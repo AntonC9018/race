@@ -61,6 +61,10 @@ struct Kari
     @("The configuration in which Kari was built.")
     string configuration = "Debug";
 
+    @("Extra arguments passed to Kari")
+    @(ArgRaw)
+    string[] rawArgs;
+
     int onExecute()
     {
         // TODO: this path should be provided by the build system or something
@@ -92,7 +96,7 @@ struct Kari
                             usedKariPlugins.map!(p => getPluginDllPath(p, "Kari.Plugins." ~ p ~ ".dll")),
                             customPlugins.map!(p => getPluginDllPath(p, p ~ ".dll")))
                         .join(",")
-                ], context.projectDirectory);
+                ] ~ rawArgs, context.projectDirectory);
             const status = wait(pid);
             if (status != 0)
             {
