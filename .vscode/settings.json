@@ -34,6 +34,10 @@
         "**/*.MA":true,
         "**/*.obj":true,
         "**/*.OBJ":true,
+
+        // The models are never managed from code anyway.
+        "game/Models/": true,
+        
         "**/*.cubemap":true,
         "**/*.flare":true,
         "**/*.mat":true,
