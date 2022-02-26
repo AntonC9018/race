@@ -21,3 +21,9 @@
 * Blender manual: https://docs.blender.org/manual/en/3.0/
 
 * On weighted normals: http://www.bytehazard.com/articles/vertnorm.html
+
+* Configurable Play Mode: https://docs.unity3d.com/Manual/ConfigurableEnterPlayMode.html
+
+* Resetting scripts without Domain Reload: https://docs.unity3d.com/2019.3/Documentation/Manual/DomainReloading.html
+
+* Importing LOD meshes. Needed for quality settings: https://docs.unity3d.com/Manual/importing-lod-meshes.html
