@@ -1,7 +1,6 @@
 module commands.context;
 
-import jcli.core.udas;
-import jcli.introspect.flags;
+import jcli.core;
 
 import std.stdio;
 
@@ -21,6 +20,12 @@ struct Context
     }
 
     int onExecute()
+    {
+        writeln("Call this command with one of the suboptions.");
+        return 1;
+    }
+
+    int onIntermediateExecute()
     {
         import std.file : exists, getcwd, mkdir;
         import std.path;
