@@ -27,3 +27,6 @@
 * Resetting scripts without Domain Reload: https://docs.unity3d.com/2019.3/Documentation/Manual/DomainReloading.html
 
 * Importing LOD meshes. Needed for quality settings: https://docs.unity3d.com/Manual/importing-lod-meshes.html
+
+* https://github.com/Unity-Technologies/vector-graphics-samples
+
