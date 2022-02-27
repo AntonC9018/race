@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7565300563414012698}
   - component: {fileID: 2462783194326439225}
   - component: {fileID: 2991016372071568187}
+  - component: {fileID: 4608356257789653042}
   m_Layer: 5
   m_Name: arrow_counter_clockwise
   m_TagString: Untagged
@@ -25,18 +26,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1480000306931729147}
-  m_LocalRotation: {x: -0.00022584584, y: -0.000842868, z: 0.258819, w: 0.96592546}
+  m_LocalRotation: {x: 0, y: 0, z: 0.2588191, w: 0.9659258}
   m_LocalPosition: {x: 0, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6043074426820342412}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: -0.1, z: 30}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 30}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -1, y: 0}
-  m_SizeDelta: {x: 2, y: 0}
+  m_AnchoredPosition: {x: -40, y: 0}
+  m_SizeDelta: {x: 80, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2462783194326439225
 CanvasRenderer:
@@ -68,6 +69,21 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 3286163911610860551, guid: b44ca4e9a6a0eaa48b403b2a6ec84888, type: 3}
   m_PreserveAspect: 0
+--- !u!114 &4608356257789653042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1480000306931729147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1477350e1da5cc845baacfdf8a1bc7e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _rotationParams: {fileID: 11400000, guid: f3cbad6dbc2c0874fb64184229fdc563, type: 2}
+  _direction: 1
+  _thingToRotate: {fileID: 0}
 --- !u!1 &2201861641189479297
 GameObject:
   m_ObjectHideFlags: 0
@@ -96,7 +112,7 @@ RectTransform:
   m_GameObject: {fileID: 2201861641189479297}
   m_LocalRotation: {x: -0.5, y: 0.5, z: 0.5, w: 0.5}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.025, y: 0.025, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 544981758517198787}
@@ -222,7 +238,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   text: "\nThe y rotation is 0.1 because otherwise the arrows\nare not visible in
     the prefab editor.\n\nTODO: maybe change the width and height \nof the canvas
-    to match the pixel size,\nand rescale instead?"
+    to match the pixel size,\nand rescale instead? This is what should be done according
+    to \nthe documentation."
 --- !u!1 &3536282386046934066
 GameObject:
   m_ObjectHideFlags: 0
@@ -234,6 +251,7 @@ GameObject:
   - component: {fileID: 4399965647770185761}
   - component: {fileID: 202823568511573451}
   - component: {fileID: 4136624169861086761}
+  - component: {fileID: 3680751925146046586}
   m_Layer: 5
   m_Name: arrow_clockwise
   m_TagString: Untagged
@@ -248,18 +266,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3536282386046934066}
-  m_LocalRotation: {x: 0.00022584577, y: -0.000842868, z: -0.25881892, w: 0.96592546}
+  m_LocalRotation: {x: 0, y: 0, z: -0.258819, w: 0.9659259}
   m_LocalPosition: {x: 0, y: 0, z: -0}
   m_LocalScale: {x: -1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6043074426820342412}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: -0.1, z: -30}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -30}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1, y: 0}
-  m_SizeDelta: {x: 2, y: 0}
+  m_AnchoredPosition: {x: 40, y: 0}
+  m_SizeDelta: {x: 80, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &202823568511573451
 CanvasRenderer:
@@ -291,3 +309,18 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 3286163911610860551, guid: b44ca4e9a6a0eaa48b403b2a6ec84888, type: 3}
   m_PreserveAspect: 0
+--- !u!114 &3680751925146046586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3536282386046934066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1477350e1da5cc845baacfdf8a1bc7e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _rotationParams: {fileID: 11400000, guid: f3cbad6dbc2c0874fb64184229fdc563, type: 2}
+  _direction: -1
+  _thingToRotate: {fileID: 0}

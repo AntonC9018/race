@@ -1,7 +1,11 @@
 {
     "name": "Garage",
     "rootNamespace": "Garage",
-    "references": [ "Common", "EngineCommon" ],
+    "references": [
+        "Common",
+        "EngineCommon",
+        "Unity.VectorGraphics"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

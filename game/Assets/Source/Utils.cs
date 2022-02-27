@@ -44,24 +44,35 @@ namespace Race
                     tesselationOptions,
                     importedSVG.NodeOpacity);
 
+                static Material GetMaterial()
                 {
-                    // var sprite = VectorUtils.BuildSprite(
-                    //     geometry,
-                    //     svgPixelsPerUnit: 100.0f, 
-                    //     Alignment.SVGOrigin, 
-                    //     // Ignored unless the alignment is "Custom"
-                    //     Vector2.zero,
-                    //     gradientResolution: 128);
-                    // sprite.name = "arrow";
+                    bool sceneContainsTexturesOrGradients = false;
+                    string materialName = sceneContainsTexturesOrGradients
+                        ? "Unlit/VectorGradient"
+                        : "Unlit/Vector";
+                    // string materialName = "Unlit/Color";
+                    var material = new Material(Shader.Find(materialName));
+                    return material;
+                }
 
-                    // var svgImage = Object.FindObjectOfType<SVGImage>();
-                    // if (svgImage is null)
-                    // {
-                    //     Debug.Log("Oops");
-                    //     return;
-                    // }
+                {
+                    var sprite = VectorUtils.BuildSprite(
+                        geometry,
+                        svgPixelsPerUnit: 100.0f, 
+                        Alignment.Center, 
+                        // Ignored unless the alignment is "Custom"
+                        Vector2.zero,
+                        gradientResolution: 128);
+                    sprite.name = "arrow";
 
-                    // svgImage.sprite = sprite;
+                    var svgImage = Object.FindObjectOfType<SVGImage>();
+                    if (svgImage is null)
+                    {
+                        Debug.Log("Oops");
+                        return;
+                    }
+
+                    svgImage.sprite = sprite;
 
                     // It doesn't find any textures and so it returns null, which makes sense.
                     // {
@@ -73,17 +84,11 @@ namespace Race
                     //     }
                     // }
 
-                    // bool sceneContainsTexturesOrGradients = false;
-                    // string materialName = sceneContainsTexturesOrGradients
-                    //     ? "Unlit/VectorGradient"
-                    //     : "Unlit/Vector";
-                    // string materialName = "Unlit/Color";
-                    // var material = new Material(Shader.Find(materialName));
 
                     // var texture2d = VectorUtils.RenderSpriteToTexture2D(
                     //     sprite,
                     //     width: 128, height: 64,
-                    //     material);
+                    //     GetMaterial());
 
                     // var pngBytes = texture2d.EncodeToPNG();
                     // string outputPath = Path.Join(Application.dataPath, "Garage/UI_Elements/arrow.png");
@@ -98,6 +103,9 @@ namespace Race
                     var meshFilter = subject.GetComponent<MeshFilter>();
                     Debug.Assert(meshFilter is not null);
                     meshFilter.mesh = mesh;
+
+                    var meshRenderer = subject.GetComponent<MeshRenderer>();
+                    meshRenderer.material = GetMaterial();
                 }
             }
         #endif
