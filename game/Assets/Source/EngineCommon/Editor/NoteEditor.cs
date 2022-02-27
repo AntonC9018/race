@@ -17,6 +17,11 @@ namespace EngineCommon.Editor
             _text = serializedObject.FindProperty(nameof(NoteComponent.text));
         }
 
+        // NOTE:
+        // I'm using IMGUI here and not the new ui toolkit, because editing a text field
+        // with it is SOOO SLOW. I don't know what they did, and I don't want to go down
+        // that rabbit hole right now, but changing the string content take like 0.2 seconds,
+        // which is just insane.
         public override void OnInspectorGUI()
         {
             var oldText = _text.stringValue;
