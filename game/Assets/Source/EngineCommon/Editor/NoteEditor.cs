@@ -1,5 +1,5 @@
 using UnityEditor;
-using UnityEngine.UIElements;
+using UnityEngine;
 
 namespace EngineCommon.Editor
 {
@@ -10,16 +10,23 @@ namespace EngineCommon.Editor
     [CustomEditor(typeof(NoteComponent))]
     public class NoteEditor : UnityEditor.Editor
     {
-        public override VisualElement CreateInspectorGUI()
+        private SerializedProperty _text;
+
+        private void OnEnable()
         {
-            var visualElement = new VisualElement();
-            var textArea = new TextField
+            _text = serializedObject.FindProperty(nameof(NoteComponent.text));
+        }
+
+        public override void OnInspectorGUI()
+        {
+            var oldText = _text.stringValue;
+            var newText = EditorGUILayout.TextArea(oldText);
+            if (newText != oldText)
             {
-                multiline = true,
-                bindingPath = nameof(NoteComponent.text),
-            };
-            visualElement.Add(textArea);
-            return visualElement;
+                serializedObject.Update();
+                _text.stringValue = newText;
+                serializedObject.ApplyModifiedProperties();
+            }
         }
     }
 }
