@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Race
@@ -7,28 +5,17 @@ namespace Race
     public class PedestalRotation : MonoBehaviour
     {
         [SerializeField] private Transform _thingToRotate;
-        [SerializeField] private float _rotationIncrement;
+        [SerializeField] private float _rotationScale;
 
-        void Start()
+        /// <summary>
+        /// The direction doesn't necessarily have to be -1 or 1, 
+        /// it can also indicate the amount by having a larger value.
+        /// It will be scaled by the internal factor.
+        /// </summary>
+        public void Rotate(float direction)
         {
-            
-        }
-
-        void Update()
-        {
-            const int left = 0;
-            const int right = 1;
-
             var rotationAxis = Vector3.up;
-
-            if (Input.GetMouseButton(left))
-            {
-                _thingToRotate.Rotate(rotationAxis, _rotationIncrement);
-            }
-            else if (Input.GetMouseButton(right))
-            {
-                _thingToRotate.Rotate(rotationAxis, -_rotationIncrement);
-            }
+            _thingToRotate.Rotate(rotationAxis, _rotationScale * direction);
         }
     }
 }
