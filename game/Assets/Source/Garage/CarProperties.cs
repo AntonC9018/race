@@ -34,7 +34,7 @@ namespace Race.Garage
 
     /// <summary>
     /// Information needed to implement the data binding between the car model
-    /// and the widgets providing the intercation.
+    /// and the widgets providing the interaction.
     /// This info is provided by the prefabs to aid in the discovery of the needed
     /// components in the prefabs.
     /// </summary>
@@ -62,7 +62,8 @@ namespace Race.Garage
 
         /// <summary>
         /// Contains the car's prefabs.
-        /// Must have a `DisplayCarInfoComponent`, via which we would get its mesh renderer. 
+        /// Must have a `DisplayCarInfoComponent`, via which we would get its mesh renderer.
+        /// These are allowed to already exist in the scene, in which case they will not be duplicated.
         /// </summary>
         public GameObject prefab;
     }
@@ -72,7 +73,7 @@ namespace Race.Garage
         // [Getters, Setters]
         public DisplayCarInfo displayCarInfo;
         
-        // TODO: autogenerate these with a plugin.
+        // TODO: autogenerate these with a Kari plugin.
         public MeshRenderer MeshRenderer
         {
             get => displayCarInfo.meshRenderer;
@@ -100,7 +101,7 @@ namespace Race.Garage
 
         /// <summary>
         /// </summary>
-        private CarInstanceInfo[] _spawnedCarInstances;
+        private CarInstanceInfo[] _carInstanceInfos;
 
         /// <summary>
         /// </summary>
@@ -108,8 +109,8 @@ namespace Race.Garage
         {
             get
             {
-                Debug.Assert(CurrentCarIndex >= 0 && CurrentCarIndex < _spawnedCarInstances.Length);
-                return ref _spawnedCarInstances[CurrentCarIndex];
+                Debug.Assert(CurrentCarIndex >= 0 && CurrentCarIndex < _carInstanceInfos.Length);
+                return ref _carInstanceInfos[CurrentCarIndex];
             }
         }
 
@@ -135,7 +136,7 @@ namespace Race.Garage
         void Start()
         {
             Debug.Assert(_carPrefabInfos is not null);
-            _spawnedCarInstances = new CarInstanceInfo[_carPrefabInfos.Length];
+            _carInstanceInfos = new CarInstanceInfo[_carPrefabInfos.Length];
 
             var options = new List<TMP_Dropdown.OptionData>(_carPrefabInfos.Length + 1)
             {
@@ -152,17 +153,16 @@ namespace Race.Garage
 
                 var infoComponent = prefabInfo.prefab.GetComponent<DisplayCarInfoComponent>();
                 Debug.Assert(infoComponent != null);
-
-                // Check whether the object is a prefab or an instantiated object in the scene not.
+                
                 // if (prefabInfo.flags.HasFlag(CarPrefabInfoFlags.IsPrespawnedBit))
-                if (prefabInfo.prefab.scene.name is not null)
+                if (!IsPrefab(prefabInfo.prefab))
                 {
                     if (lastPrespawnedEnabledIndex != -1)
                         prefabInfo.prefab.SetActive(false);
                     else if (prefabInfo.prefab.activeSelf)
                         lastPrespawnedEnabledIndex = i;
 
-                    ResetInstanceInfo(ref _spawnedCarInstances[i], infoComponent, prefabInfo.prefab);
+                    ResetInstanceInfo(ref _carInstanceInfos[i], infoComponent, prefabInfo.prefab);
                 }
 
                 var option = new TMP_Dropdown.OptionData(infoComponent.info.dataModel.name);
@@ -174,6 +174,13 @@ namespace Race.Garage
             {
                 _carNameDropdown.value = lastPrespawnedEnabledIndex;
                 _currentDropdownSelectionIndex = lastPrespawnedEnabledIndex + 1;
+            }
+
+            // Check whether the object is a prefab or an instantiated object in the scene or not.
+            // This check feels like a hack, but it seems reliable.
+            static bool IsPrefab(GameObject gameObject)
+            {
+                return gameObject.scene.name is null;
             }
         }
 
@@ -318,7 +325,7 @@ namespace Race.Garage
                 CurrentCarInfo.rootObject.SetActive(false);
             }
 
-            Debug.Assert(carIndex - 1 < _spawnedCarInstances.Length);
+            Debug.Assert(carIndex - 1 < _carInstanceInfos.Length);
             _currentDropdownSelectionIndex = carIndex;
 
             // The none option (at index 0) is just deselecting.
