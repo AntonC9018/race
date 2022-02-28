@@ -71,14 +71,14 @@ namespace EngineCommon.ColorPicker
             public float saturation;
             public float value;
             public static HSV Invalid => new HSV { hue = -1, saturation = 0, value = 0 };
-            public bool Valid => this.hue >= 0;
+            public bool IsValid => this.hue >= 0;
         }
         // Internally, the color is stored as HSV, 
         // but we give the converted color as a value passed to the callback.
         private HSV _currentColor = HSV.Invalid;
 
         // A property needed to prevent double-initialization.
-        private bool HasInited => _currentColor.Valid;
+        private bool HasInited => _currentColor.IsValid;
 
         // The texture applied to the saturation-value input area.
         // The texture present in that image will be overwritten.
@@ -106,7 +106,7 @@ namespace EngineCommon.ColorPicker
                 else
                     Initialize(value);
 
-                // Do we want to fire these?
+                // Do we always want to fire these?
                 OnValueChangedEvent?.Invoke(value);
             }
         }
@@ -244,8 +244,8 @@ namespace EngineCommon.ColorPicker
 
                     {
                         var saturationValueSize = _saturationValueRectTransform.rect.size;
-                        float saturation = clampedMousePosition.x / saturationValueSize.x;
-                        float value = clampedMousePosition.y / saturationValueSize.y;
+                        float value = clampedMousePosition.x / saturationValueSize.x;
+                        float saturation = clampedMousePosition.y / saturationValueSize.y;
 
                         if (!Mathf.Approximately(saturation, _currentColor.saturation)
                             || !Mathf.Approximately(value, _currentColor.value))
@@ -389,8 +389,8 @@ namespace EngineCommon.ColorPicker
             {
                 var saturationValueSize = _saturationValueRectTransform.rect.size;
                 _saturationValueKnobTransform.localPosition = new Vector2(
-                    colorHSV.saturation * saturationValueSize.x, colorHSV.value * saturationValueSize.y);
-                    
+                    colorHSV.value * saturationValueSize.x, colorHSV.saturation * saturationValueSize.y);
+                                    
                 var hueSize = _hueRectTransform.rect.size;
                 _hueKnobTransform.localPosition = new Vector2(
                     _hueKnobTransform.localPosition.x, colorHSV.hue * hueSize.y);
@@ -427,7 +427,7 @@ namespace EngineCommon.ColorPicker
             // return resultColor;
 
             Vector3 white = new Vector3(1, 1, 1);
-            return colorSaturation * (1 - colorValue) * white
+            return (1 - colorSaturation) * colorValue * white
                 + colorSaturation * colorValue * lastInterpolationColorRGB;
         }
 

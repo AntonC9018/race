@@ -86,7 +86,6 @@ namespace Race.Garage
         }
 
         public GameObject rootObject;
-        public bool dirty;
     }
 
     /// <summary>
@@ -115,6 +114,7 @@ namespace Race.Garage
         }
 
         private int _currentDropdownSelectionIndex = 0;
+        private bool _currentIsDirty;
         private int CurrentCarIndex => _currentDropdownSelectionIndex - 1;
         public bool IsAnyCarSelected => _currentDropdownSelectionIndex > 0;
 
@@ -265,11 +265,11 @@ namespace Race.Garage
 
         private void MaybeWriteCurrentModel()
         {
-            if (CurrentCarInfo.dirty)
+            if (_currentIsDirty)
             {
                 var model = CurrentCarInfo.DataModel;
-                var previousCarFullFilePath = GetFilePath(model.name);
-                WriteModel(model, previousCarFullFilePath);
+                var fullFilePath = GetFilePath(model.name);
+                WriteModel(model, fullFilePath);
             }
         }
 
@@ -286,13 +286,16 @@ namespace Race.Garage
         /// </summary>
         public void OnPickerColorSet(Color color)
         {
+            if (!IsAnyCarSelected)
+                return;
+
             ref var info = ref CurrentCarInfo;
             ref var displayInfo = ref CurrentCarInfo.displayCarInfo;
             var model = displayInfo.dataModel;
 
             if (model.mainColor != color)
             {
-                info.dirty = true;
+                _currentIsDirty = true;
                 model.mainColor = color;
 
                 if (displayInfo.meshRenderer != null)
@@ -320,6 +323,7 @@ namespace Race.Garage
             if (IsAnyCarSelected)
             {
                 MaybeWriteCurrentModel();
+                _currentIsDirty = false;
                 
                 Debug.Assert(CurrentCarInfo.rootObject != null);
                 CurrentCarInfo.rootObject.SetActive(false);
