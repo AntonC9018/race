@@ -7,7 +7,6 @@ using UnityEngine.UI;
 
 namespace EngineCommon.ColorPicker
 {
-    
     public class CUIColorPicker : MonoBehaviour
     {
         [SerializeField] private Image _saturationValueImage;
@@ -369,7 +368,6 @@ namespace EngineCommon.ColorPicker
 
         private void ResetToColor(Color colorRGB)
         {
-            print(colorRGB);
             HSV colorHSV;
             Color.RGBToHSV(colorRGB, out colorHSV.hue, out colorHSV.saturation, out colorHSV.value);
             ResetToColor(colorHSV);

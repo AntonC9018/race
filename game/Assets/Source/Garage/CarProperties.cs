@@ -1,10 +1,14 @@
-using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 using EngineCommon.ColorPicker;
+using Kari.Plugins.DataObject;
+using Kari.Plugins.Flags;
 using UnityEngine;
+using TMPro;
 
-namespace Garage
+
+namespace Race.Garage
 {
     /// <summary>
     /// Stores the actual source of truth data associated with the car.
@@ -12,7 +16,8 @@ namespace Garage
     /// Provides no means of actually setting the values, for that use `CarProperties`.
     /// </summary>
     [System.Serializable]
-    public class CarDataModel
+    [DataObject]
+    public partial class CarDataModel
     {
         /// <summary>
         /// </summary>
@@ -28,6 +33,62 @@ namespace Garage
     }
 
     /// <summary>
+    /// Information needed to implement the data binding between the car model
+    /// and the widgets providing the intercation.
+    /// This info is provided by the prefabs to aid in the discovery of the needed
+    /// components in the prefabs.
+    /// </summary>
+    [System.Serializable]
+    public struct DisplayCarInfo
+    {
+        public MeshRenderer meshRenderer;
+        public CarDataModel dataModel;
+    }
+
+    [NiceFlags]
+    public enum CarPrefabInfoFlags
+    {
+        /// <summary>
+        /// Indicates whether the prefab can be used directly as is,
+        /// or whether it should be spawned, and then reused.
+        /// </summary>
+        IsPrespawnedBit = 1 << 0,
+    }
+
+    [System.Serializable]
+    public struct CarPrefabInfo
+    {
+        // public CarPrefabInfoFlags flags;
+
+        /// <summary>
+        /// Contains the car's prefabs.
+        /// Must have a `DisplayCarInfoComponent`, via which we would get its mesh renderer. 
+        /// </summary>
+        public GameObject prefab;
+    }
+
+    public struct CarInstanceInfo
+    {
+        // [Getters, Setters]
+        public DisplayCarInfo displayCarInfo;
+        
+        // TODO: autogenerate these with a plugin.
+        public MeshRenderer MeshRenderer
+        {
+            get => displayCarInfo.meshRenderer;
+            set => displayCarInfo.meshRenderer = value;
+        }
+        public CarDataModel DataModel
+        {
+            get => displayCarInfo.dataModel;
+            set => displayCarInfo.dataModel = value;
+        }
+
+        public GameObject rootObject;
+        public bool dirty;
+    }
+
+    /// <summary>
     /// Provides data binding between the currently selected car and the other systems
     /// that need to get notified when that data changes.
     /// </summary>
@@ -35,9 +96,26 @@ namespace Garage
     {
         // TODO: codegen stuff.
 
+        [SerializeField] internal CarPrefabInfo[] _carPrefabInfos;
+
         /// <summary>
         /// </summary>
-        internal CarDataModel _currentModel;
+        private CarInstanceInfo[] _spawnedCarInstances;
+
+        /// <summary>
+        /// </summary>
+        public ref CarInstanceInfo CurrentCarInfo
+        {
+            get
+            {
+                Debug.Assert(CurrentCarIndex >= 0 && CurrentCarIndex < _spawnedCarInstances.Length);
+                return ref _spawnedCarInstances[CurrentCarIndex];
+            }
+        }
+
+        private int _currentDropdownSelectionIndex = 0;
+        private int CurrentCarIndex => _currentDropdownSelectionIndex - 1;
+        public bool IsAnyCarSelected => _currentDropdownSelectionIndex > 0;
 
         // For now, to avoid creating tiny scripts that do almost nothing,
         // just reference the color picker and the car mesh renderer here,
@@ -46,28 +124,96 @@ namespace Garage
         // in the long run.
         // TODO: Could also consider the mesh renderer as the source of truth,
         // it's not clear what I want yet anyway.
-        [SerializeField] internal MeshRenderer _carMeshRenderer;
-
+        //
         // For example, here, we could use a bridge script that would listen to the picker events,
         // set the color here, which would notify it back, which it should ignore.
         // And the other way, when the data changes here, it would update it on the picker, and ignore
         // the event coming from that.
-        [SerializeField] internal CUIColorPicker _colorPicker;
+        [SerializeField] private CUIColorPicker _colorPicker;
+        [SerializeField] private TMP_Dropdown _carNameDropdown;
+
+        void Start()
+        {
+            Debug.Assert(_carPrefabInfos is not null);
+            _spawnedCarInstances = new CarInstanceInfo[_carPrefabInfos.Length];
+
+            var options = new List<TMP_Dropdown.OptionData>(_carPrefabInfos.Length + 1)
+            {
+                // The first options is no selection
+                new TMP_Dropdown.OptionData("none"),
+            };
+
+            // TODO: serialize the currently selected car.
+            int lastPrespawnedEnabledIndex = -1;
+            for (int i = 0; i < _carPrefabInfos.Length; i++)
+            {
+                var prefabInfo = _carPrefabInfos[i];
+                Debug.Assert(prefabInfo.prefab != null);
+
+                var infoComponent = prefabInfo.prefab.GetComponent<DisplayCarInfoComponent>();
+                Debug.Assert(infoComponent != null);
+
+                // Check whether the object is a prefab or an instantiated object in the scene not.
+                // if (prefabInfo.flags.HasFlag(CarPrefabInfoFlags.IsPrespawnedBit))
+                if (prefabInfo.prefab.scene.name is not null)
+                {
+                    if (lastPrespawnedEnabledIndex != -1)
+                        prefabInfo.prefab.SetActive(false);
+                    else if (prefabInfo.prefab.activeSelf)
+                        lastPrespawnedEnabledIndex = i;
+
+                    ResetInstanceInfo(ref _spawnedCarInstances[i], infoComponent, prefabInfo.prefab);
+                }
+
+                var option = new TMP_Dropdown.OptionData(infoComponent.info.dataModel.name);
+                options.Add(option);
+            }
+            _carNameDropdown.AddOptions(options);
+
+            if (lastPrespawnedEnabledIndex != -1)
+            {
+                _carNameDropdown.value = lastPrespawnedEnabledIndex;
+                _currentDropdownSelectionIndex = lastPrespawnedEnabledIndex + 1;
+            }
+        }
+
+        private void ResetInstanceInfo(ref CarInstanceInfo info,
+            DisplayCarInfoComponent infoComponent, GameObject carInstance)
+        {
+            Debug.Assert(infoComponent != null);
+            Debug.Assert(infoComponent.info.dataModel != null);
+            Debug.Assert(infoComponent.info.meshRenderer != null);
+
+            Debug.Assert(carInstance != null);
+
+            // We just steal that for now.
+            // Really no reason to copy it rn, but we'll think about that once it's used somewhere else.
+            info.displayCarInfo = infoComponent.info;
+            info.rootObject = carInstance;
+        }
 
         void OnEnable()
         {
-            Debug.Assert(_carMeshRenderer != null);
-            ResetModelWithCarDataPotentiallyFromFile(_carMeshRenderer);
+            if (IsAnyCarSelected)
+                ResetModelWithCarDataMaybeFromFile(ref CurrentCarInfo);
 
+            Debug.Assert(_colorPicker != null);
             _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
+
+            Debug.Assert(_carNameDropdown != null);
+            _carNameDropdown.onValueChanged.AddListener(OnDropdownValueChanged);
         }
         
         void OnDisable()
         {
             if (_colorPicker != null)
                 _colorPicker.OnValueChangedEvent.RemoveListener(OnPickerColorSet);
+
+            if (_carNameDropdown != null)
+                _carNameDropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
             
-            WriteModel(_currentModel, GetFilePath(_currentModel.name));
+            if (IsAnyCarSelected)
+                MaybeWriteCurrentModel();
         }
 
 
@@ -77,46 +223,29 @@ namespace Garage
             return Application.persistentDataPath + "/cardata_" + carName + ".xml";
         }
 
-        public void SelectCurrentCar(MeshRenderer otherCarsMeshRenderer)
+        internal void ResetModelWithCarDataMaybeFromFile(ref CarInstanceInfo info)
         {
-            // Do this check for public methods.
-            if (otherCarsMeshRenderer == _carMeshRenderer)
-                return;
-
-            _carMeshRenderer = otherCarsMeshRenderer;
-
             // Let's say the object's name is how we store the data.
             // Let's say we store it in XML for now.
-            // TODO: might be worth it to pack this one.
+            // TODO: might be worth it to pack the whole array.
 
-            // if (!File.Exists(previousCarFullFilePath))
-            {
-                var previousCarFullFilePath = GetFilePath(_currentModel.name);
-                // TODO: keep a dirty flag and only overwrite the file if anything ever changed.
-                WriteModel(_currentModel, previousCarFullFilePath);
-            }
-
-            ResetModelWithCarDataPotentiallyFromFile(otherCarsMeshRenderer);
-        }
-
-        internal void ResetModelWithCarDataPotentiallyFromFile(MeshRenderer meshRenderer)
-        {
-            var dataFullFilePath = GetFilePath(meshRenderer.name);
+            var dataFullFilePath = GetFilePath(info.DataModel.name);
 
             if (File.Exists(dataFullFilePath))
             {
                 var serializer = new XmlSerializer(typeof(CarDataModel));
                 using var textReader = new StreamReader(dataFullFilePath);
-                var model = (CarDataModel) serializer.Deserialize(textReader);
-                ResetModel((CarDataModel) model, meshRenderer);
+                info.DataModel = (CarDataModel) serializer.Deserialize(textReader);
             }
-            else
-            {
-                var model = new CarDataModel();
-                model.mainColor = meshRenderer.material.color;
-                model.name = meshRenderer.name;
 
-                ResetModel(model, meshRenderer);
+            ResetModel(ref info);
+
+            // TODO: This is a little bit messy without the bridge handlers.
+            void ResetModel(ref CarInstanceInfo info)
+            {
+                info.MeshRenderer.material.color = info.DataModel.mainColor;
+                _colorPicker.ColorRGB = info.DataModel.mainColor;    
+                // TODO: Fire callbacks and whatnot.
             }
         }
 
@@ -127,27 +256,22 @@ namespace Garage
             serializer.Serialize(textWriter, model);
         }
 
-        public struct PropertySetContext
+        private void MaybeWriteCurrentModel()
         {
-            public CarDataModel model;
-            
-            // TODO: Should be a codegened enum probably 
-            public string nameOfPropertyThatChanged;
-
-            // other data...
-            // public GameObject newCarGameObject;
+            if (CurrentCarInfo.dirty)
+            {
+                var model = CurrentCarInfo.DataModel;
+                var previousCarFullFilePath = GetFilePath(model.name);
+                WriteModel(model, previousCarFullFilePath);
+            }
         }
 
-        // TODO: This is messy, because the MeshRenderer wants really hard to be the source of truth here.
-        internal void ResetModel(CarDataModel model, MeshRenderer carMeshRenderer)
+        public readonly struct PropertySetContext
         {
-            _currentModel = model;
-
-            // TODO: Fire callbacks and whatnot.
-            carMeshRenderer.material.color = model.mainColor;
+            public readonly CarInstanceInfo info;
             
-            // Debug.Log("Setting color " + model.mainColor.ToString());
-            _colorPicker.ColorRGB = model.mainColor;
+            // TODO: Should be a codegened enum probably 
+            public readonly string nameOfPropertyThatChanged;
         }
 
         /// <summary>
@@ -155,20 +279,67 @@ namespace Garage
         /// </summary>
         public void OnPickerColorSet(Color color)
         {
-            if (_currentModel.mainColor != color)
-            {
-                _currentModel.mainColor = color;
+            ref var info = ref CurrentCarInfo;
+            ref var displayInfo = ref CurrentCarInfo.displayCarInfo;
+            var model = displayInfo.dataModel;
 
-                _carMeshRenderer.material.color = _currentModel.mainColor;
+            if (model.mainColor != color)
+            {
+                info.dirty = true;
+                model.mainColor = color;
+
+                if (displayInfo.meshRenderer != null)
+                    displayInfo.meshRenderer.material.color = model.mainColor;
 
                 // Currently, the only source that the data comes from is the color picker,
                 // so i'm just not resetting it here.
                 // But with an event system, that would be the responsibility of a bridge script.
 
                 // TODO: fire callbacks.
-                // PropertySetContext context;
+                // PropertySetContext context
                 // context.model = _currentModel;
                 // context.nameOfPropertyThatChanged = nameof(CarDataModel.mainColor);
+            }
+        }
+
+        /// <summary>
+        /// </summary>
+        public void OnDropdownValueChanged(int carIndex)
+        {
+            Debug.Assert(carIndex >= 0);
+            if (_currentDropdownSelectionIndex == carIndex)
+                return;
+
+            if (IsAnyCarSelected)
+            {
+                MaybeWriteCurrentModel();
+                
+                Debug.Assert(CurrentCarInfo.rootObject != null);
+                CurrentCarInfo.rootObject.SetActive(false);
+            }
+
+            Debug.Assert(carIndex - 1 < _spawnedCarInstances.Length);
+            _currentDropdownSelectionIndex = carIndex;
+
+            // The none option (at index 0) is just deselecting.
+            if (carIndex > 0)
+            {
+                ref var carInfo = ref CurrentCarInfo;
+
+                if (carInfo.rootObject == null)
+                {
+                    ref var prefabInfo = ref _carPrefabInfos[CurrentCarIndex];
+                    
+                    var carGameObject = GameObject.Instantiate(prefabInfo.prefab);
+                    // carGameObject.SetActive(false);
+                    carGameObject.transform.SetParent(transform);
+
+                    var infoComponent = carGameObject.GetComponent<DisplayCarInfoComponent>();
+                    ResetInstanceInfo(ref carInfo, infoComponent, carGameObject);
+                }
+                ResetModelWithCarDataMaybeFromFile(ref carInfo);
+
+                carInfo.rootObject.SetActive(true);
             }
         }
     }

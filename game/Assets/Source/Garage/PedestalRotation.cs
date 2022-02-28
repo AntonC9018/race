@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using Unity.VectorGraphics;
 
-namespace Race
+namespace Race.Garage
 {
     // NOTE: Using SVGImage with the button component is buggy, plus, we need to emulate
     // being pushed down anyway.
@@ -20,13 +20,20 @@ namespace Race
         /// </summary>
         [SerializeField] private float _direction;
 
-        // TODO: put this in the scriptable object??
-        [SerializeField] private Transform _thingToRotate;
+        // TODO: It's a very good candidate for a singleton, as much as I dislike those.
+        [SerializeField] private CarProperties _carProperties;
 
         public void Rotate()
         {
             var rotationAxis = Vector3.up;
-            _thingToRotate.Rotate(rotationAxis, _rotationParams.rotationScale * _direction);
+            if (_carProperties.IsAnyCarSelected)
+            {
+                // The rotation should also be a reactive property of the object??
+                // I think it shouldn't, so this usage imo is totally fine.
+                // We can't cache the transform too, because the object might change.
+                _carProperties.CurrentCarInfo.rootObject.transform
+                    .Rotate(rotationAxis, _rotationParams.rotationScale * _direction);
+            }
         }
 
 

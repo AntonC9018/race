@@ -83,7 +83,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rotationParams: {fileID: 11400000, guid: f3cbad6dbc2c0874fb64184229fdc563, type: 2}
   _direction: 1
-  _thingToRotate: {fileID: 0}
+  _carProperties: {fileID: 0}
 --- !u!1 &2201861641189479297
 GameObject:
   m_ObjectHideFlags: 0
@@ -323,4 +323,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rotationParams: {fileID: 11400000, guid: f3cbad6dbc2c0874fb64184229fdc563, type: 2}
   _direction: -1
-  _thingToRotate: {fileID: 0}
+  _carProperties: {fileID: 0}
