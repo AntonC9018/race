@@ -7,18 +7,7 @@ using UnityEngine.UI;
 
 namespace EngineCommon.ColorPicker
 {
-    public struct HSV
-    {
-        public float hue;
-        public float saturation;
-        public float value;
-    }
-    public struct ColorInBothFormats
-    {
-        public Color rgb;
-        public HSV hsv;
-    }
-
+    
     public class CUIColorPicker : MonoBehaviour
     {
         [SerializeField] private Image _saturationValueImage;
@@ -32,7 +21,10 @@ namespace EngineCommon.ColorPicker
         [SerializeField] private Image _hueImage;
         [SerializeField] private RectTransform _hueKnobTransform;
         [SerializeField] private Image _resultImage = null;
-        [SerializeField] private Color _initialColor = Color.white;
+
+        // Can be reset right after the thing is spawned from script.
+        // If you want to trigger the events too, use the ColorRGB setter instead.
+        [SerializeField] public Color initialColor = Color.white;
 
         private enum InputMethod
         {
@@ -41,7 +33,7 @@ namespace EngineCommon.ColorPicker
         }
         [SerializeField] private InputMethod _usedInputMethod = InputMethod.Mouse;
 
-        [Space] public UnityEvent<Color> _onValueChangedEvent;
+        [Space] public UnityEvent<Color> OnValueChangedEvent;
 
 
         private enum DragState
@@ -74,9 +66,20 @@ namespace EngineCommon.ColorPicker
         // The last color from which the texture is made is the only one that changes.
         private Vector3 _lastInterpolatedColor;
         
+        private struct HSV
+        {
+            public float hue;
+            public float saturation;
+            public float value;
+            public static HSV Invalid => new HSV { hue = -1, saturation = 0, value = 0 };
+            public bool Valid => this.hue >= 0;
+        }
         // Internally, the color is stored as HSV, 
         // but we give the converted color as a value passed to the callback.
-        private HSV _currentColor;
+        private HSV _currentColor = HSV.Invalid;
+
+        // A property needed to prevent double-initialization.
+        private bool HasInited => _currentColor.Valid;
 
         // The texture applied to the saturation-value input area.
         // The texture present in that image will be overwritten.
@@ -87,7 +90,7 @@ namespace EngineCommon.ColorPicker
         /// You should cache the result of the getter, it does a computation.
         /// The setter fires the callbacks as well as resets the knob positions.
         /// </summary>
-        Color ColorRGB
+        public Color ColorRGB
         {
             get
             {
@@ -98,13 +101,22 @@ namespace EngineCommon.ColorPicker
 
             set
             {
-                ResetToColor(value);
+                // Possibly a hack, used to prevent stuff.
+                if (HasInited)
+                    ResetToColor(value);
+                else
+                    Initialize(value);
 
                 // Do we want to fire these?
-                _onValueChangedEvent?.Invoke(value);
+                OnValueChangedEvent?.Invoke(value);
             }
         }
-
+        
+        private void Start()
+        {
+            if (!HasInited)
+                Initialize(initialColor);
+        }
 
         private void Awake()
         {
@@ -160,7 +172,7 @@ namespace EngineCommon.ColorPicker
                 return;
 
             // The touch object is used if the input method is set to Touch.
-            // It's a pretty large struct, but it's not readonly, hence I'm passing it by ref.
+            // It's a pretty large struct, but it's not readonly, hence I'm passing it by ref (via the capture).
             Touch touch = default;
             InputMethod inputMethod = _usedInputMethod;
             if (inputMethod == InputMethod.Touch)
@@ -201,9 +213,9 @@ namespace EngineCommon.ColorPicker
 
                     {
                         var hueSize = _hueRectTransform.rect.size;
-                        float hue = clampedMousePosition.y / hueSize.y * 6;
+                        float hue = clampedMousePosition.y / hueSize.y;
 
-                        if (hue != _currentColor.hue)
+                        if (!Mathf.Approximately(hue, _currentColor.hue))
                         {
                             var newLastColor = CalculateLastColor(hue).ToRBGVector();
 
@@ -236,8 +248,8 @@ namespace EngineCommon.ColorPicker
                         float saturation = clampedMousePosition.x / saturationValueSize.x;
                         float value = clampedMousePosition.y / saturationValueSize.y;
 
-                        if (saturation != _currentColor.saturation
-                            || value != _currentColor.value)
+                        if (!Mathf.Approximately(saturation, _currentColor.saturation)
+                            || !Mathf.Approximately(value, _currentColor.value))
                         {
                             ApplySaturationValue(saturation, value, _lastInterpolatedColor);
                             
@@ -340,7 +352,7 @@ namespace EngineCommon.ColorPicker
             }
         }
 
-        private void Start()
+        private void Initialize(Color color)
         {
             // Set the first 4 pixels, the last one gets reset in the method below
             {
@@ -352,11 +364,12 @@ namespace EngineCommon.ColorPicker
                 _saturationValueTexture.SetPixel(0, 1, Color.black);
                 _saturationValueTexture.SetPixel(1, 0, Color.white);
             }
-            ResetToColor(_initialColor);
+            ResetToColor(color);
         }
 
         private void ResetToColor(Color colorRGB)
         {
+            print(colorRGB);
             HSV colorHSV;
             Color.RGBToHSV(colorRGB, out colorHSV.hue, out colorHSV.saturation, out colorHSV.value);
             ResetToColor(colorHSV);
@@ -364,31 +377,36 @@ namespace EngineCommon.ColorPicker
 
         private void ResetToColor(HSV colorHSV)
         {
-            var lastColorRGB = CalculateLastColor(colorHSV.hue);
-            var lastColorVector = lastColorRGB.ToRBGVector();
-            UpdateTextureToLastColor(lastColorRGB);
+            {
+                var lastColorRGB = CalculateLastColor(colorHSV.hue);
+                UpdateTextureToLastColor(lastColorRGB);
 
-            var newColorRGB = InterpolateColors(colorHSV.saturation, colorHSV.value, lastColorVector);
+                var lastColorVector = lastColorRGB.ToRBGVector();
+                var newColorRGB = InterpolateColors(colorHSV.saturation, colorHSV.value, lastColorVector);
+                _lastInterpolatedColor = lastColorVector;
 
-            if (_resultImage != null)
-                _resultImage.color = newColorRGB.FromRGBVector();
+                if (_resultImage != null)
+                    _resultImage.color = newColorRGB.FromRGBVector();
+            }
+            {
+                var saturationValueSize = _saturationValueRectTransform.rect.size;
+                _saturationValueKnobTransform.localPosition = new Vector2(
+                    colorHSV.saturation * saturationValueSize.x, colorHSV.value * saturationValueSize.y);
+                    
+                var hueSize = _hueRectTransform.rect.size;
+                _hueKnobTransform.localPosition = new Vector2(
+                    _hueKnobTransform.localPosition.x, colorHSV.hue * hueSize.y);
 
-            _lastInterpolatedColor = lastColorVector;
-
-            var saturationValueSize = _saturationValueRectTransform.rect.size;
-            _saturationValueKnobTransform.localPosition = new Vector2(
-                colorHSV.saturation * saturationValueSize.x, colorHSV.value * saturationValueSize.y);
-            _hueKnobTransform.localPosition = new Vector2(
-                _hueKnobTransform.localPosition.x, colorHSV.hue / 6 * saturationValueSize.y);
-
-            _currentColor = colorHSV;
+                _currentColor = colorHSV;
+            }
         }
 
         private static Color CalculateLastColor(float colorHue)
         {
-            int i0 = Mathf.Clamp((int) colorHue, 0, _HueColors.Length - 1);
+            float m = colorHue * _HueColors.Length;
+            int i0 = Mathf.Clamp((int) m, 0, _HueColors.Length - 1);
             int i1 = (i0 + 1) % _HueColors.Length;
-            return Color.Lerp(_HueColors[i0], _HueColors[i1], colorHue - i0);
+            return Color.Lerp(_HueColors[i0], _HueColors[i1], m - i0);
         }
 
         private void UpdateTextureToLastColor(Color newLastInterpolationColor)
@@ -411,7 +429,7 @@ namespace EngineCommon.ColorPicker
             // return resultColor;
 
             Vector3 white = new Vector3(1, 1, 1);
-            return (1 - colorSaturation) * colorValue * white
+            return colorSaturation * (1 - colorValue) * white
                 + colorSaturation * colorValue * lastInterpolationColorRGB;
         }
 
@@ -429,7 +447,7 @@ namespace EngineCommon.ColorPicker
             if (_resultImage != null)
                 _resultImage.color = newColor;
 
-            _onValueChangedEvent?.Invoke(newColor);
+            OnValueChangedEvent?.Invoke(newColor);
         }
     }
 }
