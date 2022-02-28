@@ -23,6 +23,7 @@ namespace EngineCommon.ColorPicker
 
         // Can be reset right after the thing is spawned from script.
         // If you want to trigger the events too, use the ColorRGB setter instead.
+        // TODO: this should use a custom property setter, I've seen it showcased somewhere.
         [SerializeField] public Color initialColor = Color.white;
 
         private enum InputMethod
