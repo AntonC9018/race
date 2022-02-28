@@ -74,7 +74,7 @@ namespace Garage
         // TODO: might want to customize the way we get the file path.
         public static string GetFilePath(string carName)
         {
-            return Application.dataPath + "/cardata_" + carName + ".xml";
+            return Application.persistentDataPath + "/cardata_" + carName + ".xml";
         }
 
         public void SelectCurrentCar(MeshRenderer otherCarsMeshRenderer)
