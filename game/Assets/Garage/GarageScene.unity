@@ -123,11 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!224 &66149321 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 22454794, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-  m_PrefabInstance: {fileID: 1882325031}
-  m_PrefabAsset: {fileID: 0}
 --- !u!21 &191895567
 Material:
   serializedVersion: 6
@@ -273,17 +268,6 @@ PrefabInstance:
       objectReference: {fileID: 963194227}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: aab7af12fa6e70e4d808aadca59f64ec, type: 3}
---- !u!114 &635269438 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 11454790, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-  m_PrefabInstance: {fileID: 1882325031}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &635542787
 GameObject:
   m_ObjectHideFlags: 0
@@ -450,17 +434,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
---- !u!114 &840740578 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 11454788, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-  m_PrefabInstance: {fileID: 1882325031}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -545,11 +518,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 11.633, y: -90, z: 0}
---- !u!224 &1002085492 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 22454792, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-  m_PrefabInstance: {fileID: 1882325031}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1123570934
 GameObject:
   m_ObjectHideFlags: 0
@@ -753,17 +721,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1225144474}
   m_CullTransparentMesh: 1
---- !u!114 &1256993976 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 11454786, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-  m_PrefabInstance: {fileID: 1882325031}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1468894032
 GameObject:
   m_ObjectHideFlags: 0
@@ -1158,46 +1115,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: CUIColorPicker
       objectReference: {fileID: 0}
-    - target: {fileID: 154786, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: m_Name
-      value: saturation_value
-      objectReference: {fileID: 0}
-    - target: {fileID: 154788, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: m_Name
-      value: hue
-      objectReference: {fileID: 0}
-    - target: {fileID: 154790, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: m_Name
-      value: result
-      objectReference: {fileID: 0}
-    - target: {fileID: 154792, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: m_Name
-      value: saturation_value_knob
-      objectReference: {fileID: 0}
-    - target: {fileID: 154794, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: m_Name
-      value: hue_knobs
-      objectReference: {fileID: 0}
-    - target: {fileID: 11454784, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: _hueImage
-      value: 
-      objectReference: {fileID: 840740578}
-    - target: {fileID: 11454784, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: _resultImage
-      value: 
-      objectReference: {fileID: 635269438}
-    - target: {fileID: 11454784, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: _hueKnobTransform
-      value: 
-      objectReference: {fileID: 66149321}
-    - target: {fileID: 11454784, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: _saturationValueImage
-      value: 
-      objectReference: {fileID: 1256993976}
-    - target: {fileID: 11454784, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
-      propertyPath: _saturationValueKnobTransform
-      value: 
-      objectReference: {fileID: 1002085492}
     - target: {fileID: 22454784, guid: b51b1107593c0d94288ccdaa607689ea, type: 3}
       propertyPath: m_Pivot.x
       value: 0
