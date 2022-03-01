@@ -95,45 +95,58 @@ namespace Race.Garage
     // TODO: I assume this one is going to be boxed, so it being a struct
     // should produce even more garbage than it being a class, but this needs profiling.
     /// <summary>
-    /// Info passed with 
+    /// Info passed when a car selection changes.
     /// </summary>
-    public struct CarSelectedEventInfo
+    public readonly struct CarSelectionChangedEventInfo
     {
         /// <summary>
         /// The CarProperties that raised the event.
         /// </summary>
-        public CarProperties carProperties;
+        public readonly CarProperties carProperties;
 
         /// <summary>
         /// The index of the deselected car.
         /// Access `carProperties` to get the car model associated with it.
         /// Will be -1 if the car is the first one selected.
         /// </summary>
-        public int previousIndex;
+        public readonly int previousIndex;
         
         /// <summary>
         /// The index of the selected car.
         /// Will be -1 in case the car got deselected.
         /// </summary>
-        public int currentIndex;
+        public readonly int currentIndex;
+
+        public CarSelectionChangedEventInfo(CarProperties carProperties, int previousIndex, int currentIndex)
+        {
+            this.carProperties = carProperties;
+            this.previousIndex = previousIndex;
+            this.currentIndex = currentIndex;
+        }
 
         public ref CarInstanceInfo PreviousCarInfo => ref carProperties.GetCarInfo(previousIndex);
         public ref CarInstanceInfo CurrentCarInfo => ref carProperties.GetCarInfo(currentIndex);
     }
 
     
-    public struct CarStatsChangedEventInfo
+    public readonly struct CarStatsChangedEventInfo
     {
         /// <summary>
         /// The CarProperties that raised the event.
         /// </summary>
-        public CarProperties carProperties;
+        public readonly CarProperties carProperties;
 
         /// <summary>
         /// The index (id) of the stat that has changed.
         /// The index of -1 means all stats have changed.
         /// </summary>
-        public int statIndex;
+        public readonly int statIndex;
+
+        public CarStatsChangedEventInfo(CarProperties carProperties, int statIndex)
+        {
+            this.carProperties = carProperties;
+            this.statIndex = statIndex;
+        }
 
         public ref CarStatsInfo CurrentStatsInfo => ref carProperties.CurrentCarInfo.dataModel.statsInfo;
     }
@@ -192,7 +205,7 @@ namespace Race.Garage
         [SerializeField] private CUIColorPicker _colorPicker;
         [SerializeField] private TMP_Dropdown _carNameDropdown;
 
-        [SerializeField] public UnityEvent<CarSelectedEventInfo> OnCarSelected;
+        [SerializeField] public UnityEvent<CarSelectionChangedEventInfo> OnCarSelected;
 
         /// <summary>
         /// </summary>
@@ -205,7 +218,7 @@ namespace Race.Garage
 
             var options = new List<TMP_Dropdown.OptionData>(_carPrefabInfos.Length + 1)
             {
-                // The first options is no selection
+                // The first options is "no selection"
                 new TMP_Dropdown.OptionData("none"),
             };
 
@@ -251,11 +264,9 @@ namespace Race.Garage
 
         internal void TriggerStatsChangedEvent(int statChangedIndex = -1)
         {
-            var info = new CarStatsChangedEventInfo
-            {
-                carProperties = this,
-                statIndex = statChangedIndex,
-            };
+            var info = new CarStatsChangedEventInfo(
+                carProperties: this,
+                statIndex: statChangedIndex);
             OnStatsChanged.Invoke(info);
             _currentIsDirty = true;
         }
@@ -324,7 +335,7 @@ namespace Race.Garage
         {
             // Let's say the object's name is how we store the data.
             // Let's say we store it in XML for now.
-            // TODO: might be worth it to pack the whole array.
+            // TODO: might be worth it to pack the whole array in a single file.
 
             var dataFullFilePath = GetFilePath(info.dataModel.name);
 
@@ -422,12 +433,10 @@ namespace Race.Garage
             if (_currentDropdownSelectionIndex == carIndex)
                 return;
 
-            var eventInfo = new CarSelectedEventInfo()
-            {
-                carProperties = this,
-                previousIndex = CurrentCarIndex,
-                currentIndex = carIndex - 1,
-            };
+            var eventInfo = new CarSelectionChangedEventInfo(
+                carProperties : this,
+                previousIndex : CurrentCarIndex,
+                currentIndex : carIndex - 1);
 
             if (IsAnyCarSelected)
             {

@@ -169,9 +169,8 @@ namespace Race.Garage
 
     public class CarStatsManager : MonoBehaviour
     {
-        // For now, do this manually, but I would like to generate code for this.
         // IMPORTANT: This object is assumed to be pristine, unmodified by other things,
-        // such that it only contains the game objects added by this class,
+        // such that it only contains the game objects added by this class.
         [SerializeField] private RectTransform _statsTransform;
 
         /// <summary>
@@ -361,7 +360,7 @@ namespace Race.Garage
             _carProperties.TriggerStatsChangedEvent(sliderIndex);
         }
 
-        private void OnCarSelected(CarSelectedEventInfo info)
+        private void OnCarSelected(CarSelectionChangedEventInfo info)
         {
             assert(info.previousIndex != info.currentIndex);
 
