@@ -371,7 +371,8 @@ namespace Race.Garage
             }
             else if (info.currentIndex == -1)
             {
-                _statsTransform.gameObject.SetActive(false);
+                // This line makes it so that the slider go away when no car is selected.
+                // _statsTransform.gameObject.SetActive(false);
                 return;
             }
 
