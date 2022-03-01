@@ -383,13 +383,13 @@ namespace Race.Garage
             // Reset stats
             {
                 // Since we know these don't change, might be worth it to cache them.
-                var sliders = _statsTransform.GetComponentsInChildren<Slider>();
-                assert(sliders.Length == CarStatsHelper.Count);
+                // var sliders = _statsTransform.GetComponentsInChildren<Slider>();
+                // assert(sliders.Length == CarStatsHelper.Count);
 
                 for (int i = 0; i < CarStatsHelper.Count; i++)
                 {
                     // Since the stats are set, this won't trigger the redistribution in our own callback.
-                    sliders[i].value = statsInfo.currentStats.GetStatRef(i);
+                    _sliders[i].value = statsInfo.currentStats.GetStatRef(i);
                 }
             }
 
