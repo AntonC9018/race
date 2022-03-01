@@ -81,7 +81,7 @@ namespace Race.Garage
         // For now, do this manually, but I would like to generate code for this.
         // IMPORTANT: This object is assumed to be pristine, unmodified by other things,
         // such that it only contains the game objects added by this class,
-        [SerializeField] private LayoutElement _statsLayout;
+        [SerializeField] private RectTransform _statsTransform;
 
         /// <summary>
         /// Children must have a slider component and a label component.
@@ -103,9 +103,9 @@ namespace Race.Garage
         void Setup()
         {
             assert(_carProperties != null);
-            assert(_statsLayout != null);
+            assert(_statsTransform != null);
             assert(_statsSliderPrefab != null);
-            assert(_statsLayout.transform.childCount == 0,
+            assert(_statsTransform.childCount == 0,
                 "The layout object must be empty and must be unmodified by other code");
 
             {
@@ -143,8 +143,7 @@ namespace Race.Garage
 
             {
                 // I'm not sure how to do this one correctly.
-                _statsLayout.enabled = false;
-                var layoutTransform = _statsLayout.transform;
+                // _statsTransform.gameObject.SetActive(false);
 
                 // I'm not sure how this works with the immediate children adding children locally.
                 // layoutTransform.hierarchyCapacity = CarStats.Count;
@@ -157,6 +156,7 @@ namespace Race.Garage
                 {
                     var parentGameObject = GameObject.Instantiate(_statsSliderPrefab);
                     ref var info = ref _statReflectionInfos[i];
+                    parentGameObject.name = info.displayName;
                     
                     {
                         var slider = parentGameObject.GetComponentInChildren<Slider>();
@@ -180,29 +180,28 @@ namespace Race.Garage
                         label.text = info.displayName;
                     }
 
-                    parentGameObject.transform.SetParent(layoutTransform, worldPositionStays: false);
+                    parentGameObject.transform.SetParent(_statsTransform, worldPositionStays: false);
                 }
              
-                _statsLayout.enabled = true;
+                _statsTransform.gameObject.SetActive(true);
             }
         }
 
         void OnEnable()
         {
-            assert(_statsLayout != null);
-            _statsLayout.gameObject.SetActive(true);
+            assert(_statsTransform != null);
+            _statsTransform.gameObject.SetActive(true);
         }
         
         void OnDisable()
         {
-            if (_statsLayout == null)
+            if (_statsTransform == null)
                 return;
-            _statsLayout.gameObject.SetActive(false);
+            _statsTransform.gameObject.SetActive(false);
 
             // TODO: it's not clear whether we want this yet.
             #if false
             {
-                var layoutTransform = _statsLayout.transform;
                 var childCount = layoutTransform.childCount;
 
                 assert(childCount == _sliderValueChangedDelegates.Length,
@@ -210,7 +209,7 @@ namespace Race.Garage
 
                 for (int i = 0; i < childCount; i++)
                 {
-                    var childTransform = layoutTransform.GetChild(i);
+                    var childTransform = _statsLayout.GetChild(i);
                     var slider = childTransform.GetComponentInChildren<Slider>();
                     assert(slider != null);
                     // TODO: make sure it's been removed.
@@ -246,6 +245,7 @@ namespace Race.Garage
                 }
             }
 
+            // TODO: might want to keep the old stats too, so, perhaps, have a setter for the stats.
             _carProperties.TriggerAllStatsChangedEvent();
         }
 
@@ -256,11 +256,11 @@ namespace Race.Garage
             // Might want to disable the canvas component, people say it's more efficient.
             if (previousCarIndex == -1)
             {
-                _statsLayout.gameObject.SetActive(true);
+                _statsTransform.gameObject.SetActive(true);
             }
             else if (currentCarIndex == -1)
             {
-                _statsLayout.gameObject.SetActive(false);
+                _statsTransform.gameObject.SetActive(false);
                 return;
             }
 
@@ -271,7 +271,7 @@ namespace Race.Garage
             // Reset stats
             {
                 // Since we know these don't change, might be worth it to cache them.
-                var sliders = _statsLayout.GetComponentsInChildren<Slider>();
+                var sliders = _statsTransform.GetComponentsInChildren<Slider>();
                 assert(sliders.Length == CarStatsHelper.Count);
 
                 for (int i = 0; i < CarStatsHelper.Count; i++)
