@@ -7,6 +7,7 @@ using Kari.Plugins.Flags;
 using UnityEngine;
 using TMPro;
 using static EngineCommon.Assertions;
+using UnityEngine.Events;
 
 namespace Race.Garage
 {
@@ -29,7 +30,13 @@ namespace Race.Garage
 
         /// <summary>
         /// </summary>
-        public CarStats stats;
+        public CarStatsInfo statsInfo;
+
+        /// <summary>
+        /// Use this for serialization for now, but it should be replaced by a typesafe function
+        /// generated via Kari.
+        /// </summary>
+        public readonly static XmlSerializer Serializer = new XmlSerializer(typeof(CarDataModel));
 
         // I'm not using notifyPropertyChanged or whatnot, because I want to have more control
         // over these things. I love declarative programming, but I want to do it with my
@@ -46,7 +53,13 @@ namespace Race.Garage
     public struct DisplayCarInfo
     {
         public MeshRenderer meshRenderer;
-        public CarDataModel dataModel;
+        public string name;
+
+        /// <summary>
+        /// Base, unchangeable stats of the car.
+        /// The values cannot go below these values and are purely additive on top.
+        /// </summary>
+        public CarStats baseStats;
     }
 
     [NiceFlags]
@@ -74,22 +87,55 @@ namespace Race.Garage
 
     public struct CarInstanceInfo
     {
-        // [Getters, Setters]
-        public DisplayCarInfo displayCarInfo;
-        
-        // TODO: autogenerate these with a Kari plugin.
-        public MeshRenderer MeshRenderer
-        {
-            get => displayCarInfo.meshRenderer;
-            set => displayCarInfo.meshRenderer = value;
-        }
-        public CarDataModel DataModel
-        {
-            get => displayCarInfo.dataModel;
-            set => displayCarInfo.dataModel = value;
-        }
-
+        public Material mainMaterial;
+        public CarDataModel dataModel;
         public GameObject rootObject;
+    }
+
+    // TODO: I assume this one is going to be boxed, so it being a struct
+    // should produce even more garbage than it being a class, but this needs profiling.
+    /// <summary>
+    /// Info passed with 
+    /// </summary>
+    public struct CarSelectedEventInfo
+    {
+        /// <summary>
+        /// The CarProperties that raised the event.
+        /// </summary>
+        public CarProperties carProperties;
+
+        /// <summary>
+        /// The index of the deselected car.
+        /// Access `carProperties` to get the car model associated with it.
+        /// Will be -1 if the car is the first one selected.
+        /// </summary>
+        public int previousIndex;
+        
+        /// <summary>
+        /// The index of the selected car.
+        /// Will be -1 in case the car got deselected.
+        /// </summary>
+        public int currentIndex;
+
+        public ref CarInstanceInfo PreviousCarInfo => ref carProperties.GetCarInfo(previousIndex);
+        public ref CarInstanceInfo CurrentCarInfo => ref carProperties.GetCarInfo(currentIndex);
+    }
+
+    
+    public struct CarStatsChangedEventInfo
+    {
+        /// <summary>
+        /// The CarProperties that raised the event.
+        /// </summary>
+        public CarProperties carProperties;
+
+        /// <summary>
+        /// The index (id) of the stat that has changed.
+        /// The index of -1 means all stats have changed.
+        /// </summary>
+        public int statIndex;
+
+        public ref CarStatsInfo CurrentStatsInfo => ref carProperties.CurrentCarInfo.dataModel.statsInfo;
     }
 
     /// <summary>
@@ -120,6 +166,10 @@ namespace Race.Garage
 
         private int _currentDropdownSelectionIndex = 0;
         private bool _currentIsDirty;
+
+        /// <summary>
+        /// Returns -1 if no car is currently selected.
+        /// </summary>
         private int CurrentCarIndex => _currentDropdownSelectionIndex - 1;
 
         /// <summary>
@@ -141,6 +191,12 @@ namespace Race.Garage
         // the event coming from that.
         [SerializeField] private CUIColorPicker _colorPicker;
         [SerializeField] private TMP_Dropdown _carNameDropdown;
+
+        [SerializeField] public UnityEvent<CarSelectedEventInfo> OnCarSelected;
+
+        /// <summary>
+        /// </summary>
+        [SerializeField] public UnityEvent<CarStatsChangedEventInfo> OnStatsChanged;
 
         void Start()
         {
@@ -174,7 +230,7 @@ namespace Race.Garage
                     ResetInstanceInfo(ref _carInstanceInfos[i], infoComponent, prefabInfo.prefab);
                 }
 
-                var option = new TMP_Dropdown.OptionData(infoComponent.info.dataModel.name);
+                var option = new TMP_Dropdown.OptionData(infoComponent.info.name);
                 options.Add(option);
             }
             _carNameDropdown.AddOptions(options);
@@ -193,23 +249,44 @@ namespace Race.Garage
             }
         }
 
-        internal void TriggerAllStatsChangedEvent()
+        internal void TriggerStatsChangedEvent(int statChangedIndex = -1)
         {
+            var info = new CarStatsChangedEventInfo
+            {
+                carProperties = this,
+                statIndex = statChangedIndex,
+            };
+            OnStatsChanged.Invoke(info);
+            _currentIsDirty = true;
         }
 
-        private void ResetInstanceInfo(ref CarInstanceInfo info,
+        private void ResetInstanceInfo(ref CarInstanceInfo instanceInfo,
             DisplayCarInfoComponent infoComponent, GameObject carInstance)
         {
             assert(infoComponent != null);
-            assert(infoComponent.info.dataModel != null);
             assert(infoComponent.info.meshRenderer != null);
-
             assert(carInstance != null);
 
-            // We just steal that for now.
-            // Really no reason to copy it rn, but we'll think about that once it's used somewhere else.
-            info.displayCarInfo = infoComponent.info;
-            info.rootObject = carInstance;
+            ref var info = ref infoComponent.info;
+
+            var material = info.meshRenderer.material;
+
+            var statsInfo = new CarStatsInfo
+            {
+                baseStats    = info.baseStats,
+                currentStats = info.baseStats,
+                additionalStatValue = 0,
+            };
+            statsInfo.ComputeNonSerializedProperties();
+
+            instanceInfo.dataModel = new CarDataModel
+            {
+                name      = info.name,
+                mainColor = material.color,
+                statsInfo = statsInfo,
+            };
+            instanceInfo.mainMaterial = material;
+            instanceInfo.rootObject = carInstance;
         }
 
         void OnEnable()
@@ -249,13 +326,25 @@ namespace Race.Garage
             // Let's say we store it in XML for now.
             // TODO: might be worth it to pack the whole array.
 
-            var dataFullFilePath = GetFilePath(info.DataModel.name);
+            var dataFullFilePath = GetFilePath(info.dataModel.name);
 
             if (File.Exists(dataFullFilePath))
+            // if (false)
             {
-                var serializer = new XmlSerializer(typeof(CarDataModel));
+                print(dataFullFilePath);
                 using var textReader = new StreamReader(dataFullFilePath);
-                info.DataModel = (CarDataModel) serializer.Deserialize(textReader);
+                // The `Deserialize` cannot keep the existing values wherever
+                // a value for a field was not found. It's a pretty stupid API design tbh.
+                // TODO: generate a typesafe serialization function.
+                // TODO: don't read the file if it hasn't changed.
+                // TODO: maybe watch the asset and hotreload it.
+                // TODO: check if the stats are valid?
+                info.dataModel = (CarDataModel) CarDataModel.Serializer.Deserialize(textReader);
+
+                // TODO: 
+                // may want to encapsulate this in the struct,
+                // but meh, working with pure data is more comfortable.
+                info.dataModel.statsInfo.ComputeNonSerializedProperties();
             }
 
             ResetModel(ref info);
@@ -263,24 +352,25 @@ namespace Race.Garage
             // TODO: This is a little bit messy without the bridge handlers.
             void ResetModel(ref CarInstanceInfo info)
             {
-                info.MeshRenderer.material.color = info.DataModel.mainColor;
-                _colorPicker.ColorRGB = info.DataModel.mainColor;    
-                // TODO: Fire callbacks and whatnot.
+                info.mainMaterial.color = info.dataModel.mainColor;
+                _colorPicker.ColorRGB = info.dataModel.mainColor;    
+                // TODO: Fire callbacks and whatnot. Actually, I'm doing that below.
+                // The callbacks need to know the index of the previous car, which this func doesn't have.
+                // So it should either get this info, or the callback should happen elsewhere.
             }
         }
 
         private static void WriteModel(CarDataModel model, string fileName)
         {
-            var serializer = new XmlSerializer(typeof(CarDataModel));
             using var textWriter = new StreamWriter(fileName);
-            serializer.Serialize(textWriter, model);
+            CarDataModel.Serializer.Serialize(textWriter, model);
         }
 
         private void MaybeWriteCurrentModel()
         {
             if (_currentIsDirty)
             {
-                var model = CurrentCarInfo.DataModel;
+                var model = CurrentCarInfo.dataModel;
                 var fullFilePath = GetFilePath(model.name);
                 WriteModel(model, fullFilePath);
             }
@@ -303,16 +393,15 @@ namespace Race.Garage
                 return;
 
             ref var info = ref CurrentCarInfo;
-            ref var displayInfo = ref CurrentCarInfo.displayCarInfo;
-            var model = displayInfo.dataModel;
+            var model = info.dataModel;
 
             if (model.mainColor != color)
             {
                 _currentIsDirty = true;
                 model.mainColor = color;
 
-                if (displayInfo.meshRenderer != null)
-                    displayInfo.meshRenderer.material.color = model.mainColor;
+                if (info.mainMaterial != null)
+                    info.mainMaterial.color = model.mainColor;
 
                 // Currently, the only source that the data comes from is the color picker,
                 // so i'm just not resetting it here.
@@ -332,6 +421,13 @@ namespace Race.Garage
             assert(carIndex >= 0);
             if (_currentDropdownSelectionIndex == carIndex)
                 return;
+
+            var eventInfo = new CarSelectedEventInfo()
+            {
+                carProperties = this,
+                previousIndex = CurrentCarIndex,
+                currentIndex = carIndex - 1,
+            };
 
             if (IsAnyCarSelected)
             {
@@ -365,6 +461,8 @@ namespace Race.Garage
 
                 carInfo.rootObject.SetActive(true);
             }
+
+            OnCarSelected.Invoke(eventInfo);
         }
     }
 }

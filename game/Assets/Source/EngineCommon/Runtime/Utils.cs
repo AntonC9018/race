@@ -19,28 +19,32 @@ namespace EngineCommon
         public static void Assert(bool condition, string message)
         {
             Debug.Assert(condition, message);
-            throw new AssertionException(message);
+            if (!condition)
+                throw new AssertionException(message);
         }
         
         [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
         public static void Assert(bool condition)
         {
             Debug.Assert(condition);
-            throw new AssertionException();
+            if (!condition)
+                throw new AssertionException();
         }
 
         [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
         public static void assert(bool condition, string message)
         {
             Debug.Assert(condition, message);
-            throw new AssertionException(message);
+            if (!condition)
+                throw new AssertionException(message);
         }
         
         [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
         public static void assert(bool condition)
         {
             Debug.Assert(condition);
-            throw new AssertionException();
+            if (!condition)
+                throw new AssertionException();
         }
     }
 }
