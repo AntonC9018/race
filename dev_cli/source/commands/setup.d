@@ -47,7 +47,11 @@ struct SetupCommand
                 return status;
             }
         }
-        return 0;
+        {
+            auto kari = Kari(context, kariConfiguration, null);
+            int status = kari.onExecute();
+            return status;
+        }
     }
 }
 

@@ -6,7 +6,7 @@ using Kari.Plugins.DataObject;
 using Kari.Plugins.Flags;
 using UnityEngine;
 using TMPro;
-
+using static EngineCommon.Assertions;
 
 namespace Race.Garage
 {
@@ -26,6 +26,10 @@ namespace Race.Garage
         /// <summary>
         /// </summary>
         public string name;
+
+        /// <summary>
+        /// </summary>
+        public CarStats stats;
 
         // I'm not using notifyPropertyChanged or whatnot, because I want to have more control
         // over these things. I love declarative programming, but I want to do it with my
@@ -104,18 +108,23 @@ namespace Race.Garage
 
         /// <summary>
         /// </summary>
-        public ref CarInstanceInfo CurrentCarInfo
+        public ref CarInstanceInfo GetCarInfo(int index)
         {
-            get
-            {
-                Debug.Assert(CurrentCarIndex >= 0 && CurrentCarIndex < _carInstanceInfos.Length);
-                return ref _carInstanceInfos[CurrentCarIndex];
-            }
+            assert(CurrentCarIndex >= 0 && CurrentCarIndex < _carInstanceInfos.Length);
+            return ref _carInstanceInfos[index];
         }
+
+        /// <summary>
+        /// </summary>
+        public ref CarInstanceInfo CurrentCarInfo => ref GetCarInfo(CurrentCarIndex);
 
         private int _currentDropdownSelectionIndex = 0;
         private bool _currentIsDirty;
         private int CurrentCarIndex => _currentDropdownSelectionIndex - 1;
+
+        /// <summary>
+        /// Check this before accessing <c>CurrentCarInfo</c>.
+        /// </summary>
         public bool IsAnyCarSelected => _currentDropdownSelectionIndex > 0;
 
         // For now, to avoid creating tiny scripts that do almost nothing,
@@ -135,7 +144,7 @@ namespace Race.Garage
 
         void Start()
         {
-            Debug.Assert(_carPrefabInfos is not null);
+            assert(_carPrefabInfos is not null);
             _carInstanceInfos = new CarInstanceInfo[_carPrefabInfos.Length];
 
             var options = new List<TMP_Dropdown.OptionData>(_carPrefabInfos.Length + 1)
@@ -149,10 +158,10 @@ namespace Race.Garage
             for (int i = 0; i < _carPrefabInfos.Length; i++)
             {
                 var prefabInfo = _carPrefabInfos[i];
-                Debug.Assert(prefabInfo.prefab != null);
+                assert(prefabInfo.prefab != null);
 
                 var infoComponent = prefabInfo.prefab.GetComponent<DisplayCarInfoComponent>();
-                Debug.Assert(infoComponent != null);
+                assert(infoComponent != null);
                 
                 // if (prefabInfo.flags.HasFlag(CarPrefabInfoFlags.IsPrespawnedBit))
                 if (!IsPrefab(prefabInfo.prefab))
@@ -184,14 +193,18 @@ namespace Race.Garage
             }
         }
 
+        internal void TriggerAllStatsChangedEvent()
+        {
+        }
+
         private void ResetInstanceInfo(ref CarInstanceInfo info,
             DisplayCarInfoComponent infoComponent, GameObject carInstance)
         {
-            Debug.Assert(infoComponent != null);
-            Debug.Assert(infoComponent.info.dataModel != null);
-            Debug.Assert(infoComponent.info.meshRenderer != null);
+            assert(infoComponent != null);
+            assert(infoComponent.info.dataModel != null);
+            assert(infoComponent.info.meshRenderer != null);
 
-            Debug.Assert(carInstance != null);
+            assert(carInstance != null);
 
             // We just steal that for now.
             // Really no reason to copy it rn, but we'll think about that once it's used somewhere else.
@@ -204,10 +217,10 @@ namespace Race.Garage
             if (IsAnyCarSelected)
                 ResetModelWithCarDataMaybeFromFile(ref CurrentCarInfo);
 
-            Debug.Assert(_colorPicker != null);
+            assert(_colorPicker != null);
             _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
 
-            Debug.Assert(_carNameDropdown != null);
+            assert(_carNameDropdown != null);
             _carNameDropdown.onValueChanged.AddListener(OnDropdownValueChanged);
         }
         
@@ -316,7 +329,7 @@ namespace Race.Garage
         /// </summary>
         public void OnDropdownValueChanged(int carIndex)
         {
-            Debug.Assert(carIndex >= 0);
+            assert(carIndex >= 0);
             if (_currentDropdownSelectionIndex == carIndex)
                 return;
 
@@ -325,11 +338,11 @@ namespace Race.Garage
                 MaybeWriteCurrentModel();
                 _currentIsDirty = false;
                 
-                Debug.Assert(CurrentCarInfo.rootObject != null);
+                assert(CurrentCarInfo.rootObject != null);
                 CurrentCarInfo.rootObject.SetActive(false);
             }
 
-            Debug.Assert(carIndex - 1 < _carInstanceInfos.Length);
+            assert(carIndex - 1 < _carInstanceInfos.Length);
             _currentDropdownSelectionIndex = carIndex;
 
             // The none option (at index 0) is just deselecting.
@@ -343,7 +356,7 @@ namespace Race.Garage
                     
                     var carGameObject = GameObject.Instantiate(prefabInfo.prefab);
                     // carGameObject.SetActive(false);
-                    carGameObject.transform.SetParent(transform);
+                    carGameObject.transform.SetParent(transform, worldPositionStays: false);
 
                     var infoComponent = carGameObject.GetComponent<DisplayCarInfoComponent>();
                     ResetInstanceInfo(ref carInfo, infoComponent, carGameObject);

@@ -12,6 +12,30 @@
 7. Run `setup.bat` in the root directory.
 
 
+## Requirements
+
+Create a small "1 v bot" drag racing game with 3rd person camera view.
+
+Garage
+Change car color
+Increase car HP
+Add your username
+Low Medium High graphics settings
+Shop with 2 in-app purchases to buy coins [100 coins pack - $0.99, 200
+coins pack $1,99]
+Save all information in playerPrefs
+Performance optimised UI is very important
+When starting the race - choose 1 from 2 maps available
+
+Ads:
+Show an interstitial ad between first and second scene
+
+Drag racing map (2 maps)
+Use addressables to spawn cars
+Movement: WASD [SPACE] + shift & ctrl to change gears
+First to come to the finish line wins
+After race is over - move back to first scene (garage)
+
 ## Links
 
 * Unity optimization, including UI: https://www.youtube.com/watch?v=_wxitgdx-UI
