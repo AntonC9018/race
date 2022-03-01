@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 76604595570749146}
   - component: {fileID: 76604595570749145}
+  - component: {fileID: 76604594924247938}
   m_Layer: 0
   m_Name: car_model
   m_TagString: Untagged
@@ -46,5 +47,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _carPrefabInfos:
   - prefab: {fileID: 1977673978104148287, guid: 7e5fe5a75f4e53e42a2d17b08723a89c, type: 3}
+  - prefab: {fileID: 5171509889710773593, guid: bc5e846c3c8954e4da06cf44326d2fd0, type: 3}
   _colorPicker: {fileID: 0}
   _carNameDropdown: {fileID: 0}
+  OnCarSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnStatsChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: Race.Garage.UnspentStatValueDisplay, Garage
+        m_MethodName: OnStatsChanged
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &76604594924247938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 76604595570749144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4349fad70b7ec214f804e4167a88ed9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _statsTransform: {fileID: 0}
+  _statsSliderPrefab: {fileID: 4611334084243862879, guid: a597d93ae715dfb40a5b96630f6da9ec, type: 3}
+  _carProperties: {fileID: 76604595570749145}
