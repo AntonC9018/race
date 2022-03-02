@@ -104,9 +104,11 @@ On the gameplay elements:
 
 More on the code / design:
 
+
 - The experimental package I'm using is `Unity.VectorGraphics` to be able to diplay SVG's,
   but that's just me trying things.
   Vector graphics are nice, because they scale to any resolution, but their support in Unity is quite limited and buggy at the moment.
+
 
 - I kind of messed up with the event variable names.
   By habit, I started naming them with the first letter being capital, but that can confuse you if there are handler methods in the same class.
@@ -161,7 +163,7 @@ More on the code / design:
   I understand, that I could refactor the code more easily and reliably if I do that notify-immediately-on-set pattern,
   and would be less likely to miss it when I meant it, so I might refactor that, but to me, triggering the callback
   manually feels better.
-  
+
 
 ## Links
 
