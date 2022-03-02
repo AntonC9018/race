@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46ea64a87a6f439589177529ff049678, type: 3}
   m_Name: TerminalSettings
   m_EditorClassIdentifier: 
-  MaxHeight: 0.7
-  SmallTerminalRatio: 0.33
-  ToggleSpeed: 360
+  MaxHeight: 1
+  SmallTerminalRatio: 0.3
+  ToggleSpeed: 2211
   ToggleHotkey: '`'
   ToggleFullHotkey: ^`
   BufferSize: 512
@@ -24,7 +24,7 @@ MonoBehaviour:
   Theme:
     InputContrast: 0
     InputAlpha: 0.5
-    ConsoleFont: {fileID: 0}
+    ConsoleFont: {fileID: 12800000, guid: a8ce77a809c34024ba5393190ac6aaa4, type: 3}
     BackgroundColor: {r: 0, g: 0, b: 0, a: 1}
     ForegroundColor: {r: 1, g: 1, b: 1, a: 1}
     ShellColor: {r: 1, g: 1, b: 1, a: 1}

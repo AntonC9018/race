@@ -102,6 +102,7 @@ namespace Race.Garage
         public const int Count = 2;
         public const int HealthIndex = 0;
         public const int AccelerationModifierIndex = 1;
+        public static readonly float MaxStatValue;
 
         // A manual meaningless switch works for now, but code generation is way better here.
         // Doing this manually is way too fragile.
@@ -127,9 +128,9 @@ namespace Race.Garage
             var type = typeof(CarStats);
             // This one allocates a new array, which we don't really need.
             var fields = type.GetFields();
-            assert(fields.Length == CarStatsHelper.Count);
-            _StatReflectionInfos = new CarStatFieldReflectionInfo[CarStatsHelper.Count];
-            for (int i = 0; i < CarStatsHelper.Count; i++)
+            assert(fields.Length == Count);
+            _StatReflectionInfos = new CarStatFieldReflectionInfo[Count];
+            for (int i = 0; i < Count; i++)
             {
                 var field = fields[i];
                 ref var currentInfo = ref _StatReflectionInfos[i];
@@ -154,6 +155,11 @@ namespace Race.Garage
                     }
                 }
             }
+
+            float sum = 0;
+            foreach (ref var info in _StatReflectionInfos.AsSpan())
+                sum += info.maxValue;
+            MaxStatValue = sum;
         }
 
         public static float GetTotalValue(this ref CarStats stats)
