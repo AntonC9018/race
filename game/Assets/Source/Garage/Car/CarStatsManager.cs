@@ -74,6 +74,7 @@ namespace Race.Garage
         /// <summary>
         /// This value can be redistributed among the stats to increase them.
         /// Represents the max such value.
+        /// Don't forget to recalculate the total stat value after you reset this!
         /// </summary>
         public float additionalStatValue;
         
@@ -186,8 +187,9 @@ namespace Race.Garage
 
     public class CarStatsManager : MonoBehaviour
     {
-        // IMPORTANT: This object is assumed to be pristine, unmodified by other things,
-        // such that it only contains the game objects added by this class.
+        /// <summary>
+        /// The container where the sliders will be spawned.
+        /// </summary>
         [SerializeField] private RectTransform _statsTransform;
 
         /// <summary>
@@ -201,8 +203,6 @@ namespace Race.Garage
         // This one might not be needed at all, because we can just
         // hide or destory the children and be done with it.
         private ValueChangedCapture[] _sliderValueChangedCaptures;
-
-        // May want to store the cached sliders, depends on performance we get.
         private Slider[] _sliders;
 
         void Awake()
