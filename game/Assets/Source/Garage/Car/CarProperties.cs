@@ -8,6 +8,7 @@ using UnityEngine;
 using TMPro;
 using static EngineCommon.Assertions;
 using UnityEngine.Events;
+using System;
 
 namespace Race.Garage
 {
@@ -228,16 +229,10 @@ namespace Race.Garage
         /// </summary>
         [SerializeField] public UnityEvent<CarStatsChangedEventInfo> OnStatsChanged;
 
-        /// <summary>
-        /// </summary>
-        private Dictionary<string, int> _carNameToIndexMapping;
-
         void Awake()
         {
-            print("Called awake Car");
             assert(_carPrefabInfos is not null);
             _carInstanceInfos = new CarInstanceInfo[_carPrefabInfos.Length];
-            _carNameToIndexMapping = new Dictionary<string, int>();
 
             // TODO: serialize the currently selected car.
             for (int i = 0; i < _carPrefabInfos.Length; i++)
@@ -256,9 +251,6 @@ namespace Race.Garage
                 }
 
                 var name = infoComponent.info.name;
-
-                assert(!_carNameToIndexMapping.ContainsKey(name));
-                _carNameToIndexMapping.Add(name, i);
 
                 _carInstanceInfos[i].name = name;
             }
@@ -491,12 +483,7 @@ namespace Race.Garage
                 }
             }
         }
-
-        // Needs to be wired up in the inspector.
-        // This one is questionable, this one's about push vs pull.
-        // But I guess since the car instance data is private, this is just easier to do here,
-        // so actually doing it here is fine.
-        //
+        
         // TODO:
         // Some tool that would find the needed `UserProperties` automatically in the editor
         // when this object is added and hook it up automatically, without delegating to runtime,
@@ -505,12 +492,13 @@ namespace Race.Garage
         // This should definitely in some way get hooked up automatically.
         public void OnUserModelLoaded(UserDataModel model)
         {
-            if (_carNameToIndexMapping.TryGetValue(model.defaultCarName, out int index))
+            for (int i = 0; i < CarInstanceInfos.Length; i++)
             {
-                // I guess this function does all we need anyway.
-                // TODO: perhaps rename it?
-                assert(index >= -1 && index < _carInstanceInfos.Length);
-                SelectCar(index);
+                if (CarInstanceInfos[i].name == model.defaultCarName)
+                {
+                    SelectCar(i);
+                    break;
+                }
             }
         }
     }

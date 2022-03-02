@@ -5,8 +5,8 @@ namespace Race.Garage
     // TODO: might be worth it to offer something like this:
     // https://gist.github.com/tomkail/ba4136e6aa990f4dc94e0d39ec6a058c
     [CreateAssetMenu(
-        fileName = "New PedestalRotationParams",
-        menuName = "PedestalRotationParams",
+        fileName = "New " + nameof(PedestalRotationParams),
+        menuName = nameof(PedestalRotationParams),
         // Second grouping.
         order = 51)]
     public class PedestalRotationParams : ScriptableObject

@@ -565,7 +565,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8616874910255606248, guid: 361c437ddb8e4224b912aa0a1462041a, type: 3}
   m_PrefabInstance: {fileID: 5249816791286114618}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 854905462}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7b743370ac3e4ec2a1668f5455a8ef8a, type: 3}
@@ -676,6 +676,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!1 &854905462 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8616874910255606254, guid: 361c437ddb8e4224b912aa0a1462041a, type: 3}
+  m_PrefabInstance: {fileID: 5249816791286114618}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &854905466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854905462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a40f82e09466bc343925675af16cf674, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _carNameDropdown: {fileID: 702998613}
+  _carProperties: {fileID: 1874294105}
 --- !u!224 &899673996 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5249816791510845110, guid: 361c437ddb8e4224b912aa0a1462041a, type: 3}
@@ -1310,6 +1329,18 @@ MonoBehaviour:
       - m_Target: {fileID: 625533718}
         m_TargetAssemblyTypeName: Race.Garage.UserCurrencyChangedDisplay, Garage
         m_MethodName: OnUserDataModelLoaded
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1874294105}
+        m_TargetAssemblyTypeName: Race.Garage.CarProperties, Garage
+        m_MethodName: OnUserModelLoaded
         m_Mode: 0
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2120,6 +2151,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ruby
       objectReference: {fileID: 0}
+    - target: {fileID: 3337579231761366281, guid: a941937c903f1c944ab16ecc14410364, type: 3}
+      propertyPath: m_PreserveAspect
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3337579231761366287, guid: a941937c903f1c944ab16ecc14410364, type: 3}
       propertyPath: m_Name
       value: image
@@ -2373,6 +2408,14 @@ PrefabInstance:
     - target: {fileID: 7620671779784910200, guid: 880afd000dd4849408aeacc3e499701f, type: 3}
       propertyPath: m_Name
       value: image
+      objectReference: {fileID: 0}
+    - target: {fileID: 7620671779784910206, guid: 880afd000dd4849408aeacc3e499701f, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7620671779784910206, guid: 880afd000dd4849408aeacc3e499701f, type: 3}
+      propertyPath: m_PreserveAspect
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7620671781156587392, guid: 880afd000dd4849408aeacc3e499701f, type: 3}
       propertyPath: m_Name

@@ -111,7 +111,6 @@ namespace Race.Garage
 
         void Awake()
         {
-            print("Called awake User");
             var model = new UserDataModel();
             TryLoadUserModelFromPlayerPrefs(model);
             _dataModel = model;

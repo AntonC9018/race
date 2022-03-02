@@ -8,9 +8,9 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: a57477913897c46af95d590f580878bd, type: 3}
-  svgType: 0
+  svgType: 1
   texturedSpriteMeshType: 0
-  svgPixelsPerUnit: 100
+  svgPixelsPerUnit: 64
   gradientResolution: 64
   alignment: 0
   customPivot: {x: 0, y: 0}
@@ -21,34 +21,34 @@ ScriptedImporter:
   predefinedResolutionIndex: 1
   targetResolution: 1080
   resolutionMultiplier: 1
-  stepDistance: 10
+  stepDistance: 100
   samplingStepDistance: 100
   maxCordDeviationEnabled: 0
   maxCordDeviation: 1
-  maxTangentAngleEnabled: 0
+  maxTangentAngleEnabled: 1
   maxTangentAngle: 5
   keepTextureAspectRatio: 1
-  textureSize: 256
+  textureSize: 64
   textureWidth: 256
   textureHeight: 256
   wrapMode: 0
   filterMode: 1
   sampleCount: 4
   preserveSVGImageAspect: 0
-  useSVGPixelsPerUnit: 0
+  useSVGPixelsPerUnit: 1
   spriteData:
     TessellationDetail: 0
     SpriteRect:
-      name: 
+      name: coinSprite
       originalName: 
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.4995959, y: 0.4995959}
       alignment: 0
       border: {x: 0, y: 0, z: 0, w: 0}
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 0
-        height: 0
+        width: 292
+        height: 292
       spriteID: 68e460953707f2548b45e5eee3477951
     PhysicsOutlines: []

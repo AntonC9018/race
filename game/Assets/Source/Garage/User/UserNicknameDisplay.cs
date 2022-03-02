@@ -9,7 +9,7 @@ namespace Race.Garage
     {
         private TMP_Text _text;
 
-        void Start()
+        void Awake()
         {
             _text = GetComponent<TMP_Text>();
         }
