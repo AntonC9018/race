@@ -13,11 +13,11 @@ namespace EngineCommon.ColorPicker
         // Inferred from the above.
         private RectTransform _saturationValueRectTransform;
 
-        [SerializeField] private RectTransform _saturationValueKnobTransform;
+        [SerializeField] private Image _hueImage;
         // Inferred from the above.
         private RectTransform _hueRectTransform;
 
-        [SerializeField] private Image _hueImage;
+        [SerializeField] private RectTransform _saturationValueKnobTransform;
         [SerializeField] private RectTransform _hueKnobTransform;
         [SerializeField] private Image _resultImage = null;
 

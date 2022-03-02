@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Xml.Serialization;
+using Kari.Plugins.DataObject;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -13,18 +14,27 @@ namespace Race.Garage
     /// Contains the name of the given stat, just as it should be diplayed in the UI.
     /// </summary>
     // TODO: generate code with this attribute, currently unimplemented.
-    public class DisplayNameAttribute : InspectorNameAttribute
+    [UnityEngine.Scripting.Preserve]
+    public sealed class DisplayNameAttribute : InspectorNameAttribute
     {
         public DisplayNameAttribute(string displayName) : base(displayName)
         {
         }
     }
 
+    // TODO:
+    // This probably won't compile with code stripping enabled, because
+    // I think it could strip these attributes too.
+    // No, you cannot subclass `RangeAttribute` to apply `UnityEngine.Scripting.Preserve`,
+    // because it's a sealed class, so we should definitely generate code for this.
+    // https://docs.unity3d.com/Manual/ManagedCodeStripping.html
+
     /// <summary>
     /// Stored in CarDataModel, <see cref="EngineCommon.CarProperties"/>  
     /// </summary>
     [System.Serializable]
-    public struct CarStats
+    [DataObject]
+    public partial struct CarStats
     {
         /// <summary>
         /// The amount of overload a car can take, essentially.
@@ -36,7 +46,7 @@ namespace Race.Garage
         /// <summary>
         /// </summary>
         [DisplayName("speed")]
-        [Range(0.1f, 2)]
+        [Range(10, 200)]
         public float accelerationModifier;
     }
 
@@ -44,7 +54,8 @@ namespace Race.Garage
     /// I thought it might be worth it to put this data into a separate struct.
     /// </summary>
     [System.Serializable]
-    public struct CarStatsInfo
+    [DataObject]
+    public partial struct CarStatsInfo
     {
         /// <summary>
         /// Base, unchangeable stats of the car.
@@ -150,7 +161,7 @@ namespace Race.Garage
             float sum = 0;
             // TODO: autogenerate this sum (without a switch).
             for (int i = 0; i < Count; i++)
-                sum += stats.GetStatRef(i) / _StatReflectionInfos[i].ValueRange;
+                sum += stats.GetStatRef(i); // / _StatReflectionInfos[i].ValueRange;
             return sum;
         }
     }
@@ -188,7 +199,7 @@ namespace Race.Garage
         // May want to store the cached sliders, depends on performance we get.
         private Slider[] _sliders;
 
-        void Start()
+        void Awake()
         {
             assert(_carProperties != null);
             assert(_statsTransform != null);
@@ -332,7 +343,7 @@ namespace Race.Garage
             float overflow = totalCurrentValue - info.totalStatValue;
             if (overflow > 0)
             {
-                newValue -= overflow * CarStatsHelper._StatReflectionInfos[sliderIndex].ValueRange;
+                newValue -= overflow; // * CarStatsHelper._StatReflectionInfos[sliderIndex].ValueRange;
             }
 
             assert(Mathf.Approximately(newValue, baseValue)

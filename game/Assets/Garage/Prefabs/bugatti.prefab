@@ -49,8 +49,8 @@ MonoBehaviour:
     meshRenderer: {fileID: 6328141948672061040}
     name: Bugatti
     baseStats:
-      health: 65.2
-      accelerationModifier: 1.5
+      health: 55
+      accelerationModifier: 127
 --- !u!1001 &6380623761171403995
 PrefabInstance:
   m_ObjectHideFlags: 0
