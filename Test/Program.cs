@@ -1,4 +1,4 @@
-﻿
+﻿// Thank you to @Zombie on Unity Discord for helping me with this!
 using System.Runtime.CompilerServices;
 
 public readonly unsafe ref struct StackRef<T>
