@@ -104,6 +104,10 @@ On the gameplay elements:
 
 More on the code / design:
 
+- The experimental package I'm using is `Unity.VectorGraphics` to be able to diplay SVG's,
+  but that's just me trying things.
+  Vector graphics are nice, because they scale to any resolution, but their support in Unity is quite limited and buggy at the moment.
+
 - I kind of messed up with the event variable names.
   By habit, I started naming them with the first letter being capital, but that can confuse you if there are handler methods in the same class.
   Since they both start with `On`, you cannot distinguish a handler vs an event just judging by the name, which I have overlooked.
