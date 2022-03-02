@@ -1,11 +1,12 @@
 {
     "name": "Garage",
-    "rootNamespace": "Garage",
+    "rootNamespace": "Race.Garage",
     "references": [
         "Common",
         "EngineCommon",
         "Unity.VectorGraphics",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "CommandTerminal"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

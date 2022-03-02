@@ -76,7 +76,7 @@ struct Kari
         string kariExecutablePath = buildPath(
             context.buildDirectory, "bin", "Kari.Generator", configuration, "net6.0", "Kari.Generator.exe");
 
-        string[] usedKariPlugins = ["DataObject", "Flags", "UnityHelpers"];
+        string[] usedKariPlugins = ["DataObject", "Flags", "UnityHelpers", "Terminal"];
         string[] customPlugins;
 
         string getPluginDllPath(string pluginName, string pluginDllName)

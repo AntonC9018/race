@@ -8,5 +8,8 @@
     "commonProjectName": "Common",
 
     // UnityHelpers
-    "engineCommon": "EngineCommon"
+    "engineCommon": "EngineCommon",
+
+    // CommandTerminal
+    "terminalProject": "CommandTerminal"
 }
