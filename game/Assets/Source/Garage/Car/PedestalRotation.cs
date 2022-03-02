@@ -70,7 +70,7 @@ namespace Race.Garage
             _isPointerOver = false;
         }
 
-        public void Update()
+        public void FixedUpdate()
         {
             if (!_isPointerOver)
                 return;
