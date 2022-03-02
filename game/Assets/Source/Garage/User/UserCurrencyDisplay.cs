@@ -5,7 +5,7 @@ namespace Race.Garage
 {
     // There must be a way to generate such classes automatically,
     // they are kind of stupid tbh.
-    public class UserCurrencyChangedDisplay : MonoBehaviour
+    public class UserCurrencyDisplay : MonoBehaviour
     {
         [SerializeField] private TMP_Text _coinText;
         [SerializeField] private TMP_Text _rubyText;

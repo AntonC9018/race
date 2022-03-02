@@ -52,7 +52,7 @@ namespace Race.Garage
             var car = CarProperties;
             if (car == null)
             {
-                Debug.LogError("Could not find UserProperties.");
+                Debug.LogError("Could not find CarProperties.");
                 return;
             }
             if (!car.IsAnyCarSelected)
@@ -67,5 +67,41 @@ namespace Race.Garage
 
             car.TriggerStatsChangedEvent();
         }
+
+
+        [Command("reset_currency", "Sets the currency of the user to 0 coins and 0 gems.")]
+        public static void ResetCurrency()
+        {
+            var user = UserProperties;
+            if (user == null)
+            {
+                Debug.LogError("Could not find UserProperties.");
+                return;
+            }
+            user.DataModel.currency = Currency.Zero;
+            user.TriggerCurrencyChanged();
+        }
+
+        [Command("reset_stats", "Sets the stats of the current car to their base stats, and sets the additional stat value to 0.")]
+        public static void ResetStats()
+        {
+            var car = CarProperties;
+            if (car == null)
+            {
+                Debug.LogError("Could not find CarProperties.");
+                return;
+            }
+            if (!car.IsAnyCarSelected)
+            {
+                Debug.LogError("No car selected currently.");
+                return;
+            }
+            ref var statsInfo = ref car.CurrentCarInfo.dataModel.statsInfo;
+            statsInfo.additionalStatValue = 0;
+            statsInfo.currentStats.Sync(statsInfo.baseStats);
+            statsInfo.ComputeNonSerializedProperties();
+            car.TriggerStatsChangedEvent();
+        }
+
     }
 }

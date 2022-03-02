@@ -11,8 +11,8 @@ namespace Race.Garage
         [SerializeField] private UserProperties _userProperties;
         [SerializeField] private CarProperties _carProperties;
         [SerializeField] private Button _button;
-        private const float _StatIncreasePerCoin = 1;
-        private const int _CoinUseAtATime = 1;
+        private const float _StatIncreasePerCoin = 10;
+        private const int _CoinUseAtATime = 50;
 
         [NiceFlags]
         public enum PossibilitiesFlags
@@ -22,10 +22,6 @@ namespace Race.Garage
             NotEnoughCoins = 1 << 2,
         }
         private PossibilitiesFlags _currentFlags = 0;
-
-        void Awake()
-        {
-        }
 
         void OnEnable()
         {

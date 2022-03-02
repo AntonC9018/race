@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Xml.Serialization;
 using Kari.Plugins.DataObject;
 using TMPro;
@@ -266,6 +267,7 @@ namespace Race.Garage
 
             // TODO: might be worth it to serialize these.
             _carProperties.OnCarSelected.AddListener(OnCarSelected);
+            _carProperties.OnStatsChanged.AddListener(OnStatsChanged);
         }
         
         void OnDisable()
@@ -299,6 +301,7 @@ namespace Race.Garage
             }
 
             _carProperties.OnCarSelected.RemoveListener(OnCarSelected);
+            _carProperties.OnStatsChanged.RemoveListener(OnStatsChanged);
         }
 
         public class ValueChangedCapture
@@ -404,13 +407,32 @@ namespace Race.Garage
                 // assert(sliders.Length == CarStatsHelper.Count);
 
                 for (int i = 0; i < CarStatsHelper.Count; i++)
-                {
-                    // Since the stats are set, this won't trigger the redistribution in our own callback.
                     _sliders[i].value = statsInfo.currentStats.GetStatRef(i);
-                }
             }
 
             _carProperties.TriggerStatsChangedEvent();
+        }
+
+        public void OnStatsChanged(CarStatsChangedEventInfo info)
+        {
+            ref var stats = ref info.carProperties.CurrentCarInfo.dataModel.statsInfo.currentStats;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            void SetSingle(ref CarStats stats, int index)
+            {
+                float statValue = stats.GetStatRef(index);
+                _sliders[index].value = statValue;
+            }
+
+            if (info.HaveAllStatsChanged)
+            {
+                for (int i = 0; i < CarStatsHelper.Count; i++)
+                    SetSingle(ref stats, i);
+            }
+            else
+            {
+                SetSingle(ref stats, info.statIndex);
+            }
         }
     }
 

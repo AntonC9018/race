@@ -154,6 +154,15 @@ More on the code / design:
   It will take some time.
 
 
+- I know about the `NotifyPropertyChanged` pattern, I'm just not fond of it.
+  I did mention this at some point in the code, but to me, triggering the callback manually after setting the value
+  is not a big deal, and I'd rather have the added flexibility that that brings than be constrained by it invisibly 
+  updating at a wrong moment.
+  I understand, that I could refactor the code more easily and reliably if I do that notify-immediately-on-set pattern,
+  and would be less likely to miss it when I meant it, so I might refactor that, but to me, triggering the callback
+  manually feels better.
+  
+
 ## Links
 
 * Unity optimization, including UI: https://www.youtube.com/watch?v=_wxitgdx-UI

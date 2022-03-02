@@ -155,6 +155,8 @@ namespace Race.Garage
         /// </summary>
         public readonly int statIndex;
 
+        public bool HaveAllStatsChanged => statIndex < 0;
+
         public CarStatsChangedEventInfo(CarProperties carProperties, int statIndex)
         {
             this.carProperties = carProperties;
