@@ -23,13 +23,8 @@ namespace Race.Garage
         }
         private PossibilitiesFlags _currentFlags = 0;
 
-        void OnEnable()
+        void Start()
         {
-            _carProperties.OnCarSelected.AddListener(OnCarSelected);
-            _carProperties.OnStatsChanged.AddListener(OnStatsChanged);
-            _userProperties.OnCurrencyChanged.AddListener(OnCurrencyChanged);
-            _button.onClick.AddListener(TradeCoinsForStatValue);
-
             // Reset the flags.
             _currentFlags.Set(PossibilitiesFlags.NoCarSelected, _carProperties.IsAnyCarSelected);
             if (_carProperties.IsAnyCarSelected)
@@ -37,6 +32,14 @@ namespace Race.Garage
             ResetCoinsFlag(_userProperties);
 
             ResetButtonInteractability();
+        }
+
+        void OnEnable()
+        {
+            _carProperties.OnCarSelected.AddListener(OnCarSelected);
+            _carProperties.OnStatsChanged.AddListener(OnStatsChanged);
+            _userProperties.OnCurrencyChanged.AddListener(OnCurrencyChanged);
+            _button.onClick.AddListener(TradeCoinsForStatValue);
         }
 
         void OnDisable()
