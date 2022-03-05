@@ -4,7 +4,10 @@ import jcli.core;
 
 import std.stdio;
 
+import commands.setup : SetupCommand, KariContext;
+
 @CommandDefault("The context common to all subcommands.")
+@(Subcommands!(SetupCommand, KariContext))
 struct Context
 {
     @(ArgConfig.optional)

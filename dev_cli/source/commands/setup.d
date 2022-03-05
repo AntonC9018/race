@@ -10,7 +10,6 @@ import std.stdio;
 import std.process : wait;
 
 
-
 @Command("setup", "Sets up all the stuff in the project")
 struct SetupCommand
 {
@@ -22,49 +21,57 @@ struct SetupCommand
 
     int onExecute()
     {
-        const kariStuffPath = context.projectDirectory.buildPath("kari_stuff");
-        const kariPath = kariStuffPath.buildPath("Kari");
-        // {
-        //     auto pid = spawnProcess2(["dotnet", "tool", "restore"], kariPath);
-        //     const status = wait(pid);
-        //     if (status != 0)
-        //     {
-        //         writeln("Kari tool restore failed.");
-        //         return status;
-        //     }
-        // }
+        KariContext kariContext;
+        kariContext.context = context;
+        kariContext.configuration = kariConfiguration;
+        kariContext.onIntermediateExecute();
+
         {
-            writeln("Building Kari.");
-            auto pid = spawnProcess2([
-                "dotnet", "build", 
-                "--configuration", kariConfiguration,
-                "/p:KariBuildPath=" ~ context.buildDirectory ~ `\`],
-                kariPath);
-            const status = wait(pid);
+            KariBuild build;
+            build.context = &kariContext;
+            auto status = build.onExecute();
             if (status != 0)
-            {
-                writeln("Kari build failed.");
                 return status;
-            }
         }
         {
-            auto kari = Kari(context, kariConfiguration, null);
-            int status = kari.onExecute();
-            return status;
+            KariRun run;
+            run.context = &kariContext;
+            auto status = run.onExecute();
+            if (status != 0)
+                return status;
         }
+        return 0;
     }
 }
 
 // TODO: Maybe should build too?
-@Command("kari", "Runs Kari on the unity project with all the neeed plugins.")
-struct Kari
+@Command("kari", "Deals with the code generator.")
+@(Subcommands!(KariRun, KariBuild))
+struct KariContext
 {
     @ParentCommand
     Context* context;
+    alias context this;
 
     @("The configuration in which Kari was built.")
     string configuration = "Debug";
 
+    string kariStuffPath;
+    string kariPath;
+
+    void onIntermediateExecute()
+    {
+        kariStuffPath = context.projectDirectory.buildPath("kari_stuff");
+        kariPath = kariStuffPath.buildPath("Kari");
+    }
+}
+
+@Command("run", "Runs Kari.")
+struct KariRun
+{
+    @ParentCommand
+    KariContext* context;
+    
     @("Extra arguments passed to Kari")
     @(ArgRaw)
     string[] rawArgs;
@@ -74,7 +81,7 @@ struct Kari
         // TODO: this path should be provided by the build system or something
         // msbuild cannot do that afaik, so study the alternatives asap.
         string kariExecutablePath = buildPath(
-            context.buildDirectory, "bin", "Kari.Generator", configuration, "net6.0", "Kari.Generator.exe");
+            context.buildDirectory, "bin", "Kari.Generator", context.configuration, "net6.0", "Kari.Generator.exe");
 
         string[] usedKariPlugins = ["DataObject", "Flags", "UnityHelpers", "Terminal"];
         string[] customPlugins;
@@ -83,7 +90,7 @@ struct Kari
         {
             return buildPath(
                 context.buildDirectory, 
-                "bin", pluginName, configuration, "net6.0",
+                "bin", pluginName, context.configuration, "net6.0",
                 pluginDllName);
         }
 
@@ -110,5 +117,29 @@ struct Kari
         }
 
         return 0;
+    }
+}
+
+@Command("build", "Builds Kari.")
+struct KariBuild
+{
+    @ParentCommand
+    KariContext* context;
+
+    int onExecute()
+    {
+        writeln("Building Kari.");
+        auto pid = spawnProcess2([
+            "dotnet", "build", 
+            "--configuration", context.configuration,
+            "/p:KariBuildPath=" ~ context.buildDirectory ~ `\`],
+            context.kariPath);
+        const status = wait(pid);
+        if (status != 0)
+        {
+            writeln("Kari build failed.");
+            return status;
+        }
+        return status;
     }
 }
