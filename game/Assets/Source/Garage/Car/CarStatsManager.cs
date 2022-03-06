@@ -37,6 +37,20 @@ namespace Race.Garage
     [DataObject]
     public partial struct CarStats
     {
+        // NOTE:
+        // The stats are floats simply because the sliders work with floats,
+        // and also I just made them floats initially.
+        //
+        // Initially, I thought I'd store the "normalized" values for the stats in the fields,
+        // but later decided that the stat ranges should really tell the weights of these stats.
+        // Like, how much stat value does maxing a stat cost.
+        // For example, health is 2 times less valuable than the speed,
+        // because the max value of speed is twice as high. 
+        //
+        // The lower bound is arbitrary at this point, I don't know what that can be useful for yet.
+        // I mean, the normalization (transforming these into physically meaningful numbers)
+        // will have to be done elsewhere anyway.
+
         /// <summary>
         /// The amount of overload a car can take, essentially.
         /// Driving in a wrong gear damages the car. 
@@ -83,6 +97,12 @@ namespace Race.Garage
         /// The current stat values.
         /// </summary>
         public CarStats currentStats;
+
+
+        // TODO: 
+        // This `ComputeNonSerializedProperties()` and the `totalStatValue` mechanism
+        // should be handled by a separate query system, which I did not implement here.
+        // See `concepts/Queries` at the root of the repo for a prototype and some ideas.
 
         /// <summary>
         /// We could initialize these properties (in my case fields) lazily, but

@@ -138,7 +138,7 @@ namespace Race.Garage
     // This way there will always be ZERO ALLOCATIONS for the event info objects, and it's not hard to do either.
     // I can do this in a day probably, with the help of my code generator.
     //
-    // See an example of the shenanigans in the `/Test` folder of the project.
+    // See an example of the shenanigans in the `/concepts/Stackref` folder of the project.
     // For Unity, that will also require this package (leaving it here for future reference):
     // https://www.nuget.org/packages/System.Runtime.CompilerServices.Unsafe/ 
 
@@ -242,6 +242,9 @@ namespace Race.Garage
                 var prefabInfo = _carPrefabInfos[i];
                 assert(prefabInfo.prefab != null);
 
+                // TODO:
+                // somehow store metadata outside the prefab??
+                // Perhaps it is possible to do with addressables??
                 var infoComponent = prefabInfo.prefab.GetComponent<DisplayCarInfoComponent>();
                 assert(infoComponent != null);
 

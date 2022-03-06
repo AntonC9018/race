@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   info:
     meshRenderer: {fileID: 7083629689922876876}
-    name: car0
+    name: Bad Car
     baseStats:
       health: 40.4
       accelerationModifier: 43

@@ -1570,6 +1570,18 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 702998614}
     - target: {fileID: 9146794995819127968, guid: 297237c35c5f3104ba042a430979da37, type: 3}
+      propertyPath: _carPrefabInfos.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 9146794995819127968, guid: 297237c35c5f3104ba042a430979da37, type: 3}
+      propertyPath: _carPrefabInfos.Array.data[2].prefab
+      value: 
+      objectReference: {fileID: 7705346226112253573, guid: bc8b65822d633d44ea8fbf7756dff864, type: 3}
+    - target: {fileID: 9146794995819127968, guid: 297237c35c5f3104ba042a430979da37, type: 3}
+      propertyPath: _carPrefabInfos.Array.data[3].prefab
+      value: 
+      objectReference: {fileID: 1798212398328428348, guid: 5ef949475592aa74cbb1e3a0ad4da4d7, type: 3}
+    - target: {fileID: 9146794995819127968, guid: 297237c35c5f3104ba042a430979da37, type: 3}
       propertyPath: OnStatsChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
       objectReference: {fileID: 702998611}

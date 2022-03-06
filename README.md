@@ -123,7 +123,7 @@ More on the code / design:
 - Events infos (or contexts) are readonly structs!
   Even though there's no real benefit, since Unity would still box/copy them with their UnityEvent implementation,
   it can be mitigated to get actual zero-allocation, zero-copy contexts.
-  See the `Test` folder for an example.
+  See the `concepts/Stackref` folder for an example.
   Basically, it involves a wrapper that would store the pointer to the event context struct on the stack.
   And yes, it does work with managed structs too.
   So, ultimately, the plan is to write a Kari plugin to generate easy-to-use wrappers for them to impelment and hide all of the pointer business.
