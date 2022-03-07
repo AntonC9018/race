@@ -1,0 +1,19 @@
+{
+    "name": "Gameplay",
+    "rootNamespace": "Race.Gameplay",
+    "references": [
+        "Common",
+        "EngineCommon",
+        "Unity.TextMeshPro",
+        "CommandTerminal"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
