@@ -10,4 +10,4 @@ You should be able to use blender project files (blend) too, I think.
 
 A useful plugin for VSCode for developing addons is https://github.com/JacquesLucke/blender_vscode, just be sure to start VSCode with admin privileges, and set the python path to the one installed by Blender.
 
-I'm going to waste too much time on this if I do it without guidance, so scrapped.
+> I'm going to waste too much time on this if I do it without guidance, so scrapped.
