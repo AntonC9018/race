@@ -39,7 +39,7 @@ namespace Race.Gameplay
     {
         public Transform container;
         public ColliderInfo<BoxCollider> body;
-        
+
         // The wheels are positioned according to WheelLocation.
         public ColliderInfo<WheelCollider>[] wheels;
 
@@ -198,20 +198,6 @@ namespace Race.Gameplay
             }
         }
 
-        private Vector3 GetCenterOfMassAdjustmentVector()
-        {
-            var bodyCollider = _carColliderInfo.body.collider;
-            assert(bodyCollider != null);
-
-            // I expect this to get more complicated eventually
-            // (e.g. make the back heavier, adjust according to wheels, etc.)
-            // For now, we only lower it a bit for stability.
-            float loweringRatio = 0.3f;
-            float altitudeLowering = -bodyCollider.bounds.size.y * loweringRatio / 2;
-
-            return new Vector3(0, altitudeLowering, 0);
-        }
-
         public void AdjustCenterOfMass()
         {
             var centerOfMassAdjustmentVector = GetCenterOfMassAdjustmentVector();
@@ -222,6 +208,20 @@ namespace Race.Gameplay
             assert(rigidbody.centerOfMass == Vector3.zero, "What? already adjusted?");
             
             rigidbody.centerOfMass += centerOfMassAdjustmentVector;
+
+            Vector3 GetCenterOfMassAdjustmentVector()
+            {
+                var bodyCollider = _carColliderInfo.body.collider;
+                assert(bodyCollider != null);
+
+                // I expect this to get more complicated eventually
+                // (e.g. make the back heavier, adjust according to wheels, etc.)
+                // For now, we only lower it a bit for stability.
+                float loweringRatio = 0.3f;
+                float altitudeLowering = -bodyCollider.bounds.size.y * loweringRatio / 2;
+
+                return new Vector3(0, altitudeLowering, 0);
+            }
         }
     }
 }
