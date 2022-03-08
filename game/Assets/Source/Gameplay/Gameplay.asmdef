@@ -5,6 +5,7 @@
         "Common",
         "EngineCommon",
         "Unity.TextMeshPro",
+        "Unity.InputSystem",
         "CommandTerminal"
     ],
     "includePlatforms": [],

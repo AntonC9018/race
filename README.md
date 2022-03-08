@@ -165,6 +165,11 @@ More on the code / design:
   manually feels better.
 
 
+## Gameplay
+
+- I'm enabling both input systems, because the command terminal package uses the old input system.
+
+
 ## Links
 
 * Unity optimization, including UI: https://www.youtube.com/watch?v=_wxitgdx-UI
@@ -184,3 +189,5 @@ More on the code / design:
 * https://github.com/Unity-Technologies/vector-graphics-samples
 
 * Applying the scale and rotation of liked objects in Blender: https://blender.stackexchange.com/a/64080
+
+* The new input system docs: https://docs.unity3d.com/Packages/com.unity.inputsystem@1.0/manual/Installation.html

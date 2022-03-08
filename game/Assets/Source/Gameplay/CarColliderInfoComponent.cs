@@ -28,22 +28,23 @@ namespace Race.Gameplay
     }
 
     [System.Serializable]
-    public struct ColliderInfo<TCollider>
+    public struct CarPartInfo<TCollider>
     {
-        public Transform transform;
+        public Transform visualTransform;
+        public Transform physicalTransform;
         public TCollider collider;
     }
 
     [System.Serializable]
-    public class CarColliderInfo
+    public class CarPartsInfo
     {
         public Transform container;
-        public ColliderInfo<BoxCollider> body;
+        public CarPartInfo<BoxCollider> body;
 
         // The wheels are positioned according to WheelLocation.
-        public ColliderInfo<WheelCollider>[] wheels;
+        public CarPartInfo<WheelCollider>[] wheels;
 
-        public ref ColliderInfo<WheelCollider> GetWheel(WheelLocation location)
+        public ref CarPartInfo<WheelCollider> GetWheel(WheelLocation location)
         {
             return ref wheels[(int) location];
         }
@@ -57,16 +58,16 @@ namespace Race.Gameplay
     {
         // hack
         [ContextMenuItem("Create default colliders", nameof(CreateDefaultColliders))]
-        [SerializeField] internal CarColliderInfo _carColliderInfo;
+        [SerializeField] internal CarPartsInfo _carColliderInfo;
         [SerializeField] internal GameObject _wheelColliderPrefab;
 
-        public CarColliderInfo CarColliderInfo => _carColliderInfo;
+        public CarPartsInfo CarColliderInfo => _carColliderInfo;
 
         private void CreateDefaultColliders()
         {
             // Parents
             Transform parent;
-            Transform carTransform;
+            Transform carModelTransform;
             {
                 var transform = this.transform;
                 parent = new GameObject("colliders").transform;
@@ -74,31 +75,31 @@ namespace Race.Gameplay
                 _carColliderInfo.container = parent;
 
                 assert(transform.childCount >= 1, "We expect the parent object to contain the car model.");
-                carTransform = transform.GetChild(0);
+                carModelTransform = transform.GetChild(0);
             }
 
             // Wheels
             {
-                var wheels = carTransform.Find("wheels");
+                var wheels = carModelTransform.Find("wheels");
                 assert(wheels != null, "Must have a `wheels` child with wheels.");
 
-                var outColliderInfos = new ColliderInfo<WheelCollider>[4];
+                var outColliderInfos = new CarPartInfo<WheelCollider>[4];
                 CreateWheelColliderGameObjectsFromWheelMeshes(parent, wheels, _wheelColliderPrefab, outColliderInfos);
                 _carColliderInfo.wheels = outColliderInfos;
 
                 // 5. Make the wheel's collider into a prefab, because it has quite a lot of properties.
                 static void CreateWheelColliderGameObjectsFromWheelMeshes(
                     Transform parent,
-                    Transform wheelMeshesContainer,
+                    Transform visualWheelsContainer,
                     GameObject wheelColliderPrefab,
-                    ColliderInfo<WheelCollider>[] outColliderInfos)
+                    CarPartInfo<WheelCollider>[] outColliderInfos)
                 {
                     var wheelNames = WheelHelper.WheelNames;
                     
                     // Validation
                     {
                         assert(outColliderInfos.Length == wheelNames.Length);
-                        assert(wheelMeshesContainer.childCount == outColliderInfos.Length);
+                        assert(visualWheelsContainer.childCount == outColliderInfos.Length);
                         assert(wheelColliderPrefab.transform.childCount == 0,
                             "We expect the wheels to have no children.");
                         {
@@ -115,7 +116,7 @@ namespace Race.Gameplay
                     float radius;
                     Vector3 center;
                     {
-                        var firstWheel = wheelMeshesContainer.GetChild(0);
+                        var firstWheel = visualWheelsContainer.GetChild(0);
                         var meshFilter = firstWheel.GetComponent<MeshFilter>();
                         assert(meshFilter != null, "No mesh filter on the model's wheel.");
 
@@ -142,7 +143,7 @@ namespace Race.Gameplay
                         wheelColliderGameObject.name = wheelName;
 
                         var wheelColliderTransform = wheelColliderGameObject.transform;
-                        var meshWheelTransform = wheelMeshesContainer.Find(wheelName);
+                        var meshWheelTransform = visualWheelsContainer.Find(wheelName);
 
                         {
                             // TODO: will this work if the rotation is not identity?
@@ -160,9 +161,10 @@ namespace Race.Gameplay
                             wheelCollider.enabled = true;
                         }
 
-                        outColliderInfos[i] = new ColliderInfo<WheelCollider>
+                        outColliderInfos[i] = new CarPartInfo<WheelCollider>
                         {
-                            transform = wheelColliderTransform,
+                            visualTransform = meshWheelTransform,
+                            physicalTransform = wheelColliderTransform,
                             collider = wheelCollider,
                         };
                     }
@@ -171,7 +173,7 @@ namespace Race.Gameplay
 
             // Body BoxCollider
             {
-                var bodyMeshTransform = carTransform.Find("body");
+                var bodyMeshTransform = carModelTransform.Find("body");
                 assert(bodyMeshTransform != null, "Must have a `body` child.");
 
                 var body = new GameObject("body");
@@ -190,9 +192,10 @@ namespace Race.Gameplay
                     collider.size = meshBounds.size;
                 }
 
-                _carColliderInfo.body = new ColliderInfo<BoxCollider>()
+                _carColliderInfo.body = new CarPartInfo<BoxCollider>()
                 {
-                    transform = bodyTransform,
+                    visualTransform = bodyMeshTransform,
+                    physicalTransform = bodyTransform,
                     collider = collider,
                 };
             }
