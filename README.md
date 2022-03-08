@@ -183,3 +183,4 @@ More on the code / design:
 
 * https://github.com/Unity-Technologies/vector-graphics-samples
 
+* Applying the scale and rotation of liked objects in Blender: https://blender.stackexchange.com/a/64080
