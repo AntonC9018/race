@@ -56,7 +56,7 @@ namespace Race.Gameplay
 
     public class CarColliderInfoComponent : MonoBehaviour
     {
-        // hack
+        // TODO: should really be a button, but Unity can't do that with just a UDA.
         [ContextMenuItem("Create default colliders", nameof(CreateDefaultColliders))]
         [SerializeField] internal CarPartsInfo _carColliderInfo;
         [SerializeField] internal GameObject _wheelColliderPrefab;
@@ -208,8 +208,9 @@ namespace Race.Gameplay
             var rigidbody = GetComponent<Rigidbody>();
             assert(rigidbody != null);
             // As far as I understand, centerOfMass is a runtime thing only (not serialized).
-            assert(rigidbody.centerOfMass == Vector3.zero, "What? already adjusted?");
+            // assert(rigidbody.centerOfMass == Vector3.zero, "What? already adjusted?");
             
+            rigidbody.ResetCenterOfMass();
             rigidbody.centerOfMass += centerOfMassAdjustmentVector;
 
             Vector3 GetCenterOfMassAdjustmentVector()

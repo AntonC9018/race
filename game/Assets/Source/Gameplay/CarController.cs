@@ -75,7 +75,10 @@ namespace Race.Gameplay
 
         void Awake()
         {
-            _carColliderInfo = GetComponent<CarColliderInfoComponent>().CarColliderInfo;
+            var colliderInfo = GetComponent<CarColliderInfoComponent>();
+            colliderInfo.AdjustCenterOfMass();
+
+            _carColliderInfo = colliderInfo.CarColliderInfo;
 
             // TODO: get this from the outside.
             _carControls = new CarControls();
@@ -90,6 +93,22 @@ namespace Race.Gameplay
                 currentTorqueInputFactor = 0,
                 isClutch = false,
             };
+        }
+
+        void OnGUI()
+        {
+            GUILayout.BeginVertical();
+            GUI.color = Color.black;
+            GUILayout.Label($"currentTorqueInputFactor: {_carDrivingState.currentTorqueInputFactor}");
+            GUILayout.Label($"currentSteeringInputFactor: {_carDrivingState.currentSteeringInputFactor}");
+            GUILayout.Label($"currentGearIndex: {_carDrivingState.currentGearIndex}");
+            GUILayout.Label($"currentRMP: {_carDrivingState.currentRMP}");
+
+            var rigidbody = GetComponent<Rigidbody>();
+            var speed = rigidbody.velocity.magnitude;
+            GUILayout.Label($"speed: {speed} m/s, {speed / 1000 * 3600} km/h");
+
+            GUILayout.EndVertical();
         }
 
         void FixedUpdate()
@@ -155,13 +174,9 @@ namespace Race.Gameplay
                     float a = currentRPM / _carEngineSpec.optimalRPM;
                     float b = (_carEngineSpec.maxRPM - currentRPM) / (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
                     float c = Mathf.Clamp01(a * b);
-                    Debug.Log("a: " + a);
-                    Debug.Log("b: " + b);
-                    Debug.Log("currentRPM: " + currentRPM);
-                    Debug.Log("Lagrange: " + c);
 
                     const float maxEfficiency = 1.0f;
-                    currentEngineEfficiency = Mathf.Lerp(_carEngineSpec.minEfficiency, maxEfficiency, a * b);
+                    currentEngineEfficiency = Mathf.Lerp(_carEngineSpec.minEfficiency, maxEfficiency, c);
                     Debug.Log("Efficiency: " + currentEngineEfficiency);
                 }
 
