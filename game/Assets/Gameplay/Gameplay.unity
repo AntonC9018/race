@@ -1032,8 +1032,9 @@ MonoBehaviour:
     maxRPM: 7000
     maxTorque: 400
     optimalRPM: 3000
+    minEfficiency: 0.3
     gears:
-    - gearRatio: 40
+    - gearRatio: 80
     - gearRatio: 2.07
     - gearRatio: 1.43
     - gearRatio: 1

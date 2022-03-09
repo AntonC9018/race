@@ -32,6 +32,8 @@ namespace Race.Gameplay
         // At this RPM, it produces the maximum torque.
         public float optimalRPM;
 
+        public float minEfficiency;
+
         public GearInfo[] gears;
     }
 
@@ -44,7 +46,7 @@ namespace Race.Gameplay
         public float currentSteeringInputFactor;
 
         // The gear from which to take the gear ratio for torque calcucations.
-        public int currentGear;
+        public int currentGearIndex;
 
         // Clutch allows switching gears.
         // The engine is detatched from wheels (does not produce torque) while the clutch is active.
@@ -55,15 +57,13 @@ namespace Race.Gameplay
     [RequireComponent(typeof(CarColliderInfoComponent))]
     public class CarController : MonoBehaviour
     {
-        private CarPartsInfo _carColliderInfo;
-        private CarControls _carControls;
-
         // For now, just serialize, but should get this from the car stats.
         [SerializeField] private CarControlLimits _carControlLimits;
         [SerializeField] private CarEngineSpec _carEngineSpec;
-        private CarDrivingState _carDrivingState;
         
-
+        private CarPartsInfo _carColliderInfo;
+        private CarControls _carControls;
+        private CarDrivingState _carDrivingState;
 
         void Awake()
         {
@@ -78,7 +78,7 @@ namespace Race.Gameplay
 
             _carDrivingState = new CarDrivingState
             {
-                currentGear = 0,
+                currentGearIndex = 0,
                 currentTorqueInputFactor = 0,
                 isClutch = false,
             };
@@ -101,17 +101,17 @@ namespace Race.Gameplay
                 return currentFactor + actualChange;
             }
 
-
             var player = _carControls.Player;
             {
+                float input = player.ForwardBackward.ReadValue<float>();
                 float currentTorqueFactor = GetNewInputFactor(
                     _carDrivingState.currentTorqueInputFactor,
                     // TODO: this actually does not behave correctly?
                     // Lowering the input should make it stop even faster? idk.
-                    input: player.ForwardBackward.ReadValue<float>(),
+                    input,
                     _carControlLimits.maxMotorTorqueInputFactorChangePerUpdate);
 
-                float currentGearRatio = _carEngineSpec.gears[_carDrivingState.currentGear].gearRatio;
+                float currentGearRatio = _carEngineSpec.gears[_carDrivingState.currentGearIndex].gearRatio;
 
                 float wheelRPM;
                 {
@@ -124,16 +124,30 @@ namespace Race.Gameplay
                     foreach (var refWheelLocation in referenceWheelLocations)
                     {
                         float a = _carColliderInfo.GetWheel(refWheelLocation).collider.rpm;
-                        Debug.Log($"Wheel at {refWheelLocation}: {a}");
                         wheelRPMSum += a;
                     }
                     wheelRPM = wheelRPMSum / referenceWheelLocations.Length;
                 }
                 float currentRPM = wheelRPM / 2 * currentGearRatio;
-                float deviationFromOptimalRPM = Mathf.Abs(currentRPM - _carEngineSpec.optimalRPM) / _carEngineSpec.maxRPM;
-                float scale = Mathf.Clamp(1 - deviationFromOptimalRPM, 0.2f, 1.0f);
-                float maximumTorqueAtCurrentRPM = _carEngineSpec.maxTorque * scale;
-                float torqueApplied = maximumTorqueAtCurrentRPM * currentTorqueFactor;
+
+                // lagrange polinomial
+                float currentEngineEfficiency;
+                {
+                    // float a = currentRPM * (_carEngineSpec.maxRPM - currentRPM);
+                    // float b = _carEngineSpec.optimalRPM * (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
+                    
+                    // We lose much precision by just dividing, so we should divide twice at least (I think).
+                    float currentClamped = Mathf.Clamp(currentRPM, 0, _carEngineSpec.maxRPM);
+                    float a = currentRPM / _carEngineSpec.optimalRPM;
+                    float b = (_carEngineSpec.maxRPM - currentRPM) / (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
+                    float c = a * b;
+
+                    const float maxEfficiency = 1.0f;
+                    currentEngineEfficiency = Mathf.Lerp(_carEngineSpec.minEfficiency, maxEfficiency, a * b);
+                    Debug.Log("Efficiency: " + currentEngineEfficiency);
+                }
+
+                float torqueApplied = _carEngineSpec.maxTorque * currentEngineEfficiency * currentTorqueFactor;
 
                 _carDrivingState.currentTorqueInputFactor = currentTorqueFactor;
 
@@ -148,7 +162,7 @@ namespace Race.Gameplay
                     _carControlLimits.maxSteeringAngleInputFactorChangePerUpdate);
                 float actualSteeringAngle = _carControlLimits.maxSteeringAngle * currentSteeringFactor;
 
-                _carDrivingState.currentTorqueInputFactor = currentSteeringFactor;
+                _carDrivingState.currentSteeringInputFactor = currentSteeringFactor;
 
                 _carColliderInfo.GetWheel(WheelLocation.FrontLeft).collider.steerAngle = actualSteeringAngle;
                 _carColliderInfo.GetWheel(WheelLocation.FrontRight).collider.steerAngle = actualSteeringAngle;
