@@ -30,9 +30,18 @@ namespace Race.Gameplay
             ""id"": ""8cbd7445-8242-4799-ab4d-0d16d39c85f8"",
             ""actions"": [
                 {
-                    ""name"": ""ForwardBackward"",
+                    ""name"": ""Forward"",
                     ""type"": ""Value"",
                     ""id"": ""272bada4-edd7-4f0b-b1de-28215c12ab52"",
+                    ""expectedControlType"": ""Analog"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Backward"",
+                    ""type"": ""Value"",
+                    ""id"": ""015b5c7f-bcbc-44cf-9689-d2face31f163"",
                     ""expectedControlType"": ""Analog"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -143,37 +152,26 @@ namespace Race.Gameplay
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""1D Axis"",
-                    ""id"": ""60284760-1892-4dc2-a52e-07c882926dce"",
-                    ""path"": ""1DAxis"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ForwardBackward"",
-                    ""isComposite"": true,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""negative"",
-                    ""id"": ""1666a2b4-f936-43f3-b578-80ee461fd795"",
-                    ""path"": ""<Keyboard>/s"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard&Mouse"",
-                    ""action"": ""ForwardBackward"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""positive"",
-                    ""id"": ""b8b719e0-33bf-476e-8715-7748a7568b8a"",
+                    ""name"": """",
+                    ""id"": ""617069df-7216-4ffa-b74c-d565c362b29f"",
                     ""path"": ""<Keyboard>/w"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse"",
-                    ""action"": ""ForwardBackward"",
+                    ""action"": ""Forward"",
                     ""isComposite"": false,
-                    ""isPartOfComposite"": true
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8d985284-d8ac-46f5-bdb2-c3c048ac6b61"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Backward"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -243,7 +241,8 @@ namespace Race.Gameplay
 }");
             // Player
             m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
-            m_Player_ForwardBackward = m_Player.FindAction("ForwardBackward", throwIfNotFound: true);
+            m_Player_Forward = m_Player.FindAction("Forward", throwIfNotFound: true);
+            m_Player_Backward = m_Player.FindAction("Backward", throwIfNotFound: true);
             m_Player_Turn = m_Player.FindAction("Turn", throwIfNotFound: true);
             m_Player_Clutch = m_Player.FindAction("Clutch", throwIfNotFound: true);
             m_Player_GearUp = m_Player.FindAction("GearUp", throwIfNotFound: true);
@@ -307,7 +306,8 @@ namespace Race.Gameplay
         // Player
         private readonly InputActionMap m_Player;
         private IPlayerActions m_PlayerActionsCallbackInterface;
-        private readonly InputAction m_Player_ForwardBackward;
+        private readonly InputAction m_Player_Forward;
+        private readonly InputAction m_Player_Backward;
         private readonly InputAction m_Player_Turn;
         private readonly InputAction m_Player_Clutch;
         private readonly InputAction m_Player_GearUp;
@@ -316,7 +316,8 @@ namespace Race.Gameplay
         {
             private @CarControls m_Wrapper;
             public PlayerActions(@CarControls wrapper) { m_Wrapper = wrapper; }
-            public InputAction @ForwardBackward => m_Wrapper.m_Player_ForwardBackward;
+            public InputAction @Forward => m_Wrapper.m_Player_Forward;
+            public InputAction @Backward => m_Wrapper.m_Player_Backward;
             public InputAction @Turn => m_Wrapper.m_Player_Turn;
             public InputAction @Clutch => m_Wrapper.m_Player_Clutch;
             public InputAction @GearUp => m_Wrapper.m_Player_GearUp;
@@ -330,9 +331,12 @@ namespace Race.Gameplay
             {
                 if (m_Wrapper.m_PlayerActionsCallbackInterface != null)
                 {
-                    @ForwardBackward.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnForwardBackward;
-                    @ForwardBackward.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnForwardBackward;
-                    @ForwardBackward.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnForwardBackward;
+                    @Forward.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnForward;
+                    @Forward.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnForward;
+                    @Forward.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnForward;
+                    @Backward.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnBackward;
+                    @Backward.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnBackward;
+                    @Backward.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnBackward;
                     @Turn.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnTurn;
                     @Turn.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnTurn;
                     @Turn.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnTurn;
@@ -349,9 +353,12 @@ namespace Race.Gameplay
                 m_Wrapper.m_PlayerActionsCallbackInterface = instance;
                 if (instance != null)
                 {
-                    @ForwardBackward.started += instance.OnForwardBackward;
-                    @ForwardBackward.performed += instance.OnForwardBackward;
-                    @ForwardBackward.canceled += instance.OnForwardBackward;
+                    @Forward.started += instance.OnForward;
+                    @Forward.performed += instance.OnForward;
+                    @Forward.canceled += instance.OnForward;
+                    @Backward.started += instance.OnBackward;
+                    @Backward.performed += instance.OnBackward;
+                    @Backward.canceled += instance.OnBackward;
                     @Turn.started += instance.OnTurn;
                     @Turn.performed += instance.OnTurn;
                     @Turn.canceled += instance.OnTurn;
@@ -415,7 +422,8 @@ namespace Race.Gameplay
         }
         public interface IPlayerActions
         {
-            void OnForwardBackward(InputAction.CallbackContext context);
+            void OnForward(InputAction.CallbackContext context);
+            void OnBackward(InputAction.CallbackContext context);
             void OnTurn(InputAction.CallbackContext context);
             void OnClutch(InputAction.CallbackContext context);
             void OnGearUp(InputAction.CallbackContext context);

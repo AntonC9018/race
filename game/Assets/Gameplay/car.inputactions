@@ -6,9 +6,18 @@
             "id": "8cbd7445-8242-4799-ab4d-0d16d39c85f8",
             "actions": [
                 {
-                    "name": "ForwardBackward",
+                    "name": "Forward",
                     "type": "Value",
                     "id": "272bada4-edd7-4f0b-b1de-28215c12ab52",
+                    "expectedControlType": "Analog",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Backward",
+                    "type": "Value",
+                    "id": "015b5c7f-bcbc-44cf-9689-d2face31f163",
                     "expectedControlType": "Analog",
                     "processors": "",
                     "interactions": "",
@@ -119,37 +128,26 @@
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "1D Axis",
-                    "id": "60284760-1892-4dc2-a52e-07c882926dce",
-                    "path": "1DAxis",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "ForwardBackward",
-                    "isComposite": true,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "negative",
-                    "id": "1666a2b4-f936-43f3-b578-80ee461fd795",
-                    "path": "<Keyboard>/s",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "ForwardBackward",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "positive",
-                    "id": "b8b719e0-33bf-476e-8715-7748a7568b8a",
+                    "name": "",
+                    "id": "617069df-7216-4ffa-b74c-d565c362b29f",
                     "path": "<Keyboard>/w",
                     "interactions": "",
                     "processors": "",
                     "groups": "Keyboard&Mouse",
-                    "action": "ForwardBackward",
+                    "action": "Forward",
                     "isComposite": false,
-                    "isPartOfComposite": true
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8d985284-d8ac-46f5-bdb2-c3c048ac6b61",
+                    "path": "<Keyboard>/s",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Backward",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }
