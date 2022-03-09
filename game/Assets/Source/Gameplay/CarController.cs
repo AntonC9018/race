@@ -13,6 +13,11 @@ namespace Race.Gameplay
         // This one here is used to simulate gradual input specifically.
         // We might need another such engine-specific factor.
         public float maxMotorTorqueInputFactorChangePerUpdate;
+
+        // The RPM's of wheels jump drastically.
+        // This factor has been introduced to smooth out these jumps.
+        // Represents the max scale that the RPM can jump in a single fixed update.
+        public float maxRPMJumpPerUpdate;
     }
 
     [System.Serializable]
@@ -47,6 +52,9 @@ namespace Race.Gameplay
 
         // The gear from which to take the gear ratio for torque calcucations.
         public int currentGearIndex;
+
+        // The RPM recorded on the last frame.
+        public float currentRMP;
 
         // Clutch allows switching gears.
         // The engine is detatched from wheels (does not produce torque) while the clutch is active.
@@ -128,19 +136,29 @@ namespace Race.Gameplay
                     }
                     wheelRPM = wheelRPMSum / referenceWheelLocations.Length;
                 }
-                float currentRPM = wheelRPM / 2 * currentGearRatio;
+                float currentRPM;
+                {
+                    float currentDesiredRPM = wheelRPM / 2 * currentGearRatio;
+                    float change = currentDesiredRPM - _carDrivingState.currentRMP;
+                    float a = ClampMagnitude(change, 0, _carControlLimits.maxRPMJumpPerUpdate);
+                    currentRPM = _carDrivingState.currentRMP + a;
+                }
 
                 // lagrange polinomial
                 float currentEngineEfficiency;
                 {
                     // float a = currentRPM * (_carEngineSpec.maxRPM - currentRPM);
                     // float b = _carEngineSpec.optimalRPM * (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
-                    
+
                     // We lose much precision by just dividing, so we should divide twice at least (I think).
-                    float currentClamped = Mathf.Clamp(currentRPM, 0, _carEngineSpec.maxRPM);
+                    // float currentClamped = Mathf.Clamp(currentRPM, 0, _carEngineSpec.maxRPM);
                     float a = currentRPM / _carEngineSpec.optimalRPM;
                     float b = (_carEngineSpec.maxRPM - currentRPM) / (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
-                    float c = a * b;
+                    float c = Mathf.Clamp01(a * b);
+                    Debug.Log("a: " + a);
+                    Debug.Log("b: " + b);
+                    Debug.Log("currentRPM: " + currentRPM);
+                    Debug.Log("Lagrange: " + c);
 
                     const float maxEfficiency = 1.0f;
                     currentEngineEfficiency = Mathf.Lerp(_carEngineSpec.minEfficiency, maxEfficiency, a * b);
@@ -150,6 +168,7 @@ namespace Race.Gameplay
                 float torqueApplied = _carEngineSpec.maxTorque * currentEngineEfficiency * currentTorqueFactor;
 
                 _carDrivingState.currentTorqueInputFactor = currentTorqueFactor;
+                _carDrivingState.currentRMP = currentRPM;
 
                 _carColliderInfo.GetWheel(WheelLocation.BackLeft).collider.motorTorque = torqueApplied;
                 _carColliderInfo.GetWheel(WheelLocation.BackRight).collider.motorTorque = torqueApplied;
