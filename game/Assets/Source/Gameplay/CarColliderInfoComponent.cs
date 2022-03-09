@@ -5,17 +5,18 @@ namespace Race.Gameplay
 {
     public enum WheelLocation
     {
-        RightBit = 1,
-        FrontBit = 2,
-
         BackLeft = 0,
-        BackRight = RightBit,
-        FrontLeft = FrontBit,
-        FrontRight = FrontBit | RightBit,
+        BackRight = WheelHelper.RightBit,
+        FrontLeft = WheelHelper.FrontBit,
+        FrontRight = WheelHelper.FrontBit | WheelHelper.RightBit,
     }
     
     public static class WheelHelper
     {
+        // Hack: one can't hide enum members in the editor?? Why is there no attribute for this?
+        public const WheelLocation RightBit = (WheelLocation) 1;
+        public const WheelLocation FrontBit = (WheelLocation) 2;
+
         public static readonly string[] WheelNames;
         static WheelHelper()
         {
