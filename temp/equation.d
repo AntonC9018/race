@@ -6,12 +6,12 @@ import std.math;
 
 struct SymbolTable
 {
+    // must be sorted
     string[] names;
     float*[] addresses;
 
     Symbol find(string name) const
     {
-        import std.algorithm;
         auto sorted = assumeSorted(names[]);
         auto t = sorted.trisect(name);
         if (t[1].length == 0)
@@ -143,7 +143,7 @@ void print(TAppender)(ref TAppender appender, in SymbolTable symbolTable, const(
                     },
                     (const float constant)
                     {
-                        appender.formattedWrite!"%f"(constant);
+                        appender.formattedWrite!"%g"(constant);
                     }
                 );
             }
@@ -176,7 +176,7 @@ void print(TAppender)(ref TAppender appender, in SymbolTable symbolTable, const(
                     else
                     {
                         matchInner();
-                        appender.formattedWrite!" ^ %f"(constant); 
+                        appender.formattedWrite!" ^ %g"(constant); 
                     }
                 }
             );
@@ -993,6 +993,8 @@ struct TermSimplificationResult
     // Need to be multiplied.
     // Contain complicated expressions, like (a + b) ^ 2, a^b, 7^(a + b)
     ComplicatedTermSimplificationInfo[] complicated;
+
+    TermSimplificationResult[][] toDistribute;
 }
 
 TermSimplificationResult simplify(Term[] termProduct)
@@ -1030,18 +1032,32 @@ TermSimplificationResult simplify(Term[] termProduct)
                     {
                         assert(expressionSimplificationInfos.length != 0);
 
-                        TermSimplificationResult[] complicated;
-                        foreach (info; expressionSimplificationInfos)
+                        auto notZero = expressionSimplificationInfos.filter!(a => !isClose(a.constant, 0));
+                        if (notZero.empty)
+                            return;
+
+                        auto notZeroArray = notZero.array;
+                        auto collapsableCount = notZeroArray.count!(a => 
+                            isClose(a.constant, 1)
+                            || a.complicated.length == 0);
+                        
+                        if (collapsableCount == notZeroArray.length)
                         {
-                            if (isClose(constantPower, 1.0f))
-                                distribute(result, info);
-                            else if (!isClose(constantPower, 0))
-                                complicated ~= info;
+                            if (notZeroArray.length == 1)
+                            {
+                                assert(notZeroArray[0].toDistribute.length == 0);
+                                distribute(result, notZeroArray[0]);
+                            }
+                            else
+                            {
+                                result.toDistribute ~= notZeroArray;
+                            }
+                            return;
                         }
-                        if (complicated.length > 0)
+
                         {
                             result.complicated ~= ComplicatedTermSimplificationInfo(
-                                InnerSimplificationInfo(complicated), InnerSimplificationInfo(constantPower));    
+                                 InnerSimplificationInfo(constantPower), InnerSimplificationInfo(notZeroArray));    
                         }
                     }
                 );
@@ -1057,7 +1073,7 @@ TermSimplificationResult simplify(Term[] termProduct)
     return result;
 }
 
-void distribute(ref TermSimplificationResult a, TermSimplificationResult b)
+void distribute(ref TermSimplificationResult a, in TermSimplificationResult b)
 {
     auto powers = a.powersOfSymbols;
     if (powers.length < b.powersOfSymbols.length)
@@ -1082,6 +1098,55 @@ TermSimplificationResult[] simplifyInternal(Expression exp)
 
     TermSimplificationResult[] simplicationResults = exp.terms
         .map!(a => .simplify(a))
+        .filter!(a => !isClose(a.constant, 0))
+        .map!((mainInfo)
+        {
+            if (mainInfo.toDistribute.length == 0)
+                return [mainInfo];
+
+            TermSimplificationResult[] newInfos;
+
+            newInfos = mainInfo.toDistribute[0];
+            foreach (distributionInfo; newInfos)
+            {
+                assert(distributionInfo.toDistribute.length == 0);
+                distribute(distributionInfo, mainInfo);
+            }
+
+            // (a + b) * (c + d) = (ac + ad + bc + bd)
+            foreach (distributionInfos; mainInfo.toDistribute[1 .. $])
+            {
+                auto oldLength = newInfos.length;
+                auto newLength = oldLength * distributionInfos.length;
+                newInfos.length = newLength;
+                foreach (duplicationIndex; 1 .. distributionInfos.length)
+                {
+                    foreach (sumIndex; 0 .. oldLength)
+                    {
+                        ref TermSimplificationResult el() { return newInfos[duplicationIndex * oldLength + sumIndex]; }
+                        ref TermSimplificationResult source() { return newInfos[sumIndex]; }
+                        
+                        el.complicated = source.complicated.dup;
+                        el.powersOfSymbols = source.powersOfSymbols.dup;
+                        el.constant = source.constant;
+                    }
+                }
+
+                foreach (distributionInfoIndex, ref const distributionInfo; distributionInfos)
+                {
+                    foreach (newInfoDuplicateIndex; 0 .. oldLength)
+                    {
+                        distribute(newInfos[distributionInfoIndex * oldLength + newInfoDuplicateIndex], distributionInfo);
+                    }
+                }
+
+                // omg memory goes brrrr
+                newInfos = newInfos.filter!((ref a) => !isClose(a.constant, 0.0f, 0.000001f, 0.000001f)).array;
+            }
+
+            return newInfos;
+        })
+        .joiner
         .filter!(a => !isClose(a.constant, 0))
         .array;
 
@@ -1220,6 +1285,14 @@ void main()
         Expression[M][N] expressions = parseAll(p);
         gaussianSimplify(expressions);
 
+        foreach (ref es; expressions)
+        {
+            foreach (ref e; es)
+            {
+                e = simplify(e);
+            }
+        }
+
         auto app = appender!string;
         foreach (i; 0 .. N)
         { 
@@ -1236,7 +1309,7 @@ void main()
     void simplification()
     {
         // auto res = parseExpression("1 * 2 * 3 * 4 * a * a * b * a ^ 2 + 80 * a ^ 4 * b", symbolTable);
-        auto res = parseExpression("(1 + 2 + a)", symbolTable);
+        auto res = parseExpression("(1 + 2 + a^3) * (7 + b^3)", symbolTable);
         assert(res.type == ParseResultType.ok);
 
         auto simplified = simplify(res.value);
@@ -1244,5 +1317,7 @@ void main()
         print(app, symbolTable, simplified);
         writeln(app[]);
     }
-    simplification();
+
+    gauss();
+
 }
