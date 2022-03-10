@@ -225,6 +225,11 @@ ParseResult!T fail(T)(ParseResultType type, string errorAt, string symbolName = 
     return result;
 }
 
+bool isCloseToZero(float a)
+{
+    import std.math;
+    return isClose(a, 0.0f, 0.00001f, 0.00001f); 
+}
 
 struct ParseResult(T)
 {
@@ -1032,7 +1037,7 @@ TermSimplificationResult simplify(Term[] termProduct)
                     {
                         assert(expressionSimplificationInfos.length != 0);
 
-                        auto notZero = expressionSimplificationInfos.filter!(a => !isClose(a.constant, 0));
+                        auto notZero = expressionSimplificationInfos.filter!(a => !isCloseToZero(a.constant));
                         if (notZero.empty)
                             return;
 
@@ -1098,7 +1103,7 @@ TermSimplificationResult[] simplifyInternal(Expression exp)
 
     TermSimplificationResult[] simplicationResults = exp.terms
         .map!(a => .simplify(a))
-        .filter!(a => !isClose(a.constant, 0))
+        .filter!(a => !isCloseToZero(a.constant))
         .map!((mainInfo)
         {
             if (mainInfo.toDistribute.length == 0)
@@ -1141,13 +1146,13 @@ TermSimplificationResult[] simplifyInternal(Expression exp)
                 }
 
                 // omg memory goes brrrr
-                newInfos = newInfos.filter!((ref a) => !isClose(a.constant, 0.0f, 0.000001f, 0.000001f)).array;
+                newInfos = newInfos.filter!((ref a) => !isCloseToZero(a.constant)).array;
             }
 
             return newInfos;
         })
         .joiner
-        .filter!(a => !isClose(a.constant, 0))
+        .filter!(a => !isCloseToZero(a.constant))
         .array;
 
 
@@ -1173,7 +1178,7 @@ TermSimplificationResult[] simplifyInternal(Expression exp)
     return iota(0, simplicationResults.length)
         .filter!(i => !scrapped[i])
         .map!(i => simplicationResults[i])
-        .filter!(a => !isClose(a.constant, 0))
+        .filter!(a => !isCloseToZero(a.constant))
         .array;
 }
 
@@ -1183,7 +1188,7 @@ Term[] flatten(TermSimplificationResult a)
 
     foreach (symbolIndex, powerOfSymbol; a.powersOfSymbols)
     {
-        if (!isClose(powerOfSymbol, 0))
+        if (!isCloseToZero(powerOfSymbol))
             result ~= Term(Inner(powerOfSymbol), Inner(Symbol(symbolIndex)));
     }
 
