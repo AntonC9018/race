@@ -16,6 +16,12 @@ struct SymbolTable
             return Symbol(-1);
         return Symbol(t[0].length);
     }
+
+    ref float get(Symbol symbol)
+    {
+        assert(symbol.index >= 0);
+        return *addresses[symbol.index];
+    }
 }
 
 SymbolTable createSymbolTableFromVariables(variables...)()
@@ -69,13 +75,13 @@ struct Symbol
     int index;
 }
 
-struct Equation
+struct Expression
 {
     // sum of product of terms
     Term[][] terms;
 }
 
-alias Inner = SumType!(Equation, Symbol, float);
+alias Inner = SumType!(Expression, Symbol, float);
 
 struct Term
 {
@@ -86,9 +92,9 @@ struct Term
 import std.array;
 import std.format;
 
-void print(TAppender)(ref TAppender appender, in SymbolTable symbolTable, const(Equation) equation)
+void print(TAppender)(ref TAppender appender, in SymbolTable symbolTable, const(Expression) expression)
 {
-    foreach (termProductIndex, termProduct; equation.terms)
+    foreach (termProductIndex, termProduct; expression.terms)
     {
         if (termProductIndex > 0)
             appender ~= " + ";
@@ -103,10 +109,10 @@ void print(TAppender)(ref TAppender appender, in SymbolTable symbolTable, const(
             void matchInner()
             {
                 term.inner.match!(
-                    (const Equation equation0)
+                    (const Expression expression0)
                     {
                         appender ~= "(";
-                        print(appender, symbolTable, equation0),
+                        print(appender, symbolTable, expression0),
                         appender ~= ")";
                     },
                     (const Symbol symbol)
@@ -121,11 +127,11 @@ void print(TAppender)(ref TAppender appender, in SymbolTable symbolTable, const(
             }
 
             term.power.match!(
-                (const Equation equation0)
+                (const Expression expression0)
                 {
                     matchInner();
                     appender ~= " ^ (";
-                    print(appender, symbolTable, equation0);
+                    print(appender, symbolTable, expression0);
                     appender ~= ")";
                 },
                 (const Symbol symbol)
@@ -208,8 +214,14 @@ struct ParseResult(T)
     }
 }
 
-bool eatSigns(auto ref string input, out bool sign)
+bool eatSigns()(auto ref string input, out bool sign)
 {
+    if (input.empty)
+    {
+        sign = false;
+        return false;
+    }
+
     bool matchSign()
     {
         if (input.front == '-')
@@ -268,7 +280,7 @@ unittest
     }
 }
 
-ParseResult!Equation parseEquation()(auto ref string input, in SymbolTable symbolTable)
+ParseResult!Expression parseExpression()(auto ref string input, in SymbolTable symbolTable)
 {
     string copy = input;
 
@@ -277,15 +289,15 @@ ParseResult!Equation parseEquation()(auto ref string input, in SymbolTable symbo
         skipWhitespace(copy);
 
         if (copy.empty)
-            return ok(Equation(termProducts));
+            return ok(Expression(termProducts));
 
         // TODO: care
-        bool whetherNegate;
+        bool currentSignMinus;
         do
         {
             Term[] terms;
 
-            if (whetherNegate)
+            if (currentSignMinus)
                 terms = [ minusOneTerm ];
 
             bool invert = false;
@@ -295,11 +307,11 @@ ParseResult!Equation parseEquation()(auto ref string input, in SymbolTable symbo
                     break;
 
                 bool whetherNegateTerm;   
-                eatSigns(input, whetherNegateTerm);
+                eatSigns(copy, whetherNegateTerm);
 
                 auto termResult = parseTerm(copy, symbolTable);
                 if (termResult.type != ParseResultType.ok)
-                    return failCopy!Equation(termResult);
+                    return failCopy!Expression(termResult);
                 
                 Term term = termResult.value;
                 if (invert)
@@ -308,7 +320,7 @@ ParseResult!Equation parseEquation()(auto ref string input, in SymbolTable symbo
                 }
                 if (whetherNegateTerm)
                 {
-                    auto wrapper = Equation([[ minusOneTerm, term, ]]);
+                    auto wrapper = Expression([[ minusOneTerm, term, ]]);
                     term = Term(Inner(1.0f), Inner(wrapper));
                 }
                 terms ~= term;
@@ -348,12 +360,12 @@ ParseResult!Equation parseEquation()(auto ref string input, in SymbolTable symbo
 
             if (copy.front == '+')
             {
-                whetherNegate = false;
+                currentSignMinus = false;
                 copy.popFront();
             }
             else if (copy.front == '-')
             {
-                whetherNegate = true;
+                currentSignMinus = true;
                 copy.popFront();
             }
             else
@@ -364,13 +376,88 @@ ParseResult!Equation parseEquation()(auto ref string input, in SymbolTable symbo
             skipWhitespace(copy);
 
             if (copy.empty)
-                return fail!Equation(ParseResultType.missingTerm, copy);
+                return fail!Expression(ParseResultType.missingTerm, copy);
         }
         while (true);
     }
 
     input = copy; // @suppress(dscanner.suspicious.auto_ref_assignment)
-    return ok(Equation(termProducts));
+    return ok(Expression(termProducts));
+}
+unittest
+{
+    float[3] a;
+    auto symbolTable = createSymbolTableFromVariables!a;
+
+    {
+        string input = "123";
+        auto r = parseExpression(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(r.value.terms.length == 1);
+
+        auto terms = r.value.terms[0];
+        assert(terms.length == 1);
+
+        auto term = terms[0];
+        assert(term.inner == Inner(123.0f));
+        assert(term.power == Inner(1.0f));
+    }
+    {
+        string input = "123 ^ 6";
+        auto r = parseExpression(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(r.value.terms.length == 1);
+
+        auto terms = r.value.terms[0];
+        assert(terms.length == 1);
+
+        auto term = terms[0];
+        assert(term.inner == Inner(123.0f));
+        assert(term.power == Inner(6.0f));
+    }
+    // {
+    //     string input = "-a0 ^ 6";
+    //     auto r = parseExpression(input, symbolTable);
+    //     assert(r.type == ParseResultType.ok);
+    //     assert(r.value.terms.length == 1);
+
+    //     auto terms = r.value.terms[0];
+    //     assert(terms.length == 1);
+
+    //     auto expectedTerm = Term(Inner(6.0f), Inner(Symbol(0)));
+    //     assert(negate(expectedTerm) == terms[0].inner);
+    // }
+    {
+        string input = "1^(-6)";
+        auto r = parseExpression(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(r.value.terms.length == 1);
+
+        auto terms = r.value.terms[0];
+        assert(terms.length == 1);
+        
+        auto term = terms[0];
+        assert(term.inner == Inner(1.0f));
+
+        term.power.match!(
+            (Expression ex)
+            {
+                assert(ex.terms.length == 1);
+                auto powerTermsProduct = ex.terms[0];
+                assert(powerTermsProduct.length == 1);
+                auto powerTerm = powerTermsProduct[0];
+                assert(powerTerm.power == Inner(1.0f));
+
+                auto app = appender!string;
+                assert(powerTerm.inner == Inner(Expression([[minusOneTerm, Term(Inner(1.0f), Inner(6.0f))]])));
+            },
+            (_)
+            {
+                assert(0);
+            }
+        );
+
+    }
 }
 
 void skipWhitespace(ref string input)
@@ -406,11 +493,11 @@ Inner negate(Inner inner)
         {
             return Inner(-constant);
         },
-        (equationOrSymbol)
+        (expressionOrSymbol)
         {
             auto term = Term(Inner(1.0f), inner);
-            auto equation = Equation([[ minusOneTerm, term, ]]);
-            return Inner(equation);
+            auto expression = Expression([[ minusOneTerm, term, ]]);
+            return Inner(expression);
         }
     );
 }
@@ -418,33 +505,33 @@ unittest
 {
     {
         auto i = Inner(1.0f);
-        assert(negate(i) == 1.0f);
+        assert(negate(i) == Inner(-1.0f));
     }
     {
         auto i = Inner(-5.0f);
-        assert(negate(i) == 5.0f);
+        assert(negate(i) == Inner(5.0f));
     }
     {
         float a = 1.9f;
         auto symbolTable = createSymbolTableFromVariables!a;
         auto i = Inner(symbolTable.find(a.stringof));
         auto neg = negate(i);
-        eval(neg, symbolTable) == -a;
+        assert(eval(neg, symbolTable) == -a);
     }
-    {
-        float a = 2.8f;
-        auto symbolTable = createSymbolTableFromVariables!a;
-        auto eqResult = parseEquation("1 + 2 * a", symbolTable);
-        assert(eqResult.type == ParseResultType.ok);
-        auto negEquation = negate(eqResult.value);
-        assert(eval(eqResult.value, symbolTable) == -eval(negEquation.value, symbolTable));
-    }
+    // {
+    //     float a = 2.8f;
+    //     auto symbolTable = createSymbolTableFromVariables!a;
+    //     auto exResult = parseExpression("1 + 2 * a", symbolTable);
+    //     assert(exResult.type == ParseResultType.ok);
+    //     auto negExpression = negate(exResult.value);
+    //     assert(eval(exResult.value, symbolTable) == -eval(negExpression.value, symbolTable));
+    // }
 }
 
 enum minusOneTerm = Term(Inner(1.0f), Inner(-1.0f));
 
 
-ParseResult!Inner parseInner(ref string input, in SymbolTable symbolTable)
+ParseResult!Inner parseInner()(auto ref string input, in SymbolTable symbolTable)
 {
     string copy = input;
 
@@ -464,7 +551,6 @@ ParseResult!Inner parseInner(ref string input, in SymbolTable symbolTable)
         if (parseName(copy, name))
         {
             Symbol symbol = symbolTable.find(name);
-            writeln("Finding ", name);
             if (symbol.index == -1)
                 return fail!Inner(ParseResultType.noSuchSymbol, copy, name);
             else
@@ -475,19 +561,45 @@ ParseResult!Inner parseInner(ref string input, in SymbolTable symbolTable)
         if (copy.front == '(')
         {
             copy.popFront();
-            auto equationParseResult = parseEquation(copy, symbolTable);
-            if (equationParseResult.type != ParseResultType.ok)
-                return failCopy!Inner(equationParseResult);
+            auto expressionParseResult = parseExpression(copy, symbolTable);
+            if (expressionParseResult.type != ParseResultType.ok)
+                return failCopy!Inner(expressionParseResult);
             
             if (copy.empty || copy.front != ')')
                 return fail!Inner(ParseResultType.unmatchedParenthesis, copy);
             
             copy.popFront();
             
-            return ok(Inner(equationParseResult.value));
+            return ok(Inner(expressionParseResult.value));
         }
     }
     return fail!Inner(ParseResultType.notMatched, input);
+}
+unittest
+{
+    float[3] a;
+    auto symbolTable = createSymbolTableFromVariables!a;
+
+    {
+        string input = "1";
+        auto r = parseInner(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(r.value == Inner(1));
+        assert(input == "");
+    }
+    {
+        string input = "a0";
+        auto r = parseInner(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(r.value == Inner(Symbol(0)));
+        assert(input == "");
+    }
+    {
+        auto input = "-a0";
+        auto r = parseInner(input, symbolTable);
+        assert(r.type == ParseResultType.notMatched);
+        assert(input == "-a0");
+    }
 }
 
 
@@ -517,6 +629,36 @@ ParseResult!Term parseTerm(ref string input, in SymbolTable symbolTable)
 
     input = copy;
     return ok(Term(powerResult.value, innerResult.value));
+}
+unittest
+{
+    float[3] a;
+    auto symbolTable = createSymbolTableFromVariables!a;
+
+    {
+        string input = "a0";
+        auto r = parseTerm(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(input == "");
+        assert(r.value.power == Inner(1.0f));
+        assert(r.value.inner == Inner(Symbol(0)));
+    }
+    {
+        string input = "a1 ^ 1.2";
+        auto r = parseTerm(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(input == "");
+        assert(r.value.power == Inner(1.2f));
+        assert(r.value.inner == Inner(Symbol(1)));
+    }
+    {
+        string input = "a0 ^ -1.2";
+        auto r = parseTerm(input, symbolTable);
+        assert(r.type == ParseResultType.ok);
+        assert(input == "");
+        assert(r.value.power == Inner(-1.2f));
+        assert(r.value.inner == Inner(Symbol(0)));
+    }
 }
 
 bool parseName(ref string input, out string name)
@@ -565,7 +707,7 @@ bool parseName(ref string input, out string name)
     return true;
 }
 
-bool parse(ref string input, out float number)
+bool parse()(auto ref string input, out float number)
 {
     string copy = input;
     bool sign = false;
@@ -628,20 +770,39 @@ bool parse(ref string input, out float number)
         number = -number;
     return true;
 }
+unittest
+{
+    import std.math;
+    {
+        float number;
+        assert(parse("123", number));
+        assert(isClose(number, 123));
+    }
+    {
+        float number;
+        assert(parse("123.1", number));
+        assert(isClose(number, 123.1f));
+    }
+    {
+        float number;
+        assert(parse("123.123", number));
+        assert(isClose(number, 123.123f));
+    }
+}
 
 
 float eval(const Inner inner, in SymbolTable symbolTable)
 {
     return inner.match!(
-        (const Equation equation0) => eval(equation0, symbolTable),
+        (const Expression expression0) => eval(expression0, symbolTable),
         (const Symbol symbol) => *symbolTable.addresses[symbol.index],
         (const float constant) => constant);
 }
 
-float eval(const(Equation) equation, in SymbolTable symbolTable)
+float eval(const(Expression) expression, in SymbolTable symbolTable)
 {
     float result = 0;
-    foreach (termProduct; equation.terms)
+    foreach (termProduct; expression.terms)
     {
         float product = 1;
         foreach (term; termProduct)
@@ -677,11 +838,11 @@ void main()
 
     void stuff(string input)
     {
-        auto eq = parseEquation(input, symbolTable);
-        if (eq.type == ParseResultType.ok)
+        auto ex = parseExpression(input, symbolTable);
+        if (ex.type == ParseResultType.ok)
         {
             auto app = appender!string;
-            print(app, symbolTable, eq.value);
+            print(app, symbolTable, ex.value);
             writeln(app[]);
         }
     }
@@ -691,26 +852,26 @@ void main()
     stuff("a * b ^ 2 * 3 / 7 * c - b ^ 3");
 
     {
-        auto eq = parseEquation("a^2 + b^(2 * a) - c ^ (-2)", symbolTable);
+        auto ex = parseExpression("a^2 + b^(2 * a) - c ^ (-2)", symbolTable);
 
-        if (eq.type == ParseResultType.ok)
+        if (ex.type == ParseResultType.ok)
         {
             *a = 2;
             *b = 2;
             *c = 3;
             auto t = (*a)^^2.0f + (*b )^^ (2.0f * *a) - (*c) ^^ (-2.0f);
             writeln(t);
-            writeln(eq.value.eval(symbolTable));
+            writeln(ex.value.eval(symbolTable));
 
             auto app = appender!string;
-            print(app, symbolTable, eq.value);
+            print(app, symbolTable, ex.value);
             writeln(app[]);
         }
         else
         {
-            writeln(eq.type);
-            writeln(eq.errorAt);
-            writeln(eq.symbolName);
+            writeln(ex.type);
+            writeln(ex.errorAt);
+            writeln(ex.symbolName);
         }
     }
 }
