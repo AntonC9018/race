@@ -89,11 +89,26 @@ struct Term
     Inner inner;
 }
 
+Term termFromExpression(Expression exp)
+{
+    if (exp.terms.length == 1 && exp.terms[0].length == 1)
+        return exp.terms[0][0];
+    if (exp.terms.length == 0)
+        return Term(Inner(1.0f), Inner(0.0f));
+    return Term(Inner(1.0f), Inner(exp));
+}
+
 import std.array;
 import std.format;
 
 void print(TAppender)(ref TAppender appender, in SymbolTable symbolTable, const(Expression) expression)
 {
+    if (expression.terms.length == 0)
+    {
+        appender ~= "0";
+        return;
+    }
+
     foreach (termProductIndex, termProduct; expression.terms)
     {
         if (termProductIndex > 0)
@@ -816,6 +831,128 @@ float eval(const(Expression) expression, in SymbolTable symbolTable)
     return result;
 }
 
+// Assumes the rows are ordered (the first row contains least zeros, etc)
+void gaussianSimplify(Matrix : Expression[M][N], size_t N, size_t M)(ref Matrix matrix)
+{
+    import std.algorithm.comparison : min, max;
+    static assert(M >= 2);
+    static assert(N >= 1);
+    const numColsWithoutRHS = M - 1;
+
+    import std.math;
+    // The last column is the rhs of equals.
+    foreach (simplificationIndex; 0 .. min(N, numColsWithoutRHS))
+    {
+        const colStartIndex = simplificationIndex;
+        const rowMainIndex = simplificationIndex;
+        
+        // a b
+        // c d
+        Expression a = matrix[rowMainIndex][colStartIndex];
+        
+        foreach (rowIndex; rowMainIndex + 1 .. N)
+        {
+            ref Expression refc() { return matrix[rowIndex][colStartIndex]; }
+            Expression c = refc();
+            refc = Expression();
+            
+            foreach (colIndex; colStartIndex + 1 .. M)
+            {
+                ref Expression b() { return matrix[rowMainIndex][colIndex]; }
+                ref Expression d() { return matrix[rowIndex][colIndex]; }
+                
+                // a * d + -c * b
+                Expression subtraction = Expression([
+                    [termFromExpression(a), termFromExpression(d)],
+                    [minusOneTerm, termFromExpression(c), termFromExpression(b)],
+                ]);
+
+                d = subtraction;
+            }
+        }
+    }
+
+    // zero out whatever we can.
+    {
+        const startColIndex = numColsWithoutRHS - 1;
+        const maxTouchedRowCoordExclusive = min(N, numColsWithoutRHS);
+        const numNonZeroColumns = abs(numColsWithoutRHS - maxTouchedRowCoordExclusive) + 1;
+        const startRowIndex = maxTouchedRowCoordExclusive - 1;
+        const numIterations = startRowIndex;
+
+        foreach (iterationIndex; 0 .. numIterations)
+        {
+            const factorRowIndex = startRowIndex - iterationIndex;
+            const factorColIndex = startColIndex - iterationIndex;
+
+            /*
+                Example:
+                a b c = d
+                0 e f = g
+                
+                M = 4, N = 2
+                numColsWithoutRHS = 3
+                startColIndex = 2        (c, f)
+                numIterations = 1
+                maxTouchedRowCoordExclusive = 2  (1 past f)
+                numNonZeroColumns = 2    (e, f)
+                startRowIndex = 1        (0 e f = g)
+            */
+
+            // row = 1, col = 2
+            Expression f = matrix[factorRowIndex][factorColIndex];
+
+            foreach (rowIndex; 0 .. factorRowIndex)
+            {
+                ref Expression c() { return matrix[rowIndex][factorColIndex]; }
+
+                // the column of e = (column of f) - (number of elements in (e, f)) + 1
+                size_t eColIndex = factorColIndex - numNonZeroColumns + 1;
+
+                // a -> af - 0 = af
+                foreach (colIndex; 0 .. eColIndex)
+                {
+                    ref Expression a() { return matrix[rowIndex][colIndex]; }
+                    a = Expression([[termFromExpression(a), termFromExpression(f)]]);
+                }
+
+                // e
+                foreach (colIndex; eColIndex .. factorColIndex)
+                {
+                    ref Expression b() { return matrix[rowIndex][colIndex]; }
+                    ref Expression e() { return matrix[factorRowIndex][colIndex]; }
+                    
+                    // bf - ec
+                    Expression subtraction = Expression([
+                        [termFromExpression(b), termFromExpression(f)],
+                        [minusOneTerm, termFromExpression(e), termFromExpression(c)]
+                    ]);
+
+                    b = subtraction;
+                }
+                
+                // skip the rest, but the last.
+                // those will be zeros by the previous operations.
+                {
+                    ref Expression d() { return matrix[rowIndex][$ - 1]; }
+                    ref Expression g() { return matrix[factorRowIndex][$ - 1]; }
+                    
+                    // dg - ec
+                    Expression subtraction = Expression([
+                        [termFromExpression(d), termFromExpression(f)],
+                        [minusOneTerm, termFromExpression(g), termFromExpression(c)]
+                    ]);
+
+                    d = subtraction;
+                }
+
+                // cf - fc = 0
+                c = Expression();
+            }
+        }
+    }
+}
+
 void main()
 {
     float[5] k;
@@ -825,47 +962,70 @@ void main()
     float* b = &segments[1];
     float* c = &segments[2];
 
-    auto symbolTable = createSymbolTableFromVariables!(k, a, b, c);
+    auto symbolTable = createSymbolTableFromVariables!(a, b, c, k);
     assert(symbolTable.names.length == 8);
     import std.stdio;
 
-    void stuff(string input)
+    enum N = 4;
+    enum M = 6;
+
+    bool ok = true;
+    Expression[M] parseRow(string[M] expressions...)
     {
-        auto ex = parseExpression(input, symbolTable);
-        if (ex.type == ParseResultType.ok)
-        {
-            auto app = appender!string;
-            print(app, symbolTable, ex.value);
-            writeln(app[]);
-        }
-    }
-        
-    stuff("a + b + c");
-    stuff("a^2 + b^3 + c^4");
-    stuff("a * b ^ 2 * 3 / 7 * c - b ^ 3");
+        Expression[M] result;
 
+        foreach (i; 0 .. M)
+        {
+            string text = expressions[i];
+            auto r = parseExpression(text, symbolTable);
+            if (r.type != ParseResultType.ok)
+            {
+                writeln("Error ", r.type, " at ", r.errorAt, "; ", r.symbolName);
+                ok = false;
+            }
+            result[i] = r.value;
+        }
+        return result;
+    }
+
+    Expression[M] parseSplitRow(string row)
     {
-        auto ex = parseExpression("a^2 + b^(2 * a) - c ^ (-2)", symbolTable);
-
-        if (ex.type == ParseResultType.ok)
-        {
-            *a = 2;
-            *b = 2;
-            *c = 3;
-            auto t = (*a) ^^ 2.0f + (*b) ^^ (2.0f * *a) - (*c) ^^ (-2.0f);
-
-            import std.math;
-            assert(isClose(t, ex.value.eval(symbolTable)));
-
-            auto app = appender!string;
-            print(app, symbolTable, ex.value);
-            writeln(app[]);
-        }
-        else
-        {
-            writeln(ex.type);
-            writeln(ex.errorAt);
-            writeln(ex.symbolName);
-        }
+        import std.string;
+        return parseRow(row.split(";")[0 .. M]);
     }
+
+    Expression[M][N] parseAll(string all)
+    {
+        import std.string;
+        import std.algorithm;
+
+        return all
+            .split("\n")
+            .map!(a => a.strip)
+            .filter!(l => l.length > 0)
+            .map!(a => parseSplitRow(a))
+            .array[0 .. N];
+    }
+
+    auto p = `
+        a^4 / 12; a^3 / 6; a^2 / 2; a; 1; 0
+        b^4 / 12; b^3 / 6; b^2 / 2; b; 1; 1
+        c^4 / 12; c^3 / 6; c^2 / 2; c; 1; 0
+        b^3 / 3;  b^2 / 2; b;       1; 0; 0
+    `;
+
+    Expression[M][N] expressions = parseAll(p);
+    gaussianSimplify(expressions);
+
+    auto app = appender!string;
+    foreach (i; 0 .. N)
+    { 
+        foreach (j; 0 .. M)
+        {
+            print(app, symbolTable, expressions[i][j]);
+            app ~= ";";
+        }
+        app ~= "\n";
+    }
+    writeln(app[]);
 }
