@@ -749,7 +749,7 @@ bool parse()(auto ref string input, out float number)
         number = whole;
         if (sign)
             number = -number;
-        input = copy;
+        input = copy; // @suppress(dscanner.suspicious.auto_ref_assignment)
         return true;
     }
     copy.popFront();
@@ -764,7 +764,7 @@ bool parse()(auto ref string input, out float number)
         copy.popFront();
     }
 
-    input = copy;
+    input = copy; // @suppress(dscanner.suspicious.auto_ref_assignment)
     number = fraction / (10 ^^ count) + whole;
     if (sign)
         number = -number;
@@ -829,13 +829,6 @@ void main()
     assert(symbolTable.names.length == 8);
     import std.stdio;
 
-    {
-        float number;
-        string input = "123.123";
-        writeln(parse(input, number));
-        writeln(number);
-    }
-
     void stuff(string input)
     {
         auto ex = parseExpression(input, symbolTable);
@@ -859,9 +852,10 @@ void main()
             *a = 2;
             *b = 2;
             *c = 3;
-            auto t = (*a)^^2.0f + (*b )^^ (2.0f * *a) - (*c) ^^ (-2.0f);
-            writeln(t);
-            writeln(ex.value.eval(symbolTable));
+            auto t = (*a) ^^ 2.0f + (*b) ^^ (2.0f * *a) - (*c) ^^ (-2.0f);
+
+            import std.math;
+            assert(isClose(t, ex.value.eval(symbolTable)));
 
             auto app = appender!string;
             print(app, symbolTable, ex.value);
