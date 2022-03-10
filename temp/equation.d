@@ -1,6 +1,8 @@
 import std.sumtype;
 import std.stdio;
 import std.range;
+import std.algorithm;
+import std.math;
 
 struct SymbolTable
 {
@@ -89,13 +91,18 @@ struct Term
     Inner inner;
 }
 
-Term termFromExpression(Expression exp)
+Term term(Expression exp)
 {
     if (exp.terms.length == 1 && exp.terms[0].length == 1)
         return exp.terms[0][0];
     if (exp.terms.length == 0)
         return Term(Inner(1.0f), Inner(0.0f));
     return Term(Inner(1.0f), Inner(exp));
+}
+
+Term term(Inner inner)
+{
+    return Term(Inner(1.0f), inner);
 }
 
 import std.array;
@@ -863,8 +870,8 @@ void gaussianSimplify(Matrix : Expression[M][N], size_t N, size_t M)(ref Matrix 
                 
                 // a * d + -c * b
                 Expression subtraction = Expression([
-                    [termFromExpression(a), termFromExpression(d)],
-                    [minusOneTerm, termFromExpression(c), termFromExpression(b)],
+                    [term(a), term(d)],
+                    [minusOneTerm, term(c), term(b)],
                 ]);
 
                 d = subtraction;
@@ -913,7 +920,7 @@ void gaussianSimplify(Matrix : Expression[M][N], size_t N, size_t M)(ref Matrix 
                 foreach (colIndex; 0 .. eColIndex)
                 {
                     ref Expression a() { return matrix[rowIndex][colIndex]; }
-                    a = Expression([[termFromExpression(a), termFromExpression(f)]]);
+                    a = Expression([[term(a), term(f)]]);
                 }
 
                 // e
@@ -924,8 +931,8 @@ void gaussianSimplify(Matrix : Expression[M][N], size_t N, size_t M)(ref Matrix 
                     
                     // bf - ec
                     Expression subtraction = Expression([
-                        [termFromExpression(b), termFromExpression(f)],
-                        [minusOneTerm, termFromExpression(e), termFromExpression(c)]
+                        [term(b), term(f)],
+                        [minusOneTerm, term(e), term(c)]
                     ]);
 
                     b = subtraction;
@@ -939,8 +946,8 @@ void gaussianSimplify(Matrix : Expression[M][N], size_t N, size_t M)(ref Matrix 
                     
                     // dg - ec
                     Expression subtraction = Expression([
-                        [termFromExpression(d), termFromExpression(f)],
-                        [minusOneTerm, termFromExpression(g), termFromExpression(c)]
+                        [term(d), term(f)],
+                        [minusOneTerm, term(g), term(c)]
                     ]);
 
                     d = subtraction;
@@ -951,6 +958,199 @@ void gaussianSimplify(Matrix : Expression[M][N], size_t N, size_t M)(ref Matrix 
             }
         }
     }
+}
+
+alias InnerSimplificationInfo = SumType!(float, Symbol, TermSimplificationResult[]);
+
+InnerSimplificationInfo simplify(Inner a)
+{
+    return a.match!(
+        (Expression expression)
+        {
+            TermSimplificationResult[] simplifiedExpression = .simplifyInternal(expression);
+
+            // multiplying by 0.
+            if (simplifiedExpression.length == 0)
+                return InnerSimplificationInfo(0);
+
+            return InnerSimplificationInfo(simplifiedExpression);
+        },
+        (other) => InnerSimplificationInfo(other)
+    );
+}
+
+struct ComplicatedTermSimplificationInfo
+{
+    InnerSimplificationInfo power;
+    InnerSimplificationInfo inner;
+}
+
+struct TermSimplificationResult
+{
+    float constant;
+    float[] powersOfSymbols;
+
+    // Need to be multiplied.
+    // Contain complicated expressions, like (a + b) ^ 2, a^b, 7^(a + b)
+    ComplicatedTermSimplificationInfo[] complicated;
+}
+
+TermSimplificationResult simplify(Term[] termProduct)
+{
+    import std.algorithm;
+    import std.math;
+
+    TermSimplificationResult result;
+    result.constant = 1.0f;
+
+    foreach (term; termProduct)
+    {
+        InnerSimplificationInfo power = .simplify(term.power);
+        InnerSimplificationInfo inner = .simplify(term.inner);
+
+        power.match!(
+            (float constantPower)
+            {
+                inner.match!(
+                    (float constantInner)
+                    {
+                        result.constant *= constantInner ^^ constantPower;
+                    },
+                    (Symbol symbol)
+                    {
+                        auto oldLength = result.powersOfSymbols.length;
+                        if (oldLength <= symbol.index)
+                        {
+                            result.powersOfSymbols.length = symbol.index + 1;
+                            result.powersOfSymbols[oldLength .. $] = 0;
+                        }
+                        result.powersOfSymbols[symbol.index] += constantPower;
+                    },
+                    (TermSimplificationResult[] expressionSimplificationInfos)
+                    {
+                        assert(expressionSimplificationInfos.length != 0);
+
+                        TermSimplificationResult[] complicated;
+                        foreach (info; expressionSimplificationInfos)
+                        {
+                            if (isClose(constantPower, 1.0f))
+                                distribute(result, info);
+                            else if (!isClose(constantPower, 0))
+                                complicated ~= info;
+                        }
+                        if (complicated.length > 0)
+                        {
+                            result.complicated ~= ComplicatedTermSimplificationInfo(
+                                InnerSimplificationInfo(complicated), InnerSimplificationInfo(constantPower));    
+                        }
+                    }
+                );
+            },
+            (other)
+            {
+                result.complicated ~= ComplicatedTermSimplificationInfo(
+                    InnerSimplificationInfo(other), inner);
+            }
+        );
+    }
+
+    return result;
+}
+
+void distribute(ref TermSimplificationResult a, TermSimplificationResult b)
+{
+    auto powers = a.powersOfSymbols;
+    if (powers.length < b.powersOfSymbols.length)
+    {
+        auto oldLength = powers.length;
+        powers.length = b.powersOfSymbols.length;
+        powers[oldLength .. $] = 0;
+    }
+    powers[0 .. b.powersOfSymbols.length] += b.powersOfSymbols[];
+    a.powersOfSymbols = powers;
+    a.constant *= b.constant;
+    a.complicated ~= b.complicated;
+}
+
+TermSimplificationResult[] simplifyInternal(Expression exp)
+{
+    import std.algorithm;
+    import std.math;
+
+    if (exp.terms.length == 0)
+        return [];
+
+    TermSimplificationResult[] simplicationResults = exp.terms
+        .map!(a => .simplify(a))
+        .filter!(a => !isClose(a.constant, 0))
+        .array;
+
+
+    bool[] scrapped = new bool[](simplicationResults.length);
+
+    // bring together same factors
+    foreach (index, ref result0; simplicationResults)
+    {
+        if (scrapped[index])
+            continue;
+
+        foreach (otherIndex, const ref result1; simplicationResults[index + 1 .. $])
+        {
+            if (result0.powersOfSymbols == result1.powersOfSymbols
+                && result0.complicated == result1.complicated)
+            {
+                scrapped[otherIndex + index + 1] = true;
+                result0.constant += result1.constant;
+            }
+        }
+    }
+
+    return iota(0, simplicationResults.length)
+        .filter!(i => !scrapped[i])
+        .map!(i => simplicationResults[i])
+        .filter!(a => !isClose(a.constant, 0))
+        .array;
+}
+
+Term[] flatten(TermSimplificationResult a)
+{
+    Term[] result;
+
+    foreach (symbolIndex, powerOfSymbol; a.powersOfSymbols)
+    {
+        if (!isClose(powerOfSymbol, 0))
+            result ~= Term(Inner(powerOfSymbol), Inner(Symbol(symbolIndex)));
+    }
+
+    foreach (ComplicatedTermSimplificationInfo complicated; a.complicated)
+    {
+        Term term;
+        auto t(InnerSimplificationInfo info)
+        {
+            return info.match!(
+                (TermSimplificationResult[] b)
+                {
+                    return Inner(Expression(b.map!flatten.array));
+                },
+                (other) { return Inner(other); }
+            );
+        }
+
+        term.inner = t(complicated.inner);
+        term.power = t(complicated.power);
+        result ~= term;
+    }
+    
+    if (!isClose(a.constant, 1) || result.length == 0)
+        result ~= term(Inner(a.constant));
+
+    return result;
+}
+
+Expression simplify(Expression expression)
+{
+    auto internal = simplifyInternal(expression);
+    return Expression(internal.map!flatten.array);
 }
 
 void main()
@@ -966,66 +1166,83 @@ void main()
     assert(symbolTable.names.length == 8);
     import std.stdio;
 
-    enum N = 4;
-    enum M = 6;
 
-    bool ok = true;
-    Expression[M] parseRow(string[M] expressions...)
+    void gauss()
     {
-        Expression[M] result;
+        enum N = 4;
+        enum M = 6;
 
-        foreach (i; 0 .. M)
+        bool ok = true;
+        Expression[M] parseRow(string[M] expressions...)
         {
-            string text = expressions[i];
-            auto r = parseExpression(text, symbolTable);
-            if (r.type != ParseResultType.ok)
+            Expression[M] result;
+
+            foreach (i; 0 .. M)
             {
-                writeln("Error ", r.type, " at ", r.errorAt, "; ", r.symbolName);
-                ok = false;
+                string text = expressions[i];
+                auto r = parseExpression(text, symbolTable);
+                if (r.type != ParseResultType.ok)
+                {
+                    writeln("Error ", r.type, " at ", r.errorAt, "; ", r.symbolName);
+                    ok = false;
+                }
+                result[i] = r.value;
             }
-            result[i] = r.value;
+            return result;
         }
-        return result;
-    }
 
-    Expression[M] parseSplitRow(string row)
-    {
-        import std.string;
-        return parseRow(row.split(";")[0 .. M]);
-    }
-
-    Expression[M][N] parseAll(string all)
-    {
-        import std.string;
-        import std.algorithm;
-
-        return all
-            .split("\n")
-            .map!(a => a.strip)
-            .filter!(l => l.length > 0)
-            .map!(a => parseSplitRow(a))
-            .array[0 .. N];
-    }
-
-    auto p = `
-        a^4 / 12; a^3 / 6; a^2 / 2; a; 1; 0
-        b^4 / 12; b^3 / 6; b^2 / 2; b; 1; 1
-        c^4 / 12; c^3 / 6; c^2 / 2; c; 1; 0
-        b^3 / 3;  b^2 / 2; b;       1; 0; 0
-    `;
-
-    Expression[M][N] expressions = parseAll(p);
-    gaussianSimplify(expressions);
-
-    auto app = appender!string;
-    foreach (i; 0 .. N)
-    { 
-        foreach (j; 0 .. M)
+        Expression[M] parseSplitRow(string row)
         {
-            print(app, symbolTable, expressions[i][j]);
-            app ~= ";";
+            import std.string;
+            return parseRow(row.split(";")[0 .. M]);
         }
-        app ~= "\n";
+
+        Expression[M][N] parseAll(string all)
+        {
+            import std.string;
+            import std.algorithm;
+
+            return all
+                .split("\n")
+                .map!(a => a.strip)
+                .filter!(l => l.length > 0)
+                .map!(a => parseSplitRow(a))
+                .array[0 .. N];
+        }
+
+        auto p = `
+            a^4 / 12; a^3 / 6; a^2 / 2; a; 1; 0
+            b^4 / 12; b^3 / 6; b^2 / 2; b; 1; 1
+            c^4 / 12; c^3 / 6; c^2 / 2; c; 1; 0
+            b^3 / 3;  b^2 / 2; b;       1; 0; 0
+        `;
+
+        Expression[M][N] expressions = parseAll(p);
+        gaussianSimplify(expressions);
+
+        auto app = appender!string;
+        foreach (i; 0 .. N)
+        { 
+            foreach (j; 0 .. M)
+            {
+                print(app, symbolTable, expressions[i][j]);
+                app ~= ";";
+            }
+            app ~= "\n";
+        }
+        writeln(app[]);
     }
-    writeln(app[]);
+
+    void simplification()
+    {
+        // auto res = parseExpression("1 * 2 * 3 * 4 * a * a * b * a ^ 2 + 80 * a ^ 4 * b", symbolTable);
+        auto res = parseExpression("(1 + 2 + a)", symbolTable);
+        assert(res.type == ParseResultType.ok);
+
+        auto simplified = simplify(res.value);
+        auto app = appender!string;
+        print(app, symbolTable, simplified);
+        writeln(app[]);
+    }
+    simplification();
 }
