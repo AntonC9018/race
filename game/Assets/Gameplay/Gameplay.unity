@@ -874,6 +874,7 @@ GameObject:
   - component: {fileID: 1671019729}
   - component: {fileID: 1671019728}
   - component: {fileID: 1671019732}
+  - component: {fileID: 1671019733}
   m_Layer: 0
   m_Name: car0_physics
   m_TagString: Untagged
@@ -963,7 +964,7 @@ MonoBehaviour:
     maxSteeringAngle: 30
     maxSteeringAngleInputFactorChangePerSecond: 1.5
     maxMotorTorqueInputFactorChangePerSecond: 2
-    maxWheelRPMJumpPerSecond: 1500
+    maxWheelRPMJumpPerSecond: 200
   _carEngineSpec:
     maxRPM: 7000
     maxTorque: 400
@@ -973,17 +974,44 @@ MonoBehaviour:
     maxIdleRPMIncreasePerSecond: 2000
     maxIdleRPMDecreasePerSecond: 1500
     gears:
-    - gearRatio: -40
-    - gearRatio: 60
-    - gearRatio: 29
-    - gearRatio: 12
-    - gearRatio: 4
-    - gearRatio: 1
+    - gearRatio: -87.40164
+    - gearRatio: 87.40164
+    - gearRatio: 29.133879
+    - gearRatio: 14.566939
+    - gearRatio: 8.740164
+    - gearRatio: 4.8556466
   _carBrakesSpec:
     brakeTorque: 500
   _motorWheelLocations: 0000000001000000
   _brakeWheelLocations: 0000000001000000
   _steeringWheelLocations: 0200000003000000
+--- !u!114 &1671019733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1671019727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e79b4359abfa047448b516139ee6e5af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  desiredOptimalSpeeds:
+  - -5
+  - 5
+  - 15
+  - 30
+  - 50
+  - 90
+  RightClickMe: 0
+  computedGearRatios:
+  - -87.40164
+  - 87.40164
+  - 29.133879
+  - 14.566939
+  - 8.740164
+  - 4.8556466
 --- !u!1 &1693046824
 GameObject:
   m_ObjectHideFlags: 0

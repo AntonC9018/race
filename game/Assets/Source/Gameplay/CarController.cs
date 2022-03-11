@@ -1,7 +1,12 @@
+#define COMPUTE_RPM_FROM_WHEELS
+
+#if COMPUTE_RPM_FROM_WHEELS
+#else
+    #define COMPUTE_RPM_FROM_RIGIDBODY
+#endif
+
 using System;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
@@ -16,10 +21,13 @@ namespace Race.Gameplay
         // We might need another such engine-specific factor.
         public float maxMotorTorqueInputFactorChangePerSecond;
 
-        // The RPM's of wheels jump drastically.
-        // This factor has been introduced to smooth out these jumps.
-        // Represents the max scale that the RPM can jump in a second.
-        public float maxWheelRPMJumpPerSecond;
+        // NOTE: Uncommented so that it does not reset in the inspector when the version is changed.
+        // #if COMPUTE_RPM_FROM_WHEELS
+            // The RPM's of wheels jump drastically.
+            // This factor has been introduced to smooth out these jumps.
+            // Represents the max scale that the RPM can jump in a second.
+            public float maxWheelRPMJumpPerSecond;
+        // #endif
     }
 
     [System.Serializable]
@@ -73,7 +81,7 @@ namespace Race.Gameplay
         public int gearIndex;
 
         public float motorRPM;
-        // The recorded wheel RPM (with damping applied).
+        // The recorded wheel RPM (possibly with damping applied).
         public float wheelRPM;
 
         // Clutch allows switching gears.
@@ -83,19 +91,26 @@ namespace Race.Gameplay
     }
 
     [RequireComponent(typeof(CarColliderInfoComponent))]
+    #if COMPUTE_RPM_FROM_RIGIDBODY
+        [RequireComponent(typeof(Rigidbody))]
+    #endif
     public class CarController : MonoBehaviour
     {
         // For now, just serialize, but should get this from the car stats.
-        [SerializeField] private CarControlLimits _carControlLimits;
-        [SerializeField] private CarEngineSpec _carEngineSpec;
-        [SerializeField] private CarBrakesSpec _carBrakesSpec;
-        [SerializeField] private WheelLocation[] _motorWheelLocations;
-        [SerializeField] private WheelLocation[] _brakeWheelLocations;
-        [SerializeField] private WheelLocation[] _steeringWheelLocations;
+        [SerializeField] internal CarControlLimits _carControlLimits;
+        [SerializeField] internal CarEngineSpec _carEngineSpec;
+        [SerializeField] internal CarBrakesSpec _carBrakesSpec;
+        [SerializeField] internal WheelLocation[] _motorWheelLocations;
+        [SerializeField] internal WheelLocation[] _brakeWheelLocations;
+        [SerializeField] internal WheelLocation[] _steeringWheelLocations;
 
         private CarPartsInfo _carPartsInfo;
         private CarControls _carControls;
         private CarDrivingState _carDrivingState;
+
+        #if COMPUTE_RPM_FROM_RIGIDBODY
+            private Rigidbody _carRigidbody;
+        #endif
 
 
         void Awake()
@@ -104,6 +119,10 @@ namespace Race.Gameplay
             colliderInfo.AdjustCenterOfMass();
 
             _carPartsInfo = colliderInfo.CarColliderInfo;
+
+            #if COMPUTE_RPM_FROM_RIGIDBODY
+                _carRigidbody = GetComponent<Rigidbody>();
+            #endif
 
             // TODO: get this from the outside.
             _carControls = new CarControls();
@@ -130,6 +149,9 @@ namespace Race.Gameplay
 
         void OnGUI()
         {
+            var rigidbody = GetComponent<Rigidbody>();
+            var speed = rigidbody.velocity.magnitude;
+
             GUILayout.BeginVertical();
             GUI.color = Color.black;
             GUILayout.Label($"torqueInputFactor: {_carDrivingState.motorTorqueInputFactor}");
@@ -138,8 +160,15 @@ namespace Race.Gameplay
             GUILayout.Label($"motorRPM: {_carDrivingState.motorRPM}");
             GUILayout.Label($"wheelRPM: {_carDrivingState.wheelRPM}");
 
-            var rigidbody = GetComponent<Rigidbody>();
-            var speed = rigidbody.velocity.magnitude;
+            float speedMetersPerSecond = rigidbody.velocity.magnitude;
+            float speedMetersPerMinute = speed * 60.0f;
+            float circumference = _carPartsInfo.wheels[0].GetCircumference();
+            float expectedWheelRPM = speedMetersPerMinute / circumference;
+
+            GUILayout.Label($"expectedWheelRPM: {expectedWheelRPM}");
+            GUILayout.Label($"expectedMotorRPM: {expectedWheelRPM * _carEngineSpec.gears[_carDrivingState.gearIndex].gearRatio}");
+
+
             GUILayout.Label($"speed: {speed} m/s, {speed / 1000 * 3600} km/h");
 
             GUILayout.EndVertical();
@@ -185,15 +214,25 @@ namespace Race.Gameplay
 
             float wheelRPM;
             {
-                float wheelRPMSum = 0;
-                foreach (ref var wheelInfo in _carPartsInfo.wheels.AsSpan())
-                    wheelRPMSum += wheelInfo.collider.rpm;
-                float recordedWheelRPM = wheelRPMSum / _carPartsInfo.wheels.Length;
-                
-                // `maxWheelRPMJumpPerSecond` is needed to counteract the fact that the wheel RPM
-                // that the Unity provides jumps up and down drastically, so we damp it here manually.
-                float maxAllowedChange = _carControlLimits.maxWheelRPMJumpPerSecond * Time.deltaTime;
-                wheelRPM = GetValueChangedByAtMost(_carDrivingState.wheelRPM, recordedWheelRPM, maxAllowedChange);
+                #if COMPUTE_RPM_FROM_WHEELS
+                    float wheelRPMSum = 0;
+                    foreach (ref var wheelInfo in _carPartsInfo.wheels.AsSpan())
+                        wheelRPMSum += wheelInfo.collider.rpm;
+                    float recordedWheelRPM = wheelRPMSum / _carPartsInfo.wheels.Length;
+                    wheelRPM = recordedWheelRPM;
+                    
+                    // `maxWheelRPMJumpPerSecond` is needed to counteract the fact that the wheel RPM
+                    // that the Unity provides jumps up and down drastically, so we damp it here manually.
+                    float maxAllowedChange = _carControlLimits.maxWheelRPMJumpPerSecond * Time.deltaTime;
+                    wheelRPM = GetValueChangedByAtMost(_carDrivingState.wheelRPM, recordedWheelRPM, maxAllowedChange);
+                #else
+                    float speedMetersPerSecond = _carRigidbody.velocity.magnitude;
+                    float speedMetersPerMinute = speedMetersPerSecond * 60.0f;
+                    float circumference = _carPartsInfo.wheels[0].GetCircumference();
+
+                    // Computing the RPM directly seems ok 
+                    wheelRPM = speedMetersPerMinute / circumference;
+                #endif
             }
 
             // Brakes
@@ -225,7 +264,7 @@ namespace Race.Gameplay
                     float gearRatio = _carEngineSpec.gears[_carDrivingState.gearIndex].gearRatio;
                     // RPM between the engine and the wheels.
                     // We don't do any damping here either (at least for now).
-                    float desiredMotorRPM = wheelRPM / 2 * gearRatio;
+                    float desiredMotorRPM = wheelRPM * gearRatio;
 
                     // The RPM here should change instantly (probably).
                     // motorRPM = GetMotorRPM(desiredMotorRPM, _carEngineSpec, _carDrivingState.motorRMP);
@@ -251,23 +290,48 @@ namespace Race.Gameplay
                         // and that the point at the optimal RPM is the extreme (the derivative is 0).
                         // 4 equations, 1 inequality -> 5 parameters, one of which is kind of free.
                         // So the approximation should ideally be a polynomial with 5 coefficients.
-                        //
-                        // Could also just linearly interpolate the 2 segments, but that's not going to be cool.
-                        
+
+                        // For now I'm just going to linearly interpolate the 2 segments,
+                        // but I'd prefer a continuous function here.
+                        // The algebra gets pretty messy, see `/concepts/engine_efficiency_equation`
+
+
+                        /*
+                        // Lagrangian second order approximation, does not have the desired properties.
                         float a = motorRPM / _carEngineSpec.optimalRPM;
                         float b = (_carEngineSpec.maxRPM - motorRPM) / (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
-                        Debug.Log("motor rpm: " + motorRPM);
-                        Debug.Log("a: " + a);
-                        Debug.Log("b: " + b);
 
                         // May go beyond maxRPM and can even go negative if driving in reverse gear forwards
                         // (which should not really be allowed at all, but going beyond maxRPM is definitely possible).
                         // In such cases, the product will be below 0. The product can never go above 1 though.
                         // Nope! I think due to floating point errors it does get above 1 sometimes.
                         float c = Mathf.Clamp01(a * b);
+
                         // float c = a * b;
                         // if (c < 0)
                         //     c = 0;
+                        */
+
+                        float a;
+                        float b;
+                        float c;
+                        if (motorRPM < _carEngineSpec.optimalRPM)
+                        {
+                            a = _carEngineSpec.optimalRPM - motorRPM;
+                            b = _carEngineSpec.optimalRPM;
+                            c = Mathf.Lerp(1, 0, a / b);
+                        }
+                        else
+                        {
+                            a = _carEngineSpec.maxRPM - motorRPM;
+                            b = _carEngineSpec.maxRPM - _carEngineSpec.optimalRPM;
+                            c = Mathf.Lerp(0, 1, a / b);
+                        }
+
+
+                        Debug.Log("motor rpm: " + motorRPM);
+                        Debug.Log("a: " + a);
+                        Debug.Log("b: " + b);
                         Debug.Log("c: " + c);
 
                         const float maxEfficiency = 1.0f;

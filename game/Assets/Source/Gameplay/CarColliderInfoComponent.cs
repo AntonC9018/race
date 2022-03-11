@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using static EngineCommon.Assertions;
 
@@ -25,6 +26,18 @@ namespace Race.Gameplay
             WheelNames[(int) WheelLocation.BackRight]  = "back_right";
             WheelNames[(int) WheelLocation.FrontLeft]  = "front_left";
             WheelNames[(int) WheelLocation.FrontRight] = "front_right";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float GetCircumference(this WheelCollider wheel)
+        {
+            return wheel.radius * 2 * Mathf.PI;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float GetCircumference(this CarPartInfo<WheelCollider> wheel)
+        {
+            return GetCircumference(wheel.collider);
         }
     }
 
