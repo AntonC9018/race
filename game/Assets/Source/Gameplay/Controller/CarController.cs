@@ -288,12 +288,6 @@ namespace Race.Gameplay
                             c = Mathf.Lerp(0, 1, a / b);
                         }
 
-
-                        Debug.Log("motor rpm: " + motorRPM);
-                        Debug.Log("a: " + a);
-                        Debug.Log("b: " + b);
-                        Debug.Log("c: " + c);
-
                         const float maxEfficiency = 1.0f;
                         // Unclamped because we've contrained the c already.
                         engineEfficiency = Mathf.LerpUnclamped(engine.minEfficiency, maxEfficiency, c);
@@ -343,7 +337,6 @@ namespace Race.Gameplay
 
             // Steering
             {
-                print("Turn: " + movementInputs.Turn);
                 float steeringInputFactor = movementInputs.Turn;
                 float actualSteeringAngle = spec.steering.maxSteeringAngle * steeringInputFactor;
                 drivingState.steeringInputFactor = steeringInputFactor;
