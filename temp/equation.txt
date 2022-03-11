@@ -1,0 +1,34 @@
+f(x) is the function that will simulate the engine efficiency at a given RPM (x).
+The algebra is really ugly, I can't solve it manually.
+
+Restrictions:
+
+f(0) = 0
+f(b) = 1
+f(c) = 0       
+f'(b) = 0                     f(b) is the max value
+f''(x) < 0  for x in [0, c]   to ensure a single root
+
+f(x) has to be of order 5, because we have 4 equations and a restriction with the last equation,
+so ideally we want a somewhat free parameter. This implies f''(x) is of order 3.
+
+f''(x) = k0 * x^2 + k1 * x + k2 
+f(x) = integrate f''(x) twice = k0 * x^4 / 12 + k1 * x^3 / 6 + k2 * x^2 / 2 + k3 * x + k4
+
+So the 5 parameters are k0, k1, k2, k3, k4.
+k4 is 0 from the equation f(0) = 0.
+
+Then I simplified the system of equation manually with gaussian elimination and expressed k0 from k1.
+The equations below can be used to express all of the other coefficients from k1.
+Substitute b = hc for simplicity.
+
+
+k1 = free coefficient
+k0 = -(12 + 2 * h^2 * c^3 * (h^2 - 2*h + 1) * k1) / (h^2 * c^3 * (2 * h^3 - 3 * h^2 + 1))
+0 = c^4 * k0 + 2 * c^3 * k1 + 6 * c^2 * k2 + 12 * c * k3
+12 = (h * c)^4 * k0 + (h * c)^3 * 2 * k1 + (h * c)^2 * 6 * k2 + 12 * h * c * k3
+
+
+f(x) = k0 * x^4 / 12 + k1 * x^3 / 6 + k2 * x^2 / 2 + k3 * x
+f''(x) = k0 * x^2 + k1 * x + k2 < 0
+

@@ -1,3 +1,11 @@
+// Math expression parser (seems to work correctly)
+// Evaluator (also seems to work)
+// Simplifier (only works for simple cases, distributing nested factors seems broken)
+// Linear equation simplifier via gaussian elimination (seems busted)
+// Expression printer (works)
+
+// I went for sum-of-products representation of expressions, instead of the normal expression trees.
+
 import std.sumtype;
 import std.stdio;
 import std.range;
@@ -1314,15 +1322,32 @@ void main()
     void simplification()
     {
         // auto res = parseExpression("1 * 2 * 3 * 4 * a * a * b * a ^ 2 + 80 * a ^ 4 * b", symbolTable);
-        auto res = parseExpression("(1 + 2 + a^3) * (7 + b^3)", symbolTable);
-        assert(res.type == ParseResultType.ok);
+        float k1;
+        float c;
+        float h;
+        auto symbolTable = createSymbolTableFromVariables!(k1, c, h);
 
-        auto simplified = simplify(res.value);
-        auto app = appender!string;
-        print(app, symbolTable, simplified);
-        writeln(app[]);
+        auto res = parseExpression("(1 + k1) * (c + h)", symbolTable);
+        if (res.type == ParseResultType.ok)
+        {
+            auto simplified = simplify(res.value);
+            auto app = appender!string;
+            print(app, symbolTable, simplified);
+            writeln(app[]);
+
+            k1 = 1;
+            c = 50;
+            h = 0.4;
+            writeln(eval(res.value, symbolTable));
+            writeln(eval(simplified, symbolTable));
+        }
+        else
+        {
+            writeln(res.type);
+            writeln(res.errorAt);
+        }
     }
 
-    gauss();
+    simplification();
 
 }
