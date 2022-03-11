@@ -47,4 +47,22 @@ namespace EngineCommon
                 throw new AssertionException();
         }
     }
+
+    public static class MathHelper 
+    {
+        public static float ClampMagnitude(float desired, float min, float max)
+        {
+            float desiredChangeMagnitude = Mathf.Abs(desired);
+            float actualChangeMagnitude = Mathf.Clamp(desiredChangeMagnitude, min, max);
+            float actualChange = Mathf.Sign(desired) * actualChangeMagnitude;
+            return actualChange;
+        }
+
+        public static float GetValueChangedByAtMost(float currentValue, float desiredValue, float maxChangeAllowed)
+        {
+            float desiredChange = desiredValue - currentValue;
+            float actualChange = ClampMagnitude(desiredChange, 0, maxChangeAllowed);
+            return currentValue + actualChange;
+        }
+    }
 }

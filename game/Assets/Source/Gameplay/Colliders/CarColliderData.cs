@@ -1,92 +1,78 @@
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    public enum WheelLocation
+    [System.Serializable]
+    public struct CarVisualParts
     {
-        BackLeft = 0,
-        BackRight = WheelHelper.RightBit,
-        FrontLeft = WheelHelper.FrontBit,
-        FrontRight = WheelHelper.FrontBit | WheelHelper.RightBit,
-    }
-    
-    public static class WheelHelper
-    {
-        // Hack: one can't hide enum members in the editor?? Why is there no attribute for this?
-        public const WheelLocation RightBit = (WheelLocation) 1;
-        public const WheelLocation FrontBit = (WheelLocation) 2;
-
-        public static readonly string[] WheelNames;
-        static WheelHelper()
-        {
-            WheelNames = new string[4];
-            WheelNames[(int) WheelLocation.BackLeft]   = "back_left";
-            WheelNames[(int) WheelLocation.BackRight]  = "back_right";
-            WheelNames[(int) WheelLocation.FrontLeft]  = "front_left";
-            WheelNames[(int) WheelLocation.FrontRight] = "front_right";
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetCircumference(this WheelCollider wheel)
-        {
-            return wheel.radius * 2 * Mathf.PI;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetCircumference(this CarPartInfo<WheelCollider> wheel)
-        {
-            return GetCircumference(wheel.collider);
-        }
+        public Transform body;
+        public Transform[] wheels;
     }
 
     [System.Serializable]
-    public struct CarPartInfo<TCollider>
+    public struct CarPart<TCollider>
     {
-        public Transform visualTransform;
-        public Transform physicalTransform;
+        public Transform transform;
         public TCollider collider;
     }
 
     [System.Serializable]
-    public class CarPartsInfo
+    public struct CarColliderParts
     {
         public Transform container;
-        public CarPartInfo<BoxCollider> body;
+        public CarPart<BoxCollider> body;
+        public Rigidbody Rigidbody => body.collider.attachedRigidbody; 
 
         // The wheels are positioned according to WheelLocation.
-        public CarPartInfo<WheelCollider>[] wheels;
+        public CarPart<WheelCollider>[] wheels;
 
-        public ref CarPartInfo<WheelCollider> GetWheel(WheelLocation location)
+        public ref CarPart<WheelCollider> GetWheel(WheelLocation location)
         {
             return ref wheels[(int) location];
         }
     }
 
-    // I expect that another script would get this info, then forget about the component.
-    // So this script just helps with the creation of the colliders.
-    // "But the runtime overhead!". Well, I don't know how to handle that, really.
-
-    public class CarColliderInfoComponent : MonoBehaviour
+    public static class CarColliderSetupHelper
     {
-        // TODO: should really be a button, but Unity can't do that with just a UDA.
-        [ContextMenuItem("Create default colliders", nameof(CreateDefaultColliders))]
-        [SerializeField] internal CarPartsInfo _carColliderInfo;
-        [SerializeField] internal GameObject _wheelColliderPrefab;
-
-        public CarPartsInfo CarColliderInfo => _carColliderInfo;
-
-        private void CreateDefaultColliders()
+        public static void AdjustCenterOfMass(in this CarColliderParts colliderParts)
         {
+            Vector3 centerOfMassAdjustmentVector;
+            {
+                var bodyCollider = colliderParts.body.collider;
+                assert(bodyCollider != null);
+
+                // I expect this to get more complicated eventually
+                // (e.g. make the back heavier, adjust according to wheels, etc.)
+                // For now, we only lower it a bit for stability.
+                float loweringRatio = 0.3f;
+                float altitudeLowering = -bodyCollider.bounds.size.y * loweringRatio / 2;
+
+                centerOfMassAdjustmentVector = new Vector3(0, altitudeLowering, 0);
+            }
+
+            var rigidbody = colliderParts.Rigidbody;
+            assert(rigidbody != null);
+            // As far as I understand, centerOfMass is a runtime thing only (not serialized).
+            // assert(rigidbody.centerOfMass == Vector3.zero, "What? already adjusted?");
+            
+            rigidbody.ResetCenterOfMass();
+            rigidbody.centerOfMass += centerOfMassAdjustmentVector;
+        }
+
+        #if UNITY_EDITOR
+        public static void CreateDefaultColliders(CarProperties properties, Transform rootTransform, GameObject wheelPrefab)
+        {
+            ref var colliderParts = ref properties.DataModel._colliderParts;
+            ref var visualParts = ref properties._visualParts;
             // Parents
             Transform parent;
             Transform carModelTransform;
             {
-                var transform = this.transform;
+                var transform = rootTransform;
                 parent = new GameObject("colliders").transform;
                 parent.SetParent(transform, worldPositionStays: false);
-                _carColliderInfo.container = parent;
+                colliderParts.container = parent;
 
                 assert(transform.childCount >= 1, "We expect the parent object to contain the car model.");
                 carModelTransform = transform.GetChild(0);
@@ -97,23 +83,27 @@ namespace Race.Gameplay
                 var wheels = carModelTransform.Find("wheels");
                 assert(wheels != null, "Must have a `wheels` child with wheels.");
 
-                var outColliderInfos = new CarPartInfo<WheelCollider>[4];
-                CreateWheelColliderGameObjectsFromWheelMeshes(parent, wheels, _wheelColliderPrefab, outColliderInfos);
-                _carColliderInfo.wheels = outColliderInfos;
+                var outWheelColliderParts = new CarPart<WheelCollider>[4];
+                var outWheelVisualParts = new Transform[4];
+                CreateWheelColliderGameObjectsFromWheelMeshes(
+                    parent, wheels, wheelPrefab, outWheelColliderParts, outWheelVisualParts);
+                colliderParts.wheels = outWheelColliderParts;
+                visualParts.wheels = outWheelVisualParts;
 
                 // 5. Make the wheel's collider into a prefab, because it has quite a lot of properties.
                 static void CreateWheelColliderGameObjectsFromWheelMeshes(
                     Transform parent,
                     Transform visualWheelsContainer,
                     GameObject wheelColliderPrefab,
-                    CarPartInfo<WheelCollider>[] outColliderInfos)
+                    CarPart<WheelCollider>[] outColliderParts,
+                    Transform[] outVisualParts)
                 {
                     var wheelNames = WheelHelper.WheelNames;
                     
                     // Validation
                     {
-                        assert(outColliderInfos.Length == wheelNames.Length);
-                        assert(visualWheelsContainer.childCount == outColliderInfos.Length);
+                        assert(outColliderParts.Length == wheelNames.Length);
+                        assert(visualWheelsContainer.childCount == outColliderParts.Length);
                         assert(wheelColliderPrefab.transform.childCount == 0,
                             "We expect the wheels to have no children.");
                         {
@@ -175,12 +165,13 @@ namespace Race.Gameplay
                             wheelCollider.enabled = true;
                         }
 
-                        outColliderInfos[i] = new CarPartInfo<WheelCollider>
+                        outColliderParts[i] = new CarPart<WheelCollider>
                         {
-                            visualTransform = meshWheelTransform,
-                            physicalTransform = wheelColliderTransform,
+                            transform = wheelColliderTransform,
                             collider = wheelCollider,
                         };
+
+                        outVisualParts[i] = meshWheelTransform;
                     }
                 }
             }
@@ -206,40 +197,15 @@ namespace Race.Gameplay
                     collider.size = meshBounds.size;
                 }
 
-                _carColliderInfo.body = new CarPartInfo<BoxCollider>()
+                visualParts.body = bodyMeshTransform;
+
+                colliderParts.body = new CarPart<BoxCollider>()
                 {
-                    visualTransform = bodyMeshTransform,
-                    physicalTransform = bodyTransform,
+                    transform = bodyTransform,
                     collider = collider,
                 };
             }
         }
-
-        public void AdjustCenterOfMass()
-        {
-            var centerOfMassAdjustmentVector = GetCenterOfMassAdjustmentVector();
-
-            var rigidbody = GetComponent<Rigidbody>();
-            assert(rigidbody != null);
-            // As far as I understand, centerOfMass is a runtime thing only (not serialized).
-            // assert(rigidbody.centerOfMass == Vector3.zero, "What? already adjusted?");
-            
-            rigidbody.ResetCenterOfMass();
-            rigidbody.centerOfMass += centerOfMassAdjustmentVector;
-
-            Vector3 GetCenterOfMassAdjustmentVector()
-            {
-                var bodyCollider = _carColliderInfo.body.collider;
-                assert(bodyCollider != null);
-
-                // I expect this to get more complicated eventually
-                // (e.g. make the back heavier, adjust according to wheels, etc.)
-                // For now, we only lower it a bit for stability.
-                float loweringRatio = 0.3f;
-                float altitudeLowering = -bodyCollider.bounds.size.y * loweringRatio / 2;
-
-                return new Vector3(0, altitudeLowering, 0);
-            }
-        }
+        #endif
     }
 }

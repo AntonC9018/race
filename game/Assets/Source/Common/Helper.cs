@@ -1,6 +1,6 @@
 namespace Race.Common
 {
-    public static class Conversions 
+    public static class Helper 
     {
     }
 }
