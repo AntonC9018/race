@@ -458,7 +458,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
@@ -707,6 +707,7 @@ GameObject:
   - component: {fileID: 1852148770}
   - component: {fileID: 1852148772}
   - component: {fileID: 1852148771}
+  - component: {fileID: 1852148773}
   m_Layer: 5
   m_Name: pips
   m_TagString: Untagged
@@ -758,11 +759,11 @@ MonoBehaviour:
   _visualConfiguration: {fileID: 11400000, guid: fefd3157aa7ea414f8b563a3c8c7e211, type: 2}
   _pipConfiguration:
     largePipInfo:
-      count: 13
+      count: 8
       angleWidthDegrees: 2.13
       heightInRadii: 0.22
     smallPipInfo:
-      count: 2
+      count: 3
       angleWidthDegrees: 1.14
       heightInRadii: 0.12
     pipEdgeOffsetInRadii: 0.02
@@ -774,6 +775,28 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1852148769}
   m_CullTransparentMesh: 1
+--- !u!114 &1852148773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1852148769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ede38b8ef6bf2548b844c1d8f82e508, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pips: {fileID: 1852148771}
+  _needle: {fileID: 0}
+  _visualConfiguration: {fileID: 11400000, guid: fefd3157aa7ea414f8b563a3c8c7e211, type: 2}
+  _data:
+    minValue: 0
+    maxValue: 200
+    gap: 20
+    pipsPerText: 2
+    textOffsetFromPipInRadii: 0.22
+  _textGameObjectPrefab: {fileID: 8206441098313678216, guid: 3718bdf812a93094ca6a3345fc18e2be, type: 3}
 --- !u!1 &1906027259
 GameObject:
   m_ObjectHideFlags: 0
