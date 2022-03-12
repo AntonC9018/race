@@ -133,9 +133,9 @@ namespace Race.Gameplay
 
                     Span<Vector2> uvs = stackalloc Vector2[4];
                     uvs[0] = new Vector2(1, 1);
-                    uvs[1] = new Vector2(1, -1);
-                    uvs[2] = new Vector2(-1, -1);
-                    uvs[3] = new Vector2(-1, 1);
+                    uvs[1] = new Vector2(1, 0);
+                    uvs[2] = new Vector2(0, 0);
+                    uvs[3] = new Vector2(0, 1);
 
                     int currentVertexIndex = vh.currentVertCount;
 
