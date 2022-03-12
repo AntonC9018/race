@@ -198,10 +198,18 @@ namespace Race.Gameplay
 
         public PipPositioningInfo GetGeometryInfo(in CircleInfo circleInfo)
         {
+            return _GetGeometryInfo(circleInfo, _visualConfiguration, _pipConfiguration);
+        }
+
+        public static PipPositioningInfo _GetGeometryInfo(
+            in CircleInfo circleInfo,
+            RadialDisplayVisualConfiguration visualConfiguration,
+            in PipConfiguration pipConfiguration)
+        {
             PipPositioningInfo result;
 
-            float angleRangeLength = _visualConfiguration.AngleRangeLength;
-            float pipEdgePixelOffset = _pipConfiguration.pipEdgeOffsetInRadii * circleInfo.radius;
+            float angleRangeLength = visualConfiguration.AngleRangeLength;
+            float pipEdgePixelOffset = pipConfiguration.pipEdgeOffsetInRadii * circleInfo.radius;
 
             PipPositioningInfo.Pip GetInitialPipInfo(in PipInfo pipInfo, in CircleInfo circle)
             {
@@ -223,17 +231,17 @@ namespace Race.Gameplay
 
             float angleIncreasePerLargePip;
             {
-                var large = GetInitialPipInfo(_pipConfiguration.largePipInfo, circleInfo);
+                var large = GetInitialPipInfo(pipConfiguration.largePipInfo, circleInfo);
 
                 float numLargePipSegments = large.count + -1;
-                angleIncreasePerLargePip = _visualConfiguration.SignedAngleRangeLength / numLargePipSegments;
+                angleIncreasePerLargePip = visualConfiguration.SignedAngleRangeLength / numLargePipSegments;
                 large.angleIncrease = angleIncreasePerLargePip;
 
                 result.largePipInfo = large;
             }
 
             {
-                var small = GetInitialPipInfo(_pipConfiguration.smallPipInfo, circleInfo);
+                var small = GetInitialPipInfo(pipConfiguration.smallPipInfo, circleInfo);
 
                 float numSmallSegmentsPerLargePip = small.count + 1;
                 small.angleIncrease = angleIncreasePerLargePip / numSmallSegmentsPerLargePip;
@@ -241,7 +249,7 @@ namespace Race.Gameplay
                 result.smallPipInfo = small;
             }
 
-            result.minAngle = _visualConfiguration.MinAngle;
+            result.minAngle = visualConfiguration.MinAngle;
 
             return result;
         }

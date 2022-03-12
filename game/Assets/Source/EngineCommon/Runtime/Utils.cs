@@ -67,6 +67,12 @@ namespace EngineCommon
             float actualChange = ClampMagnitude(desiredChange, 0, maxChangeAllowed);
             return currentValue + actualChange;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int CeilDivide(int a, int b)
+        {
+            return (a + b - 1) / b;
+        }
     }
 
     public static class CircleHelper

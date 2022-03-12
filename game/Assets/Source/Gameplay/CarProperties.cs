@@ -42,6 +42,50 @@ namespace Race.Gameplay
         public ref readonly CarColliderParts ColliderParts => ref _colliderParts;
     }
 
+    public static class CarDataModelHelper
+    {
+        // TODO: refactor this logic to be able to reuse it in other calculations.
+
+        /// <summary>
+        /// Returns the max speed estimate in m/s.
+        /// </summary>
+        public static float GetMaxSpeed(this CarDataModel dataModel)
+        {
+            var maxMotorRPM = dataModel.Spec.engine.maxRPM;;
+            var maxGearRatio = dataModel.Spec.transmission.gearRatios[^1];
+            var circumferenceOfWheel = dataModel.ColliderParts.wheels[0].GetCircumference();
+            var maxWheelRPM = maxMotorRPM / maxGearRatio;
+            var maxSpeed = FromRPMToSpeed(maxWheelRPM, circumferenceOfWheel);
+            return maxSpeed;
+        }
+
+        /// <summary>
+        /// Returns the speed in m/s.
+        /// </summary>
+        public static float FromRPMToSpeed(float rpm, float circumference)
+        {
+            return rpm * circumference / 60.0f;
+        }
+
+        /// <summary>
+        /// Returns the speed in m/s.
+        /// </summary>
+        public static float FromRPMToSpeed(float rpm, in CarPart<WheelCollider> wheel)
+        {
+            return FromRPMToSpeed(rpm, wheel.GetCircumference());
+        }
+
+        /// <summary>
+        /// Returns the current vehicle speed in m/s.
+        /// The speed is calculated based on the wheel RPM.
+        /// </summary>
+        public static float GetCurrentSpeed(this CarDataModel dataModel)
+        {
+            // float speed = model.ColliderParts.Rigidbody.velocity.magnitude;
+            return FromRPMToSpeed(dataModel.DrivingState.wheelRPM, dataModel.ColliderParts.wheels[0]);
+        }
+    }
+
     public class CarProperties : MonoBehaviour
     {
         // For now, show it in the inspector.
@@ -52,8 +96,7 @@ namespace Race.Gameplay
         [SerializeField] internal CarVisualParts _visualParts;
         public ref readonly CarVisualParts VisualParts => ref _visualParts;
         
-        // This one is needed mostly for syncronization.
-        // Like running the code that depends on the new model values after they've actually been updated.
+        // TODO: A separate event object could be helpful.
         public UnityEvent<CarDataModel> OnDrivingStateChanged;
 
         public void TriggerOnDrivingStateChanged()

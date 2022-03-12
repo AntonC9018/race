@@ -109,7 +109,7 @@ namespace Race.Gameplay
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetCircumference(this CarPart<WheelCollider> wheel)
+        public static float GetCircumference(in this CarPart<WheelCollider> wheel)
         {
             return GetCircumference(wheel.collider);
         }
