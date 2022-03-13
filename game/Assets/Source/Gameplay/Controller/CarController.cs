@@ -188,7 +188,7 @@ namespace Race.Gameplay
                     
                     // `maxWheelRPMJumpPerSecond` is needed to counteract the fact that the wheel RPM
                     // that the Unity provides jumps up and down drastically, so we damp it here manually.
-                    float maxAllowedChange = _dataSmoothing.maxWheelRPMJumpPerSecond * Time.deltaTime;
+                    float maxAllowedChange = _dataSmoothing.maxWheelRPMJumpPerSecond * Time.fixedDeltaTime;
                     wheelRPM = MathHelper.GetValueChangedByAtMost(drivingState.wheelRPM, recordedWheelRPM, maxAllowedChange);
                 #else
                     float speedMetersPerSecond = colliderParts.Rigidbody.velocity.magnitude;
@@ -311,12 +311,12 @@ namespace Race.Gameplay
                         {
                             if (desiredMotorRPM > motorRPM)
                             {
-                                float maxAllowedChange = engine.maxIdleRPMIncreasePerSecond * Time.deltaTime;
+                                float maxAllowedChange = engine.maxIdleRPMIncreasePerSecond * Time.fixedDeltaTime;
                                 return Mathf.Min(desiredMotorRPM, motorRPM + maxAllowedChange);
                             }
                             else
                             {
-                                float maxAllowedChange = engine.maxIdleRPMDecreasePerSecond * Time.deltaTime;
+                                float maxAllowedChange = engine.maxIdleRPMDecreasePerSecond * Time.fixedDeltaTime;
                                 return Mathf.Max(desiredMotorRPM, motorRPM - maxAllowedChange);
                             }
                         }

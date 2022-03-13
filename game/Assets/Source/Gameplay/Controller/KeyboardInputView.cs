@@ -19,13 +19,13 @@ namespace Race.Gameplay
     public class KeyboardInputView : MonoBehaviour, ICarInputView
     {
         [SerializeField] internal KeyboardInputSmoothingParameters _smoothingParameters;
-        private CarControls.PlayerActions _player;
+        [SerializeField] internal InputManager _inputManager;
+        private CarControls.PlayerActions Player => _inputManager.CarControls.Player;
         private CarProperties _properties;
 
         public void Enable(CarProperties properties)
         {
-            _player = new CarControls().Player;
-            _player.Enable();
+            Player.Enable();
             _properties = properties;
         }
 
@@ -33,37 +33,46 @@ namespace Race.Gameplay
         {
             get
             {
+                // I'm a little uneasy about this one.
+                // I guess we just say that the movement data in the driving state is only to change in 
+                // FixedUpdate(), then this is fine.
+                // But I still kind of dislike that we tie ourselves to the engine like this here,
+                // even though we cannot get "pure" input data without the engine backing us up.
+                float timeSinceLastInput = Time.fixedDeltaTime;
+
                 CarMovementInputValues result;
+                var player = Player;
                 // In case of brake, we just apply the read amount.
                 // This is different for motor torque, where we want to allow gradual changes.
                 // Maybe?? I'm not sure. We might want that damping here too.
-                result.Brakes = _player.Backward.ReadValue<float>();
+                result.Brakes = player.Backward.ReadValue<float>();
 
                 result.Forward = MathHelper.GetValueChangedByAtMost(
                     _properties.DataModel.DrivingState.motorTorqueInputFactor,
-                    desiredValue: _player.Forward.ReadValue<float>(),
-                    _smoothingParameters.maxMotorTorqueInputFactorChangePerSecond * Time.deltaTime);
+                    desiredValue: player.Forward.ReadValue<float>(),
+                    _smoothingParameters.maxMotorTorqueInputFactorChangePerSecond * timeSinceLastInput);
 
                 result.Turn = MathHelper.GetValueChangedByAtMost(
                     _properties.DataModel.DrivingState.steeringInputFactor,
-                    desiredValue: _player.Turn.ReadValue<float>(),
+                    desiredValue: player.Turn.ReadValue<float>(),
                     // This one might be part of the controller tho,
                     // Because the amount a wheel can turn should be constrained.
-                    _smoothingParameters.maxSteeringAngleInputFactorChangePerSecond * Time.deltaTime);
+                    _smoothingParameters.maxSteeringAngleInputFactorChangePerSecond * timeSinceLastInput);
 
                 return result;
             }
         }
 
-        public bool Clutch => _player.Clutch.ReadValue<float>() > 0;
+        public bool Clutch => Player.Clutch.ReadValue<float>() > 0;
 
         public GearInputType Gear
         {
             get
             {
-                if (_player.GearUp.WasPerformedThisFrame())
+                var player = Player;
+                if (player.GearUp.WasPerformedThisFrame())
                     return GearInputType.GearUp;
-                if (_player.GearDown.WasPerformedThisFrame())
+                if (player.GearDown.WasPerformedThisFrame())
                     return GearInputType.GearDown;
                 return GearInputType.None;
             }
