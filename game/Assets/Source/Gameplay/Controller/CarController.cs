@@ -40,7 +40,7 @@ namespace Race.Gameplay
         public float steeringInputFactor;
 
         /// <summary>
-        /// The gear from which to take the gear ratio for torque calcucations.
+        /// The gear from which to take the gear ratio for torque calculations.
         /// </summary>
         public int gearIndex;
 

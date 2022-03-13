@@ -2,7 +2,6 @@ using UnityEngine;
 using TMPro;
 using static EngineCommon.Assertions;
 using EngineCommon;
-using UnityEngine.Serialization;
 using System;
 
 namespace Race.Gameplay
@@ -13,6 +12,7 @@ namespace Race.Gameplay
         // Just functional
         public float minValue;
         public float maxValue;
+        public readonly float Length => maxValue - minValue;
     }
 
     [System.Serializable]
