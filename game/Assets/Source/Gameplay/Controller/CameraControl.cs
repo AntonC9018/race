@@ -31,6 +31,12 @@ namespace Race.Gameplay
             _inputManager.CarControls.Player.SwitchCamera.performed += OnSwitchCamera;
         }
 
+        void Destroy()
+        {
+            if (_inputManager != null)
+                _inputManager.CarControls.Player.SwitchCamera.performed -= OnSwitchCamera;
+        }
+
         private void OnSwitchCamera(InputAction.CallbackContext callbackContext)
         {
             assert(callbackContext.performed);
@@ -42,6 +48,7 @@ namespace Race.Gameplay
             _currentCameraIndex = newIndex;
         }
 
+        // Does not need to be `LateUpdate`, because we're handling movement in `FixedUpdate`.
         void Update()
         {
             // TODO: something fancier
