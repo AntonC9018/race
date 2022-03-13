@@ -191,3 +191,7 @@ More on the code / design:
 * Applying the scale and rotation of liked objects in Blender: https://blender.stackexchange.com/a/64080
 
 * The new input system docs: https://docs.unity3d.com/Packages/com.unity.inputsystem@1.0/manual/Installation.html
+
+* Custom UI meshes example: https://www.hallgrimgames.com/blog/2018/11/25/custom-unity-ui-meshes
+
+* TextMeshPro gameobjects performance thread: https://forum.unity.com/threads/many-text-mesh-pro-elements-in-a-scene-what-is-a-possible-solution.665614/

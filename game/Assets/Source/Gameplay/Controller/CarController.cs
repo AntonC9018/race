@@ -291,7 +291,6 @@ namespace Race.Gameplay
                         const float maxEfficiency = 1.0f;
                         // Unclamped because we've contrained the c already.
                         engineEfficiency = Mathf.LerpUnclamped(engine.minEfficiency, maxEfficiency, c);
-                        Debug.Log("Efficiency: " + engineEfficiency);
                     }
 
                     motorTorqueApplied = engine.maxTorque * engineEfficiency * movementInputs.Forward

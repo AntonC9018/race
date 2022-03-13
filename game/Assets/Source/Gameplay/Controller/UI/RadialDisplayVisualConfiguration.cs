@@ -14,11 +14,12 @@ namespace Race.Gameplay
         order = 51)]
     public class RadialDisplayVisualConfiguration : ScriptableObject
     {
-        
         [InspectorName("Min Angle (degrees)")]
+        [Range(-360, 360)]
         [SerializeField] private float _minAngle;
         
         [InspectorName("Max Angle (degrees)")]
+        [Range(-360, 360)]
         [SerializeField] private float _maxAngle;
 
         // TODO: always store internally in radians.

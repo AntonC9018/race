@@ -837,13 +837,13 @@ MonoBehaviour:
   _visualConfiguration: {fileID: 11400000, guid: fefd3157aa7ea414f8b563a3c8c7e211, type: 2}
   _pipConfiguration:
     largePipInfo:
-      count: 8
-      angleWidthDegrees: 1.5
-      heightInRadii: 0.22
+      count: 13
+      width: 0.234
+      heightInRadii: 0.21
     smallPipInfo:
       count: 2
-      angleWidthDegrees: 0.6
-      heightInRadii: 0.12
+      width: 0.328
+      heightInRadii: 0.1
     pipEdgeOffsetInRadii: 0
 --- !u!222 &1852148772
 CanvasRenderer:
@@ -868,7 +868,7 @@ MonoBehaviour:
   _pips: {fileID: 1852148771}
   _configuration:
     pipsPerText: 2
-    textOffsetFromPipInRadii: 0.16
+    textOffsetFromPipInRadii: 0.124
   _textGameObjectPrefab: {fileID: 8206441098313678216, guid: 3718bdf812a93094ca6a3345fc18e2be, type: 3}
   _needleTransform: {fileID: 1607157351}
 --- !u!114 &1852148774

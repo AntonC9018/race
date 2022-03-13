@@ -2,6 +2,7 @@ using System;
 using EngineCommon;
 using UnityEngine;
 using UnityEngine.UI;
+using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
@@ -11,14 +12,16 @@ namespace Race.Gameplay
         // This count is bugging me a little... it's the only thing that's going to change
         // depending on the speed ranges of the car.
         // So it should probably be separated out.
+        [Min(0)]
         public int count;
         
         /// <summary>
-        /// The width of the pip, expressed in ~~radians~~ degrees.
-        /// The actual pixel width of the pips will be dependent on the angle range.
+        /// Expressed in the percentage from the space alloted to the segment the pip is in.
         /// </summary>
-        public float angleWidthDegrees;
-        public float AngleWidth => Mathf.Deg2Rad * angleWidthDegrees;
+        [Range(0, 1)]
+        public float width;
+
+        [Range(0, 1)]
         public float heightInRadii;
     }
 
@@ -27,6 +30,8 @@ namespace Race.Gameplay
     {
         public PipInfo largePipInfo;
         public PipInfo smallPipInfo;
+
+        [Range(0, 1)]
         public float pipEdgeOffsetInRadii;
     }
 
@@ -35,8 +40,9 @@ namespace Race.Gameplay
         [SerializeField] internal Texture _pipTexture;
         [SerializeField] internal RadialDisplayVisualConfiguration _visualConfiguration;
         [SerializeField] internal PipConfiguration _pipConfiguration;
-
         public ref PipConfiguration PipConfiguration => ref _pipConfiguration;
+
+        public override Texture mainTexture => _pipTexture != null ? s_WhiteTexture : _pipTexture;
 
         /// <summary>
         /// Call after resetting PipConfiguration.
@@ -161,25 +167,31 @@ namespace Race.Gameplay
             public int Index => _radialInterpolationPrimitive.Index;
         }
 
-        public struct PipPositioningInfo
+        public readonly struct PipPositioningInfo
         {
-            public float minAngle;
-            
+            public readonly float minAngle;
+            public readonly Pip largePipInfo;
+            public readonly Pip smallPipInfo;
             public struct Pip
             {
                 public Vector2 size;
                 public int count;
-                public float angleIncrease;
+                public float anglePerSegment;
                 public float distanceToBottom;
             }
-            public Pip largePipInfo;
-            public Pip smallPipInfo;
+
+            public PipPositioningInfo(float minAngle, Pip largePipInfo, Pip smallPipInfo)
+            {
+                this.minAngle = minAngle;
+                this.largePipInfo = largePipInfo;
+                this.smallPipInfo = smallPipInfo;
+            }
 
             public PipOffsetEnumerator EnumerateLargePipOffsets()
             {
                 return new PipOffsetEnumerator(
                     largePipInfo.distanceToBottom,
-                    CircleHelper.InterpolateAngles(minAngle, largePipInfo.angleIncrease, largePipInfo.count));
+                    CircleHelper.InterpolateAngles(minAngle, largePipInfo.anglePerSegment, largePipInfo.count));
             }
 
             public PipOffsetEnumerator EnumerateSmallPipOffsets(float fromAngle)
@@ -187,7 +199,7 @@ namespace Race.Gameplay
                 return new PipOffsetEnumerator(
                     smallPipInfo.distanceToBottom,
                     CircleHelper.InterpolateAngles(
-                        fromAngle + smallPipInfo.angleIncrease, smallPipInfo.angleIncrease, smallPipInfo.count));
+                        fromAngle + smallPipInfo.anglePerSegment, smallPipInfo.anglePerSegment, smallPipInfo.count));
             }
 
             internal bool HasSmallPipsAt(int largePipIndex)
@@ -206,52 +218,48 @@ namespace Race.Gameplay
             RadialDisplayVisualConfiguration visualConfiguration,
             in PipConfiguration pipConfiguration)
         {
-            PipPositioningInfo result;
-
             float angleRangeLength = visualConfiguration.AngleRangeLength;
             float pipEdgePixelOffset = pipConfiguration.pipEdgeOffsetInRadii * circleInfo.radius;
 
-            PipPositioningInfo.Pip GetInitialPipInfo(in PipInfo pipInfo, in CircleInfo circle)
+            PipPositioningInfo.Pip GetPipInfo(
+                in PipInfo pipInfo, in CircleInfo circle,
+                float allotedAngle, int segmentCount)
             {
-                PipPositioningInfo.Pip pip;
+                assert(segmentCount > 0);
 
-                float normalizedWidth = pipInfo.AngleWidth / angleRangeLength;
-                float width = circle.radius * 2 * Mathf.PI * normalizedWidth;
+                PipPositioningInfo.Pip result;
+
+                float anglePerSegment = allotedAngle / segmentCount;
+                result.anglePerSegment = anglePerSegment;
+
+                float angleWidth = pipInfo.width * anglePerSegment;
+                float width = Mathf.Abs(circle.radius * angleWidth);
                 float height = circle.radius * pipInfo.heightInRadii;
-                pip.size = new Vector2(width, height);
+                result.size = new Vector2(width, height);
 
-                pip.count = pipInfo.count;
-                pip.distanceToBottom = circle.radius - pipEdgePixelOffset - pip.size.y;
+                result.count = pipInfo.count;
+                result.distanceToBottom = circle.radius - pipEdgePixelOffset - result.size.y;
                 
-                // Zeroed out, because uninitializing is not allowed in C#
-                pip.angleIncrease = 0;
-                
-                return pip;
+                return result;
             }
 
-            float angleIncreasePerLargePip;
+            PipPositioningInfo.Pip large;
             {
-                var large = GetInitialPipInfo(pipConfiguration.largePipInfo, circleInfo);
-
-                float numLargePipSegments = large.count + -1;
-                angleIncreasePerLargePip = visualConfiguration.SignedAngleRangeLength / numLargePipSegments;
-                large.angleIncrease = angleIncreasePerLargePip;
-
-                result.largePipInfo = large;
+                ref readonly var a = ref pipConfiguration.largePipInfo;
+                large = GetPipInfo(a, circleInfo,
+                    allotedAngle: visualConfiguration.SignedAngleRangeLength,
+                    segmentCount: Math.Max(a.count - 1, 1));
             }
 
+            PipPositioningInfo.Pip small;
             {
-                var small = GetInitialPipInfo(pipConfiguration.smallPipInfo, circleInfo);
-
-                float numSmallSegmentsPerLargePip = small.count + 1;
-                small.angleIncrease = angleIncreasePerLargePip / numSmallSegmentsPerLargePip;
-
-                result.smallPipInfo = small;
+                ref readonly var a = ref pipConfiguration.smallPipInfo;
+                small = GetPipInfo(a, circleInfo,
+                    allotedAngle: large.anglePerSegment,
+                    segmentCount: a.count + 1);
             }
 
-            result.minAngle = visualConfiguration.MinAngle;
-
-            return result;
+            return new PipPositioningInfo(visualConfiguration.MinAngle, large, small);
         }
     }
 }

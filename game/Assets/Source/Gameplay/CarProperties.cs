@@ -106,7 +106,7 @@ namespace Race.Gameplay
 
         void Awake()
         {
-            CarColliderSetupHelper.AdjustCenterOfMass(DataModel.ColliderParts);
+            CarColliderSetupHelper.AdjustCenterOfMass(ref DataModel._colliderParts);
 
             ref readonly var spec = ref DataModel.Spec;
             var gearRatios = spec.transmission.gearRatios;

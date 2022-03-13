@@ -19,7 +19,10 @@ namespace Race.Gameplay
     public struct RadialValueVisualConfiguration
     {
         // Purely visual
+        [Min(1)]
         public int pipsPerText;
+        
+        [Range(0, 1)]
         public float textOffsetFromPipInRadii;
     }
 
@@ -70,11 +73,12 @@ namespace Race.Gameplay
                     }
 
                     TMP_Text textComponent;
+                    GameObject textGameObject;
                     // Create new / reuse existing game object.
                     // TODO: might want to refactor the array in a wrapper.
                     if (textIndex >= oldTextCount)
                     {
-                        var textGameObject = GameObject.Instantiate(_textGameObjectPrefab);
+                        textGameObject = GameObject.Instantiate(_textGameObjectPrefab);
 
                         textComponent = textGameObject.GetComponent<TMP_Text>();
                         assert(textComponent != null);
@@ -83,7 +87,8 @@ namespace Race.Gameplay
                     else
                     {
                         textComponent = _valueTexts[textIndex];
-                        textComponent.gameObject.SetActive(true);
+                        textGameObject = textComponent.gameObject;
+                        textGameObject.SetActive(true);
                     }
 
                     {
@@ -97,7 +102,9 @@ namespace Race.Gameplay
                     {
                         float valueOffset = largePipIndex * largePipGap;
                         int value = Mathf.RoundToInt(valueRange.minValue + valueOffset);
-                        textComponent.text = value.ToString();
+                        var text = value.ToString();
+                        textComponent.text = text;
+                        textGameObject.name = text;
                     }
                 }
             }

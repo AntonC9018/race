@@ -94,11 +94,7 @@ namespace EngineCommon
         {
             var bounds = transform.rect;
             var radius = Mathf.Min(bounds.yMax - bounds.yMin, bounds.xMax - bounds.xMin) / 2;
-            return new CircleInfo
-            {
-                radius = radius,
-                center = bounds.center,
-            };
+            return new CircleInfo(radius, bounds.center);
         }
 
         public struct RadialInterpolation
@@ -131,9 +127,15 @@ namespace EngineCommon
     }
 
     [System.Serializable]
-    public struct CircleInfo
+    public readonly struct CircleInfo
     {
-        public float radius;
-        public Vector2 center;
+        public readonly float radius;
+        public readonly Vector2 center;
+
+        public CircleInfo(float radius, Vector2 center)
+        {
+            this.radius = radius;
+            this.center = center;
+        }
     }
 }

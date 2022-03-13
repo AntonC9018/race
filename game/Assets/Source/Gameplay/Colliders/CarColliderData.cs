@@ -22,12 +22,12 @@ namespace Race.Gameplay
     {
         public Transform container;
         public CarPart<BoxCollider> body;
-        public Rigidbody Rigidbody => body.collider.attachedRigidbody; 
+        public readonly Rigidbody Rigidbody => body.collider.attachedRigidbody; 
 
         // The wheels are positioned according to WheelLocation.
         public CarPart<WheelCollider>[] wheels;
 
-        public ref CarPart<WheelCollider> GetWheel(WheelLocation location)
+        public readonly ref CarPart<WheelCollider> GetWheel(WheelLocation location)
         {
             return ref wheels[(int) location];
         }
@@ -35,7 +35,7 @@ namespace Race.Gameplay
 
     public static class CarColliderSetupHelper
     {
-        public static void AdjustCenterOfMass(in this CarColliderParts colliderParts)
+        public static void AdjustCenterOfMass(ref this CarColliderParts colliderParts)
         {
             Vector3 centerOfMassAdjustmentVector;
             {
