@@ -29,8 +29,9 @@ namespace Race.Gameplay
     {
         /// <summary>
         /// The currently applied torque, normalized between 0 and 1.
-        /// Increases as the user holds down the forward key.
+        /// Increases e.g. as the user holds down the forward key.
         /// The actual torque applied to the wheel is going to be rescaled by this amount.
+        /// "throttle" is the official term for this, I think.
         /// </summary>
         public float motorTorqueInputFactor;
         public float brakeTorqueInputFactor;

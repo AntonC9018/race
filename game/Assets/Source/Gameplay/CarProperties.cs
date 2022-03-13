@@ -95,6 +95,9 @@ namespace Race.Gameplay
 
         [SerializeField] internal CarVisualParts _visualParts;
         public ref readonly CarVisualParts VisualParts => ref _visualParts;
+
+        // For just configure here, but this should get to us from elsewhere.
+        [SerializeField] private CarColliderSetupHelper.CenterOfMassAdjustmentParameters _centerOfMassAdjustmentParameters;
         
         // TODO: A separate event object could be helpful.
         public UnityEvent<CarDataModel> OnDrivingStateChanged;
@@ -106,7 +109,7 @@ namespace Race.Gameplay
 
         void Awake()
         {
-            CarColliderSetupHelper.AdjustCenterOfMass(ref DataModel._colliderParts);
+            CarColliderSetupHelper.AdjustCenterOfMass(ref DataModel._colliderParts, _centerOfMassAdjustmentParameters);
 
             ref readonly var spec = ref DataModel.Spec;
             var gearRatios = spec.transmission.gearRatios;

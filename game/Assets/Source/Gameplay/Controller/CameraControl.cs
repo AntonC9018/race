@@ -17,13 +17,13 @@ namespace Race.Gameplay
             assert(_inputManager is not null);
 
             _currentCameraIndex = 0;
-            var transfrom = this.transform;
+            var transform = this.transform;
             var childCount = transform.childCount;
             assert(childCount > 0, "No cameras?");
             
-            transfrom.GetChild(0).gameObject.SetActive(true);
+            transform.GetChild(0).gameObject.SetActive(true);
             for (int i = 1; i < childCount; i++)
-                transfrom.GetChild(i).gameObject.SetActive(false);
+                transform.GetChild(i).gameObject.SetActive(false);
         }
 
         void Start()

@@ -35,17 +35,24 @@ namespace Race.Gameplay
 
     public static class CarColliderSetupHelper
     {
-        public static void AdjustCenterOfMass(ref this CarColliderParts colliderParts)
+        // I expect this to get more complicated eventually
+        // (e.g. make the back heavier, adjust according to wheels, etc.)
+        // For now, we only lower it a bit for stability.
+        [System.Serializable]
+        public struct CenterOfMassAdjustmentParameters
+        {
+            [Range(0, 2)]
+            public float loweringRatio; 
+        }
+
+        public static void AdjustCenterOfMass(ref this CarColliderParts colliderParts, in CenterOfMassAdjustmentParameters parameters)
         {
             Vector3 centerOfMassAdjustmentVector;
             {
                 var bodyCollider = colliderParts.body.collider;
                 assert(bodyCollider != null);
 
-                // I expect this to get more complicated eventually
-                // (e.g. make the back heavier, adjust according to wheels, etc.)
-                // For now, we only lower it a bit for stability.
-                float loweringRatio = 0.3f;
+                float loweringRatio = parameters.loweringRatio;
                 float altitudeLowering = -bodyCollider.bounds.size.y * loweringRatio / 2;
 
                 centerOfMassAdjustmentVector = new Vector3(0, altitudeLowering, 0);
