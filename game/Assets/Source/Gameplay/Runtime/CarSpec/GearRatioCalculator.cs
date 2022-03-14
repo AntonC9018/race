@@ -22,7 +22,7 @@ namespace Race.Gameplay
 
         public void Compute()
         {
-            float circumference = carProperties.DataModel.ColliderParts.wheels[0].GetCircumference();
+            float circumference = carProperties.DataModel.ColliderParts.wheels[0].collider.GetCircumference();
 
             computedGearRatios = new float[desiredOptimalSpeeds.Length];
             

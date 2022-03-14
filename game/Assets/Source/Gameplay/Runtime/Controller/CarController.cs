@@ -123,7 +123,7 @@ namespace Race.Gameplay
 
             float speedMetersPerSecond = rigidbody.velocity.magnitude;
             float speedMetersPerMinute = speed * 60.0f;
-            float circumference = dataModel.ColliderParts.wheels[0].GetCircumference();
+            float circumference = dataModel.ColliderParts.wheels[0].collider.GetCircumference();
             float expectedWheelRPM = speedMetersPerMinute / circumference;
 
             GUILayout.Label($"expectedWheelRPM: {expectedWheelRPM}");

@@ -6,7 +6,8 @@
         "EngineCommon",
         "Unity.TextMeshPro",
         "Unity.InputSystem",
-        "CommandTerminal"
+        "CommandTerminal",
+        "Gameplay.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

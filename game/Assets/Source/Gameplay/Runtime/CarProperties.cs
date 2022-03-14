@@ -53,7 +53,7 @@ namespace Race.Gameplay
         {
             var maxMotorRPM = dataModel.Spec.engine.maxRPM;;
             var maxGearRatio = dataModel.Spec.transmission.gearRatios[^1];
-            var circumferenceOfWheel = dataModel.ColliderParts.wheels[0].GetCircumference();
+            var circumferenceOfWheel = dataModel.ColliderParts.wheels[0].collider.GetCircumference();
             var maxWheelRPM = maxMotorRPM / maxGearRatio;
             var maxSpeed = FromRPMToSpeed(maxWheelRPM, circumferenceOfWheel);
             return maxSpeed;
@@ -72,7 +72,7 @@ namespace Race.Gameplay
         /// </summary>
         public static float FromRPMToSpeed(float rpm, in CarPart<WheelCollider> wheel)
         {
-            return FromRPMToSpeed(rpm, wheel.GetCircumference());
+            return FromRPMToSpeed(rpm, wheel.collider.GetCircumference());
         }
 
         /// <summary>
