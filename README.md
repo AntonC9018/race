@@ -161,6 +161,12 @@ More on the code / design:
 
 - I'm enabling both input systems, because the command terminal package uses the old input system.
 
+- Most of the heavy lifting for car movement is done by the built-in `WheelCollider`, while the engine simulation is custom.
+  I have designed a gear based system that computes the current RPM of the engine from the current RPM of the wheels,
+  then uses that to compute the efficiency of the engine, which is then used to compute and apply torque to the wheels.
+
+- The speedometer and the tachometer are created dynamically based on the properties of the selected car.
+
 
 ## Links
 

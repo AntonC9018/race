@@ -7,6 +7,3 @@
 [submodule "Assets/Source/CommandTerminal"]
 	path = game/Assets/Source/CommandTerminal
 	url = https://github.com/AntonC9018/command_terminal
-[submodule "game/Packages/com.hextantstudios.utilities"]
-	path = game/Packages/com.hextantstudios.utilities
-	url = https://github.com/AntonC9018/com.hextantstudios.utilities
