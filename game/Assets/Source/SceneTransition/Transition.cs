@@ -51,19 +51,24 @@ namespace Race.SceneTransition
             float newTorque = torque;
             float previousTorque = torqueBaseline;
             // How much of the new torque is enough to get the previous torque.
-            float scale = previousTorque / newTorque;
+            float neededEfficiencyForOldTorque = previousTorque / newTorque;
 
-            float motorRPMAtOldEfficiency = CarDataModelHelper.GetLowEngineRPMAtEngineEfficiency(scale, reference);
-            float deltaRPM = motorRPMAtOldEfficiency - reference.optimalRPM;
+            float motorRPMAtOldTorque = CarDataModelHelper.GetLowEngineRPMAtEngineEfficiency(neededEfficiencyForOldTorque, reference);
+            float deltaRPM = motorRPMAtOldTorque - reference.optimalRPM;
 
             // So after this we either adjust the max RPM and the optimal RPM,
             // or change the gear ratios.
             // I'm going to adjust the gear ratios.
             var transmission = new CarTransmissionInfo();
             float[] newGearRatios = transmission.gearRatios[..];
+
+            // was:     wheelRPM * g = N
+            // became:  wheelRPM * g' = N'
+            // N' = oldRPM, g' = new gear
+            // g' = N' / wheelRPM = f * N / wheelRPM = f * g
+            for (int i = 0; i < newGearRatios.Length; i++)
+                newGearRatios[i] *= neededEfficiencyForOldTorque;
             
-
-
             return true;
         }
 
