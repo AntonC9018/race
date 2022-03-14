@@ -387,19 +387,19 @@ MonoBehaviour:
   RightClickMe: 0
   carProperties: {fileID: 1671019733}
   desiredOptimalSpeeds:
-  - -5
-  - 5
-  - 15
-  - 40
-  - 60
-  - 100
+  - -32.25806
+  - 32.25806
+  - 64.51613
+  - 96.77419
+  - 129.03226
+  - 161.29036
   computedGearRatios:
-  - -87.40164
-  - 87.40164
-  - 29.133879
-  - 10.925205
-  - 7.2834697
-  - 4.370082
+  - -6.7736278
+  - 6.7736278
+  - 3.3868136
+  - 2.2578757
+  - 1.6934068
+  - 1.3547251
 --- !u!4 &1054960052
 Transform:
   m_ObjectHideFlags: 0
@@ -908,7 +908,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: car0_physics
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1671019735, guid: b773acca8bbda1146b1cab322a5de301, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: b773acca8bbda1146b1cab322a5de301, type: 3}
 --- !u!1001 &1921171471454235325
 PrefabInstance:

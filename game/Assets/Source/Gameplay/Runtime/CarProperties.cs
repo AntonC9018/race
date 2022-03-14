@@ -85,6 +85,8 @@ namespace Race.Gameplay
             return FromRPMToSpeed(dataModel.DrivingState.wheelRPM, dataModel.ColliderParts.wheels[0]);
         }
 
+        const float maxEngineEfficiency = 1.0f;
+
         // The idea is that the engine efficiency peaks when it's at the optimal RPM.
         // It dies down towards the edges (0 and `maxRPM` for the wheels).
         public static float GetEngineEfficiency(float motorRPM, in CarEngineInfo engine)
@@ -93,27 +95,45 @@ namespace Race.Gameplay
             float a;
             float b;
             float c;
-            const float maxEfficiency = 1.0f;
 
             if (motorRPM < engine.optimalRPM)
             {
                 a = engine.optimalRPM - motorRPM;
                 b = engine.optimalRPM;
-                c = Mathf.Lerp(maxEfficiency, engine.efficiencyAtIdleRPM, a / b);
+                c = Mathf.Lerp(maxEngineEfficiency, engine.efficiencyAtIdleRPM, a / b);
             }
             else
             {
                 a = engine.maxRPM - motorRPM;
                 b = engine.maxRPM - engine.optimalRPM;
-                c = Mathf.Lerp(engine.efficiencyAtMaxRPM, maxEfficiency, a / b);
+                c = Mathf.Lerp(engine.efficiencyAtMaxRPM, maxEngineEfficiency, a / b);
             }
 
             return c;
         }
 
-        public static float GetMotorRPM(float wheelRPM, float gearRatio)
+        // The inverse of GetEngineEfficiency.
+        // TODO: unittest for keeping the two in sync.
+        /// <summary>
+        /// By the spec, gives estimates rather than precise results.
+        /// Does not depend on torque.
+        /// </summary>
+        public static float GetLowEngineRPMAtEngineEfficiency(float efficiency, in CarEngineInfo engine)
         {
-            return wheelRPM * gearRatio; 
+            float a = efficiency - engine.efficiencyAtIdleRPM;
+            float b = maxEngineEfficiency - engine.efficiencyAtIdleRPM;
+            return Mathf.Lerp(engine.idleRPM, engine.optimalRPM, a / b);
+        }
+
+        /// <summary>
+        /// By the spec, gives estimates rather than precise results.
+        /// Does not depend on torque.
+        /// </summary>
+        public static float GetHighEngineRPMAtEngineEfficiency(float efficiency, in CarEngineInfo engine)
+        {
+            float a = efficiency - engine.efficiencyAtMaxRPM;
+            float b = maxEngineEfficiency - engine.efficiencyAtMaxRPM;
+            return Mathf.Lerp(engine.maxRPM, engine.optimalRPM, a / b);
         }
     }
 

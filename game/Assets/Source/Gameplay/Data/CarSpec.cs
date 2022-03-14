@@ -18,6 +18,9 @@ namespace Race.Gameplay
     [System.Serializable]
     public struct CarTransmissionInfo
     {
+        /// <summary>
+        /// engineRPM / wheelRPM
+        /// </summary>
         public float[] gearRatios;
     }
 

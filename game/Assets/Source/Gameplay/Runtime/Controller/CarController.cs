@@ -225,7 +225,7 @@ namespace Race.Gameplay
                     float gearRatio = spec.transmission.gearRatios[drivingState.gearIndex];
                     // RPM between the engine and the wheels.
                     // We don't do any damping here either (at least for now).
-                    float desiredMotorRPM = CarDataModelHelper.GetMotorRPM(wheelRPM, gearRatio);
+                    float desiredMotorRPM = wheelRPM * gearRatio;
 
                     // The RPM here should change instantly (probably).
                     // motorRPM = GetMotorRPM(desiredMotorRPM, _carEngineSpec, _carDrivingState.motorRMP);
