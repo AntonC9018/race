@@ -174,8 +174,6 @@ More on the code / design:
 
 * Unity optimization, including UI: https://www.youtube.com/watch?v=_wxitgdx-UI
 
-* Car model created by Bob Kimani (Kimz Auto): https://free3d.com/3d-model/bugatti-chiron-2017-model-31847.html
-
 * Blender manual: https://docs.blender.org/manual/en/3.0/
 
 * On weighted normals: http://www.bytehazard.com/articles/vertnorm.html

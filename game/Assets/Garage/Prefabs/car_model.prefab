@@ -47,9 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _carPrefabInfos:
   - prefab: {fileID: 1977673978104148287, guid: 7e5fe5a75f4e53e42a2d17b08723a89c, type: 3}
-  - prefab: {fileID: 5171509889710773593, guid: bc5e846c3c8954e4da06cf44326d2fd0, type: 3}
   _colorPicker: {fileID: 0}
-  _carNameDropdown: {fileID: 0}
   OnCarSelected:
     m_PersistentCalls:
       m_Calls: []

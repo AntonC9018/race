@@ -295,6 +295,8 @@ GameObject:
   - component: {fileID: 1835113493857528045}
   - component: {fileID: 1835113493857528041}
   - component: {fileID: 1835113493857528040}
+  - component: {fileID: 1671019734}
+  - component: {fileID: 1671019735}
   m_Layer: 0
   m_Name: car0_physics
   m_TagString: Untagged
@@ -349,7 +351,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _carProperties: {fileID: 1835113493857528040}
   _dataSmoothing:
-    maxWheelRPMJumpPerSecond: 0
+    maxWheelRPMJumpPerSecond: 200
 --- !u!114 &1835113493857528040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -393,9 +395,39 @@ MonoBehaviour:
     - {fileID: 1442675502732526858}
     - {fileID: 6940620122425502813}
     - {fileID: 6039305335809462950}
+  _centerOfMassAdjustmentParameters:
+    loweringRatio: 0.77
   OnDrivingStateChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1671019734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1835113493857528050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 189b897afb0603e499b2fe84264d093f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _smoothingParameters:
+    maxSteeringAngleInputFactorChangePerSecond: 1
+    maxMotorTorqueInputFactorChangePerSecond: 2
+  _inputManager: {fileID: 0}
+--- !u!114 &1671019735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1835113493857528050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 180f92256ddc33549a7a22d3b55450e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1835113493882542809
 GameObject:
   m_ObjectHideFlags: 0
