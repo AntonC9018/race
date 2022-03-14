@@ -225,74 +225,13 @@ namespace Race.Gameplay
                     float gearRatio = spec.transmission.gearRatios[drivingState.gearIndex];
                     // RPM between the engine and the wheels.
                     // We don't do any damping here either (at least for now).
-                    float desiredMotorRPM = wheelRPM * gearRatio;
+                    float desiredMotorRPM = CarDataModelHelper.GetMotorRPM(wheelRPM, gearRatio);
 
                     // The RPM here should change instantly (probably).
                     // motorRPM = GetMotorRPM(desiredMotorRPM, _carEngineSpec, _carDrivingState.motorRMP);
                     motorRPM = desiredMotorRPM;
-                    
-                    // The idea is that the engine efficiency peaks when it's at the optimal RPM.
-                    // It dies down towards the edges (0 and `maxRPM` for the wheels).
-                    // We clamp it to at least `minEfficiency` so that the car can move e.g. from stationary position.
-                    float engineEfficiency;
-                    {
-                        // float a = currentRPM * (_carEngineSpec.maxRPM - currentRPM);
-                        // float b = _carEngineSpec.optimalRPM * (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
 
-                        // The reason I'm using these formulas instead of the one above is because
-                        // here a and b are closer to 1, so less loss of precision should occur.
-                        // float currentClamped = Mathf.Clamp(currentRPM, 0, _carEngineSpec.maxRPM);
-
-                        // TODO:
-                        // Math! This does not work properly, because a second order approximation
-                        // provided by the lagrangian polynomial is not good enough.
-                        // We have the additional restriction that the second derivative is always negative
-                        // (the function's derivative is strictly decreasing)
-                        // and that the point at the optimal RPM is the extreme (the derivative is 0).
-                        // 4 equations, 1 inequality -> 5 parameters, one of which is kind of free.
-                        // So the approximation should ideally be a polynomial with 5 coefficients.
-
-                        // For now I'm just going to linearly interpolate the 2 segments,
-                        // but I'd prefer a continuous function here.
-                        // The algebra gets pretty messy, see `/concepts/engine_efficiency_equation`
-
-
-                        /*
-                        // Lagrangian second order approximation, does not have the desired properties.
-                        float a = motorRPM / _carEngineSpec.optimalRPM;
-                        float b = (_carEngineSpec.maxRPM - motorRPM) / (_carEngineSpec.maxRPM - _carEngineSpec.optimalRPM);
-
-                        // May go beyond maxRPM and can even go negative if driving in reverse gear forwards
-                        // (which should not really be allowed at all, but going beyond maxRPM is definitely possible).
-                        // In such cases, the product will be below 0. The product can never go above 1 though.
-                        // Nope! I think due to floating point errors it does get above 1 sometimes.
-                        float c = Mathf.Clamp01(a * b);
-
-                        // float c = a * b;
-                        // if (c < 0)
-                        //     c = 0;
-                        */
-
-                        float a;
-                        float b;
-                        float c;
-                        if (motorRPM < engine.optimalRPM)
-                        {
-                            a = engine.optimalRPM - motorRPM;
-                            b = engine.optimalRPM;
-                            c = Mathf.Lerp(1, 0, a / b);
-                        }
-                        else
-                        {
-                            a = engine.maxRPM - motorRPM;
-                            b = engine.maxRPM - engine.optimalRPM;
-                            c = Mathf.Lerp(0, 1, a / b);
-                        }
-
-                        const float maxEfficiency = 1.0f;
-                        // Unclamped because we've contrained the c already.
-                        engineEfficiency = Mathf.LerpUnclamped(engine.minEfficiency, maxEfficiency, c);
-                    }
+                    float engineEfficiency = CarDataModelHelper.GetEngineEfficiency(motorRPM, engine);
 
                     motorTorqueApplied = engine.maxTorque * engineEfficiency * movementInputs.Forward
                         // In case the current gear ratio is negative, we're in a reverse gear.

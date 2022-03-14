@@ -62,7 +62,11 @@ namespace Race.Gameplay
         /// <summary>
         /// Needed so that it can move at all from stationary position.
         /// </summary>
-        public float minEfficiency;
+        public float efficiencyAtIdleRPM;
+
+        /// <summary>
+        /// </summary>
+        public float efficiencyAtMaxRPM;
         
         /// <summary>
         // These two are only relevant when the clutch is applied.

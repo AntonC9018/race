@@ -191,3 +191,5 @@ More on the code / design:
 * Custom UI meshes example: https://www.hallgrimgames.com/blog/2018/11/25/custom-unity-ui-meshes
 
 * TextMeshPro gameobjects performance thread: https://forum.unity.com/threads/many-text-mesh-pro-elements-in-a-scene-what-is-a-possible-solution.665614/
+
+* Optimal gears at speeds in racing cars. Used this one for gear ratio baseline data: https://www.yourdatadriven.com/best-gear-change-rpm-guide-to-optimum-gear-shift-points-in-a-racing-car/

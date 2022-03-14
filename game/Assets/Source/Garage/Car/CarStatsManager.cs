@@ -63,6 +63,12 @@ namespace Race.Garage
         [DisplayName("speed")]
         [Range(10, 200)]
         public float accelerationModifier;
+
+        /// <summary>
+        /// Factor of weight reduction.
+        /// </summary>
+        [Range(10, 200)]
+        public float lightness;
     }
 
     /// <summary>

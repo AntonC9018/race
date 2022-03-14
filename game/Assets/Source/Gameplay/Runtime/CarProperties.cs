@@ -51,7 +51,7 @@ namespace Race.Gameplay
         /// </summary>
         public static float GetMaxSpeed(this CarDataModel dataModel)
         {
-            var maxMotorRPM = dataModel.Spec.engine.maxRPM;;
+            var maxMotorRPM = dataModel.Spec.engine.maxRPM;
             var maxGearRatio = dataModel.Spec.transmission.gearRatios[^1];
             var circumferenceOfWheel = dataModel.ColliderParts.wheels[0].collider.GetCircumference();
             var maxWheelRPM = maxMotorRPM / maxGearRatio;
@@ -84,13 +84,44 @@ namespace Race.Gameplay
             // float speed = model.ColliderParts.Rigidbody.velocity.magnitude;
             return FromRPMToSpeed(dataModel.DrivingState.wheelRPM, dataModel.ColliderParts.wheels[0]);
         }
+
+        // The idea is that the engine efficiency peaks when it's at the optimal RPM.
+        // It dies down towards the edges (0 and `maxRPM` for the wheels).
+        public static float GetEngineEfficiency(float motorRPM, in CarEngineInfo engine)
+        {
+            // I think in real cars the function should be more sophisticated.
+            float a;
+            float b;
+            float c;
+            const float maxEfficiency = 1.0f;
+
+            if (motorRPM < engine.optimalRPM)
+            {
+                a = engine.optimalRPM - motorRPM;
+                b = engine.optimalRPM;
+                c = Mathf.Lerp(maxEfficiency, engine.efficiencyAtIdleRPM, a / b);
+            }
+            else
+            {
+                a = engine.maxRPM - motorRPM;
+                b = engine.maxRPM - engine.optimalRPM;
+                c = Mathf.Lerp(engine.efficiencyAtMaxRPM, maxEfficiency, a / b);
+            }
+
+            return c;
+        }
+
+        public static float GetMotorRPM(float wheelRPM, float gearRatio)
+        {
+            return wheelRPM * gearRatio; 
+        }
     }
 
     public class CarProperties : MonoBehaviour
     {
         // For now, show it in the inspector.
         // In the end it should be set up dynamically.
-        [SerializeField] internal CarDataModel _dataModel;
+        internal CarDataModel _dataModel;
         public CarDataModel DataModel => _dataModel;
 
         [SerializeField] internal CarVisualParts _visualParts;
