@@ -4,9 +4,8 @@
 2. Install [.NET6 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0) to be able to compile and run the code generator.
 3. Install [Unity 2021.2.12f1](https://unity3d.com/unity/whats-new/2021.2.12).
 4. Install [Git LFS](https://git-lfs.github.com/).
-5. Install [Blender](https://www.blender.org/) to work with models (and to enable their export).
-6. Clone this repository `git clone https://github.com/AntonC9018/race --recursive`.
-7. Run `setup.bat` in the root directory.
+5. Clone this repository `git clone https://github.com/AntonC9018/race --recursive`.
+6. Run `setup.bat` in the root directory.
 
 
 > IMPORTANT!
@@ -19,6 +18,12 @@
 > Also, install D before running it, because it just builds the `dev` tool and delegates all of the work to it.
 >
 > If you forgot to run it, just roll back the git changes, run it, and then reopen the editor.
+
+
+Additionally:
+
+- Install [Blender](https://www.blender.org/) to work with models.
+
 
 
 ## Requirements
@@ -68,18 +73,10 @@ On the gameplay elements:
 
 
 - After that we have a dropdown that selects one of the 2 cars available.
-  The first car (car0) I made myself in Blender (I'm pretty much a beginner, which is why it's so bad),
-  the second car is a model I've downloaded online.
-  
-  I had to cut down on the number of triangles of that, there were so many it lagged my computer out (it still does that to some extent).
-  I did that by removing some of the subsurface modifiers in Blender.
-  I couldn't drop the resolution of the lattices or whatever they are called (the grid things), because I simply am not qualified enough to understand how that person even made them.
-  Also, this second model has a cube on the bottom, which I tried to remove, but it would mess up the whole model, so I kind of gave up on that.
-
-  I didn't bother adding wheels to the models yet, because I'll need to position them in the correct spots, and, I think, instantiate them dynamically anyway, so I left it for now.
-
-  One last thing, I'm taking the export directly from the blender file, which is why, currently, you'll need Blender to open up the game.
-  Ultimately, I'll absolutely need to migrate to FBX (manual) exports, in order to, for example, export the wheels separately from the cars.
+  The first car (Bad Car) I made myself in Blender (I'm pretty much a beginner, which is why it's so bad),
+  the latter ones I downloaded online.
+  I had to modify the downloaded models a little bit in Blender, like adjusting the hierarchy and the names.
+  I only use manually exported FBX files in Unity, that is, I don't use direct import from Blender.
 
 
 - The stats can be changed once a car is selected.
@@ -128,6 +125,9 @@ More on the code / design:
   And yes, it does work with managed structs too.
   So, ultimately, the plan is to write a Kari plugin to generate easy-to-use wrappers for them to impelment and hide all of the pointer business.
 
+> Actually, these structs will still be boxed, I think.
+> I will need to test that, or study the source code.
+
 
 - No tests yet!
   My systems are not 100% decoupled (they are close though), and I didn't really have time to write tests yet.
@@ -146,14 +146,6 @@ More on the code / design:
 - I'm using `UnityEvents` to connect everything together.
   I'm sure there is a library, or a more efficient (from the boilerplate point of view) way of programming this,
   but I just don't have enough experience in Unity to know that.
-
-
-- The UI is not yet optimized.
-  I mean, the optimization tips specify that you should split up the elements onto different canvases as much as possible,
-  because changing one element dirties the entire thing, and to avoid the use of layouts.
-  I haven't got to this point yet.
-  I haven't even measured the performance and tried different approaches yet.
-  It will take some time.
 
 
 - I know about the `NotifyPropertyChanged` pattern, I'm just not fond of it.
