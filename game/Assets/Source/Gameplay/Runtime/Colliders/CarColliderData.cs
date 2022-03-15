@@ -70,8 +70,9 @@ namespace Race.Gameplay
         #if UNITY_EDITOR
         public static void CreateDefaultColliders(CarProperties properties, Transform rootTransform, GameObject wheelPrefab)
         {
-            ref var colliderParts = ref properties.DataModel._colliderParts;
-            ref var visualParts = ref properties._visualParts;
+            // TODO: currently broken, DataModel does not exist in the editor
+            ref var colliderParts = ref properties.DataModel._infoComponent.colliderParts;
+            ref var visualParts = ref properties.DataModel._infoComponent.visualParts;
             // Parents
             Transform parent;
             Transform carModelTransform;

@@ -282,7 +282,7 @@ namespace Race.Gameplay
 
             // Visuals
             {
-                var visualWheels = _carProperties.VisualParts.wheels;
+                var visualWheels = _carProperties.DataModel.VisualParts.wheels;
                 for (int index = 0; index < colliderParts.wheels.Length; index++)
                 {
                     colliderParts.wheels[index].collider.GetWorldPose(out var position, out var rotation);

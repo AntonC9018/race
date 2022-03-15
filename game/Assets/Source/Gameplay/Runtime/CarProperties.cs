@@ -31,16 +31,19 @@ namespace Race.Gameplay
         public CarDrivingState _drivingState;
 
         /// <summary>
-        /// The gameobjects that are not linked to visuals directly.
+        /// The info (metadata) attached to the car, taken directly from the game object. 
         /// </summary>
-        public CarColliderParts _colliderParts;
+        public CarInfoComponent _infoComponent;
+
+
+        public ref CarDrivingState DrivingState => ref _drivingState;
 
         /// <summary>
         /// We do not allow it to change at runtime.
         /// </summary>
         public ref readonly CarSpecInfo Spec => ref _spec;
-        public ref CarDrivingState DrivingState => ref _drivingState;
-        public ref readonly CarColliderParts ColliderParts => ref _colliderParts;
+        public ref readonly CarColliderParts ColliderParts => ref _infoComponent.colliderParts;
+        public ref readonly CarVisualParts VisualParts => ref _infoComponent.visualParts;
     }
 
     public static class CarDataModelHelper
@@ -138,17 +141,13 @@ namespace Race.Gameplay
         }
     }
 
+    [RequireComponent(typeof(CarInfoComponent))]
     public class CarProperties : MonoBehaviour
     {
         // For now, show it in the inspector.
         // In the end it should be set up dynamically.
         internal CarDataModel _dataModel;
         public CarDataModel DataModel => _dataModel;
-
-        // [SerializeField] private CarPrefabInfoComponent 
-
-        [SerializeField] internal CarVisualParts _visualParts;
-        public ref readonly CarVisualParts VisualParts => ref _visualParts;
 
         // For just configure here, but this should get to us from elsewhere.
         

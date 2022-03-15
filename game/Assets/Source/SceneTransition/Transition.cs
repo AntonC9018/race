@@ -115,7 +115,7 @@ namespace Race.SceneTransition
 
         public void ApplyColor(Color color, Gameplay.CarProperties properties)
         {
-            properties.VisualParts.body.GetComponent<MeshRenderer>().material.color = color;
+            properties.DataModel.VisualParts.body.GetComponent<MeshRenderer>().material.color = color;
         }
 
         public void InitializeScene(Transform root, in GameplayInitializationInfo initInfo)
