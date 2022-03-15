@@ -15,18 +15,18 @@ namespace Race.Gameplay
         [ContextMenuItem("Set the gear ratios on the controller", nameof(Set))]
         public bool RightClickMe;
 
-        [SerializeField] public CarProperties carProperties;
+        [SerializeField] public CarInfoComponent carInfo;
         [SerializeField] public float[] desiredOptimalSpeeds;
         
         [SerializeField] public float[] computedGearRatios;
 
         public void Compute()
         {
-            float circumference = carProperties.DataModel.ColliderParts.wheels[0].collider.GetCircumference();
+            float circumference = carInfo.colliderParts.wheels[0].collider.GetCircumference();
 
             computedGearRatios = new float[desiredOptimalSpeeds.Length];
             
-            float optimalRPM = carProperties.DataModel.Spec.engine.optimalRPM;
+            float optimalRPM = carInfo.template.baseSpec.engine.optimalRPM;
 
             for (int index = 0; index < computedGearRatios.Length; index++)
             {
@@ -42,7 +42,7 @@ namespace Race.Gameplay
 
         public void Set()
         {
-            carProperties.DataModel._spec.transmission.gearRatios = computedGearRatios;
+            carInfo.template.baseSpec.transmission.gearRatios = computedGearRatios;
             Debug.Log("Ratios have been set.");
         }
     }

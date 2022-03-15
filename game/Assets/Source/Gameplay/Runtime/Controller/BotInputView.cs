@@ -27,7 +27,7 @@ namespace Race.Gameplay
             properties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
         }
 
-        public void OnDrivingStateChanged(CarDataModel model)
+        public void OnDrivingStateChanged(CarProperties properties)
         {
             // do stuff.
         }

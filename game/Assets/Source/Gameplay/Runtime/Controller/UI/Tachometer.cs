@@ -23,9 +23,9 @@ namespace Race.Gameplay
             _carProperties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
         }
 
-        public void OnDrivingStateChanged(CarDataModel model)
+        public void OnDrivingStateChanged(CarProperties properties)
         {
-            float motorRPM = model.DrivingState.motorRPM;
+            float motorRPM = properties.DataModel.DrivingState.motorRPM;
             float normalizedRPM = (motorRPM - _displayValueRange.minValue) / _displayValueRange.Length;
             float clamped = Mathf.Clamp01(normalizedRPM);
             _valueDisplay.ResetNeedleRotation(clamped);

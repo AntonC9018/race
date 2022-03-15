@@ -24,9 +24,9 @@ namespace Race.Gameplay
             _carProperties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
         }
 
-        public void OnDrivingStateChanged(CarDataModel model)
+        public void OnDrivingStateChanged(CarProperties properties)
         {
-            float speed = model.GetCurrentSpeed();
+            float speed = properties.DataModel.GetCurrentSpeed();
             float normalizedSpeed = speed / _maxSpeed;
             float clamped = Mathf.Clamp01(normalizedSpeed);
             _valueDisplay.ResetNeedleRotation(clamped);

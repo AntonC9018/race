@@ -23,7 +23,7 @@ namespace Race.Gameplay
         /// Includes info about the engine, transmission, wheels.
         /// Does not include any actual game objects or colliders of sorts, it's just plain data.
         /// </summary>
-        public CarSpecInfo _spec;
+        public readonly CarSpecInfo _spec;
 
         /// <summary>
         /// Current RPM, wheel RPM, gear and things like that.
@@ -33,8 +33,14 @@ namespace Race.Gameplay
         /// <summary>
         /// The info (metadata) attached to the car, taken directly from the game object. 
         /// </summary>
-        public CarInfoComponent _infoComponent;
+        public readonly CarInfoComponent _infoComponent;
 
+        public CarDataModel(CarSpecInfo spec, CarInfoComponent infoComponent)
+        {
+            _spec = spec;
+            _drivingState = new CarDrivingState();
+            _infoComponent = infoComponent;
+        }
 
         public ref CarDrivingState DrivingState => ref _drivingState;
 
@@ -144,40 +150,27 @@ namespace Race.Gameplay
     [RequireComponent(typeof(CarInfoComponent))]
     public class CarProperties : MonoBehaviour
     {
-        // For now, show it in the inspector.
-        // In the end it should be set up dynamically.
-        internal CarDataModel _dataModel;
-        public CarDataModel DataModel => _dataModel;
+        private CarDataModel _dataModel;
+        public ref CarDataModel DataModel => ref _dataModel;
 
-        // For just configure here, but this should get to us from elsewhere.
-        
+        public void Initialize(CarDataModel dataModel)
+        {
+            _dataModel = dataModel;
+        }
+
         // TODO: A separate event object could be helpful.
-        public UnityEvent<CarDataModel> OnDrivingStateChanged;
+        public UnityEvent<CarProperties> OnDrivingStateChanged;
 
         public void TriggerOnDrivingStateChanged()
         {
-            OnDrivingStateChanged.Invoke(DataModel);
+            OnDrivingStateChanged.Invoke(this);
         }
 
         void Awake()
         {
-            // CarColliderSetupHelper.AdjustCenterOfMass(ref DataModel._colliderParts, _centerOfMassAdjustmentParameters);
 
             ref readonly var spec = ref DataModel.Spec;
-            var gearRatios = spec.transmission.gearRatios;
-            assert(gearRatios is not null);
-            assert(gearRatios.Length > 0);
-
-            int firstPositiveGearIndex = -1;
-            for (int i = 0; i < gearRatios.Length; i++)
-            {
-                if (gearRatios[i] > 0)
-                {
-                    firstPositiveGearIndex = i;
-                    break;
-                }
-            }
-            DataModel.DrivingState.gearIndex = firstPositiveGearIndex;
+            
 
             assert(spec.motorWheelLocations is not null);
             assert(spec.brakeWheelLocations is not null);

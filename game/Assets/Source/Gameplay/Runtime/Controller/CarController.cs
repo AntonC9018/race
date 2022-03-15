@@ -97,13 +97,30 @@ namespace Race.Gameplay
             assert(_inputView != null, "Input view has not been provided.");
             _inputView = inputView;
             _carProperties = carProperties;
+
+            // Should the initial gear be set here?
+            ref var dataModel = ref carProperties.DataModel;
+            var gearRatios = dataModel.Spec.transmission.gearRatios;
+            assert(gearRatios is not null);
+            assert(gearRatios.Length > 0);
+
+            int firstPositiveGearIndex = -1;
+            for (int i = 0; i < gearRatios.Length; i++)
+            {
+                if (gearRatios[i] > 0)
+                {
+                    firstPositiveGearIndex = i;
+                    break;
+                }
+            }
+            dataModel.DrivingState.gearIndex = firstPositiveGearIndex;
         }
 
         void OnGUI()
         {
             var rigidbody = GetComponent<Rigidbody>();
             var speed = rigidbody.velocity.magnitude;
-            var dataModel = _carProperties.DataModel;
+            ref var dataModel = ref _carProperties.DataModel;
 
             GUILayout.BeginVertical();
             GUI.color = Color.white;
@@ -187,7 +204,7 @@ namespace Race.Gameplay
                     // `maxWheelRPMJumpPerSecond` is needed to counteract the fact that the wheel RPM
                     // that the Unity provides jumps up and down drastically, so we damp it here manually.
                     float maxAllowedChange = _dataSmoothing.maxWheelRPMJumpPerSecond * Time.fixedDeltaTime;
-                    wheelRPM = MathHelper.GetValueChangedByAtMost(drivingState.wheelRPM, recordedWheelRPM, maxAllowedChange);
+                    wheelRPM = MathHelper.GetValueChangedByAtMost((float)drivingState.wheelRPM, recordedWheelRPM, maxAllowedChange);
                 #else
                     float speedMetersPerSecond = colliderParts.Rigidbody.velocity.magnitude;
                     float speedMetersPerMinute = speedMetersPerSecond * 60.0f;

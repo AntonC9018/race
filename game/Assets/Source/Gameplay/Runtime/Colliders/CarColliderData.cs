@@ -8,6 +8,11 @@ namespace Race.Gameplay
     {
         public Transform body;
         public Transform[] wheels;
+
+        // TODO:
+        // This one is shared between the two scenes.
+        // It should be factored out into another common component.
+        public MeshRenderer meshRenderer;
     }
 
     [System.Serializable]
