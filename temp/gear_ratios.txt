@@ -1,0 +1,10 @@
+
+            // Approximate gear ratios I found online.
+            // float[] referenceGearRatios = new float[]
+            // {
+            //     3.136f,
+            //     1.888f,
+            //     1.330f,
+            //     1,
+            //     0.814f,
+            // };

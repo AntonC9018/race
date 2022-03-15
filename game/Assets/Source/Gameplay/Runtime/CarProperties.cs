@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using static EngineCommon.Assertions;
@@ -22,7 +23,7 @@ namespace Race.Gameplay
         /// Includes info about the engine, transmission, wheels.
         /// Does not include any actual game objects or colliders of sorts, it's just plain data.
         /// </summary>
-        public CarSpecInfoObject _spec;
+        public CarSpecInfo _spec;
 
         /// <summary>
         /// Current RPM, wheel RPM, gear and things like that.
@@ -37,7 +38,7 @@ namespace Race.Gameplay
         /// <summary>
         /// We do not allow it to change at runtime.
         /// </summary>
-        public ref readonly CarSpecInfo Spec => ref _spec.info;
+        public ref readonly CarSpecInfo Spec => ref _spec;
         public ref CarDrivingState DrivingState => ref _drivingState;
         public ref readonly CarColliderParts ColliderParts => ref _colliderParts;
     }
@@ -144,11 +145,12 @@ namespace Race.Gameplay
         internal CarDataModel _dataModel;
         public CarDataModel DataModel => _dataModel;
 
+        // [SerializeField] private CarPrefabInfoComponent 
+
         [SerializeField] internal CarVisualParts _visualParts;
         public ref readonly CarVisualParts VisualParts => ref _visualParts;
 
         // For just configure here, but this should get to us from elsewhere.
-        [SerializeField] private CarColliderSetupHelper.CenterOfMassAdjustmentParameters _centerOfMassAdjustmentParameters;
         
         // TODO: A separate event object could be helpful.
         public UnityEvent<CarDataModel> OnDrivingStateChanged;
@@ -160,7 +162,7 @@ namespace Race.Gameplay
 
         void Awake()
         {
-            CarColliderSetupHelper.AdjustCenterOfMass(ref DataModel._colliderParts, _centerOfMassAdjustmentParameters);
+            // CarColliderSetupHelper.AdjustCenterOfMass(ref DataModel._colliderParts, _centerOfMassAdjustmentParameters);
 
             ref readonly var spec = ref DataModel.Spec;
             var gearRatios = spec.transmission.gearRatios;

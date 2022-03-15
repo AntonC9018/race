@@ -16,18 +16,25 @@ namespace Race.Gameplay
         public float maxMotorTorqueInputFactorChangePerSecond;
     }
 
-    public class KeyboardInputView : MonoBehaviour, ICarInputView
+    // TODO:
+    // We should straight up have an adaptive input view that should handle any input source.
+    // It should only be dependent on the input map, and select the way it interprets and how it
+    // filters inputs based on where they come from.
+    // Perhaps the simplest way would be a switch over the input device type,
+    // and then just handle each case.
+    // There aren't that many options, at the end of the day.
+    public class CarKeyboardInputView : ICarInputView
     {
-        [SerializeField] internal KeyboardInputSmoothingParameters _smoothingParameters;
-        [SerializeField] internal InputManager _inputManager;
-        private CarControls.PlayerActions Player => _inputManager.CarControls.Player;
-        private CarProperties _properties;
-
-        public void Enable(CarProperties properties)
+        private KeyboardInputSmoothingParameters _smoothingParameters;
+        private CarControls.PlayerActions _player;
+        
+        public CarKeyboardInputView(KeyboardInputSmoothingParameters smoothingParameters, CarControls.PlayerActions player)
         {
-            Player.Enable();
-            _properties = properties;
+            _smoothingParameters = smoothingParameters;
+            _player = player;
         }
+
+        public CarProperties CarProperties { get; set; }
 
         public CarMovementInputValues Movement
         {
@@ -41,19 +48,19 @@ namespace Race.Gameplay
                 float timeSinceLastInput = Time.fixedDeltaTime;
 
                 CarMovementInputValues result;
-                var player = Player;
+                var player = _player;
                 // In case of brake, we just apply the read amount.
                 // This is different for motor torque, where we want to allow gradual changes.
                 // Maybe?? I'm not sure. We might want that damping here too.
                 result.Brakes = player.Backward.ReadValue<float>();
 
                 result.Forward = MathHelper.GetValueChangedByAtMost(
-                    _properties.DataModel.DrivingState.motorTorqueInputFactor,
+                    CarProperties.DataModel.DrivingState.motorTorqueInputFactor,
                     desiredValue: player.Forward.ReadValue<float>(),
                     _smoothingParameters.maxMotorTorqueInputFactorChangePerSecond * timeSinceLastInput);
 
                 result.Turn = MathHelper.GetValueChangedByAtMost(
-                    _properties.DataModel.DrivingState.steeringInputFactor,
+                    CarProperties.DataModel.DrivingState.steeringInputFactor,
                     desiredValue: player.Turn.ReadValue<float>(),
                     // This one might be part of the controller tho,
                     // Because the amount a wheel can turn should be constrained.
@@ -63,13 +70,13 @@ namespace Race.Gameplay
             }
         }
 
-        public bool Clutch => Player.Clutch.ReadValue<float>() > 0;
+        public bool Clutch => _player.Clutch.ReadValue<float>() > 0;
 
         public GearInputType Gear
         {
             get
             {
-                var player = Player;
+                var player = _player;
                 if (player.GearUp.WasPerformedThisFrame())
                     return GearInputType.GearUp;
                 if (player.GearDown.WasPerformedThisFrame())

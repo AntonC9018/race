@@ -64,8 +64,6 @@ namespace Race.Gameplay
 
     public interface ICarInputView
     {
-        void Enable(CarProperties properties);
-
         // Could split these into more interfaces if needed later, but I highly doubt it.
         CarMovementInputValues Movement { get; }
         bool Clutch { get; }
@@ -90,20 +88,15 @@ namespace Race.Gameplay
     public class CarController : MonoBehaviour
     {
         // For now, just serialize, but should get this from the car stats.
-        [SerializeField] internal CarProperties _carProperties;
         [SerializeField] internal DataSmoothingParameters _dataSmoothing;
+        private CarProperties _carProperties;
         private ICarInputView _inputView;
 
-        void Awake()
+        public void Initialize(CarProperties carProperties, ICarInputView inputView)
         {
-            // For now just get it from the object, but may want to do something fancy here later.
-            _inputView = GetComponent<ICarInputView>();
             assert(_inputView != null, "Input view has not been provided.");
-        }
-
-        void Start()
-        {
-            _inputView.Enable(_carProperties);
+            _inputView = inputView;
+            _carProperties = carProperties;
         }
 
         void OnGUI()
@@ -135,7 +128,7 @@ namespace Race.Gameplay
             GUILayout.EndVertical();
         }
 
-        void Update()
+        void OnGearInput()
         {
             ref var drivingState = ref _carProperties.DataModel.DrivingState;
 
@@ -177,6 +170,10 @@ namespace Race.Gameplay
                 isClutch = _inputView.Clutch;
                 drivingState.isClutch = isClutch;
             }
+
+            // We process input events in FixedUpdate (see the input system settings).
+            // TODO: may want to abstract this.
+            OnGearInput();
 
             float wheelRPM;
             {

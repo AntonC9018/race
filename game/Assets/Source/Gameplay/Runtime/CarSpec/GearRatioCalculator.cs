@@ -42,7 +42,7 @@ namespace Race.Gameplay
 
         public void Set()
         {
-            carProperties.DataModel._spec.info.transmission.gearRatios = computedGearRatios;
+            carProperties.DataModel._spec.transmission.gearRatios = computedGearRatios;
             Debug.Log("Ratios have been set.");
         }
     }
