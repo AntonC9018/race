@@ -295,8 +295,7 @@ GameObject:
   - component: {fileID: 1835113493857528045}
   - component: {fileID: 1835113493857528041}
   - component: {fileID: 1835113493857528040}
-  - component: {fileID: 1671019734}
-  - component: {fileID: 1671019735}
+  - component: {fileID: 2377223954822095977}
   m_Layer: 0
   m_Name: car0_physics
   m_TagString: Untagged
@@ -349,7 +348,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6e7f0ba6b34fe94380682a78e00d2f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _carProperties: {fileID: 1835113493857528040}
   _dataSmoothing:
     maxWheelRPMJumpPerSecond: 200
 --- !u!114 &1835113493857528040
@@ -364,43 +362,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3894109b287eb384e8987f6b0e4c648e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dataModel:
-    _spec: {fileID: 11400000, guid: ec784459ae3c5ff4dbb0693b15013c97, type: 2}
-    _drivingState:
-      motorTorqueInputFactor: 0
-      brakeTorqueInputFactor: 0
-      steeringInputFactor: 0
-      gearIndex: 0
-      motorRPM: 0
-      wheelRPM: 0
-      isClutch: 0
-    _colliderParts:
-      container: {fileID: 1835113493882542808}
-      body:
-        transform: {fileID: 1835113493958894102}
-        collider: {fileID: 1835113493958894103}
-      wheels:
-      - transform: {fileID: 1835113493012914606}
-        collider: {fileID: 1835113493012914607}
-      - transform: {fileID: 1835113493054446711}
-        collider: {fileID: 1835113493054446708}
-      - transform: {fileID: 1835113493340613225}
-        collider: {fileID: 1835113493340613230}
-      - transform: {fileID: 1835113492560521352}
-        collider: {fileID: 1835113492560521353}
-  _visualParts:
-    body: {fileID: 4026137354668310515}
-    wheels:
-    - {fileID: 6959056555403653588}
-    - {fileID: 1442675502732526858}
-    - {fileID: 6940620122425502813}
-    - {fileID: 6039305335809462950}
-  _centerOfMassAdjustmentParameters:
-    loweringRatio: 0.77
   OnDrivingStateChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1671019734
+--- !u!114 &2377223954822095977
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -409,25 +374,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 1835113493857528050}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 189b897afb0603e499b2fe84264d093f, type: 3}
+  m_Script: {fileID: 11500000, guid: a2c3ad5e62181fa499597eb0a83ec206, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _smoothingParameters:
-    maxSteeringAngleInputFactorChangePerSecond: 1
-    maxMotorTorqueInputFactorChangePerSecond: 2
-  _inputManager: {fileID: 0}
---- !u!114 &1671019735
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1835113493857528050}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 180f92256ddc33549a7a22d3b55450e7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  template: {fileID: 0}
+  colliderParts:
+    container: {fileID: 0}
+    body:
+      transform: {fileID: 0}
+      collider: {fileID: 0}
+    wheels: []
+  visualParts:
+    body: {fileID: 0}
+    wheels: []
+    meshRenderer: {fileID: 0}
 --- !u!1 &1835113493882542809
 GameObject:
   m_ObjectHideFlags: 0
@@ -579,33 +539,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 040de42b61cc4ca4bbf09c7edaa74124, type: 3}
---- !u!4 &1442675502732526858 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 969057074555527110, guid: 040de42b61cc4ca4bbf09c7edaa74124, type: 3}
-  m_PrefabInstance: {fileID: 1835113492004330188}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2232967941094948135 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 040de42b61cc4ca4bbf09c7edaa74124, type: 3}
-  m_PrefabInstance: {fileID: 1835113492004330188}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &4026137354668310515 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -5861409178561632961, guid: 040de42b61cc4ca4bbf09c7edaa74124, type: 3}
-  m_PrefabInstance: {fileID: 1835113492004330188}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6039305335809462950 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 5384138888970930282, guid: 040de42b61cc4ca4bbf09c7edaa74124, type: 3}
-  m_PrefabInstance: {fileID: 1835113492004330188}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6940620122425502813 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8729569020873307793, guid: 040de42b61cc4ca4bbf09c7edaa74124, type: 3}
-  m_PrefabInstance: {fileID: 1835113492004330188}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6959056555403653588 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 8783190178123606808, guid: 040de42b61cc4ca4bbf09c7edaa74124, type: 3}
   m_PrefabInstance: {fileID: 1835113492004330188}
   m_PrefabAsset: {fileID: 0}
