@@ -4,7 +4,7 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    public class BotInputView : MonoBehaviour, ICarInputView
+    public class BotInputView : ICarInputView
     {
         public CarMovementInputValues Movement
         {

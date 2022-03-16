@@ -33,6 +33,8 @@ namespace Race.SceneTransition
 
     public ref struct GameplayInitializationInfo
     {
+        // We don't pass arrays because we don't need to keep them in memory.
+        // TODO: Could pass IEnumerable's?
         public Span<PlayerInfo> playerInfos;
         public Span<BotInfo> botInfos;
     }
@@ -48,6 +50,9 @@ namespace Race.SceneTransition
     public class Transition : MonoBehaviour
     {
         [SerializeField] private GameObject _cameraControlPrefab;
+
+        // We want this to be a singleton
+
 
         public static CarSpecInfo GetEngineSpecFromStatsAndTemplate(
             in CarStats currentStats,
@@ -101,7 +106,7 @@ namespace Race.SceneTransition
         }
 
         // Initialization always turns into a mess.
-        public void InitializeScene(Transform root, in GameplayInitializationInfo initInfo)
+        public void InitializeGameplayScene(Transform root, in GameplayInitializationInfo initInfo)
         {
             // assert(initInfo.playerInfos.Length == 1, "For now only one player is allowed");
 
@@ -133,7 +138,7 @@ namespace Race.SceneTransition
                 FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
                 
                 {
-                    // TODO: remove the factory, just pass adaptive input views
+                    // TODO: remove the factory, just pass adaptive input views?
                     var factory = playerInfo.inputViewFactory;
                     var cameraInput = factory.CreateCameraInputView(playerIndex, carProperties);
                     var carInput = factory.CreateCarInputView(playerIndex, carProperties);
@@ -186,6 +191,61 @@ namespace Race.SceneTransition
                 var carDataModel = new Gameplay.CarDataModel(carSpec, infoComponent);
                 carProperties.Initialize(carDataModel);
             }
+        }
+
+        /// <summary>
+        /// </summary>
+        // TODO:
+        // This will take a few other things eventually.
+        // This one is only called through interface, because the Garage assembly must not reference
+        // this script directly.
+        public void InitializeGameplaySceneFromGarage(
+            // This will have to be refactored when multiple users can participate.
+            // It's good to keep the flexibility for possible multiplayer later, but 
+            // it will still need tweeking if added.
+            Garage.CarProperties carProperties, Garage.UserDataModel userDataModel)
+        {
+            GameplayInitializationInfo info;
+            // For now
+            var inputFactory = GetComponent<IInputViewFactory>();
+            assert(inputFactory is not null);
+
+            var playerInfo = new PlayerInfo
+            {
+                carIndex = carProperties.CurrentCarIndex,
+                carDataModel = carProperties.CurrentCarInfo.dataModel,
+                // For now
+                inputViewFactory = inputFactory,
+                userDataModel = userDataModel,
+            };
+            // TODO: create a span from the thing directly.
+            // https://docs.microsoft.com/en-us/dotnet/api/system.runtime.interopservices.memorymarshal.createspan?view=net-6.0
+            info.playerInfos = new PlayerInfo[] { playerInfo }.AsSpan();
+
+            var botInfo = new BotInfo
+            {
+                carIndex = 0,
+                // TODO: settings for difficulty and such
+                inputView = new BotInputView(),
+            };
+            info.botInfos = new BotInfo[] { botInfo }.AsSpan();
+
+            // TODO:
+            // Create the scene from addressable? Or just create it dynamically?
+            // I actually think keeping the scene content within subobjects would have been way simpler.
+            // So like not loading new scenes at all, just hiding or unhiding the subobjects,
+            // perhaps removing certain objects or creating new ones.
+            Transform sceneRoot = null;
+
+            // How do we integrate the loading screen here?
+            InitializeGameplayScene(sceneRoot, info);
+        }
+
+        /// <summary>
+        /// Called if the initial scene is the local scene.
+        /// </summary>
+        public void InitializeGameplaySceneLocal()
+        {
         }
     }
 }

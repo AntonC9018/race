@@ -84,10 +84,16 @@ namespace Race.Garage
 
     public struct CarInstanceInfo
     {
+        // TODO:
+        // I think these should be on the data model.
+        // Then the data model could have further distinction between the different
+        // kinds of data, like mutable/immutable, things that only exist in the current scene
+        // vs normal data.
+
         /// <summary>
         /// </summary>
         public string name;
-
+        
         public Material mainMaterial;
         public CarDataModel dataModel;
         public GameObject rootObject;
@@ -202,7 +208,7 @@ namespace Race.Garage
         /// <summary>
         /// Returns -1 if no car is currently selected.
         /// </summary>
-        private int CurrentCarIndex => _currentSelectionIndex;
+        public int CurrentCarIndex => _currentSelectionIndex;
 
         /// <summary>
         /// Check this before accessing <c>CurrentCarInfo</c>.
