@@ -67,8 +67,8 @@ namespace Race.Garage
         /// <summary>
         /// Factor of weight reduction.
         /// </summary>
-        [Range(10, 200)]
-        public float lightness;
+        // [Range(10, 200)]
+        // public float lightness;
     }
 
     /// <summary>
