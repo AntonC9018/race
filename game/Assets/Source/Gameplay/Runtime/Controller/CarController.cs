@@ -64,6 +64,7 @@ namespace Race.Gameplay
 
     public interface ICarInputView
     {
+        void ResetTo(CarProperties carProperties);
         // Could split these into more interfaces if needed later, but I highly doubt it.
         CarMovementInputValues Movement { get; }
         bool Clutch { get; }
@@ -92,9 +93,12 @@ namespace Race.Gameplay
         private CarProperties _carProperties;
         private ICarInputView _inputView;
 
+        /// <summary>
+        /// The input view must have been already reset to the car properties at this point.
+        /// </summary>
         public void Initialize(CarProperties carProperties, ICarInputView inputView)
         {
-            assert(_inputView != null, "Input view has not been provided.");
+            assert(inputView != null, "Input view has not been provided.");
             _inputView = inputView;
             _carProperties = carProperties;
 

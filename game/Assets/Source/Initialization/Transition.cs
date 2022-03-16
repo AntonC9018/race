@@ -12,23 +12,12 @@ namespace Race.SceneTransition
         public int carIndex;
         public Garage.CarDataModel carDataModel;
         public UserDataModel userDataModel;
-        public IInputViewFactory inputViewFactory;
-    }
-
-    /// <summary>
-    /// Creates and initializes input views.
-    /// </summary>
-    public interface IInputViewFactory
-    {
-        ICarInputView CreateCarInputView(int participantIndex, Gameplay.CarProperties carProperties);
-        ICameraInputView CreateCameraInputView(int participantIndex, Gameplay.CarProperties carProperties);
     }
    
     [System.Serializable]
     public struct BotInfo
     {
         public int carIndex;
-        public ICarInputView inputView;
     }
 
     public ref struct GameplayInitializationInfo
@@ -47,14 +36,12 @@ namespace Race.SceneTransition
         public readonly float torqueFactor => c_torqueFactor;
     }
 
-    public class Transition : MonoBehaviour
+    // TODO: this class does too many things
+    public class Transition : MonoBehaviour, ITransitionToGameplaySceneFromGarage
     {
         [SerializeField] private GameObject _cameraControlPrefab;
 
-        // We want this to be a singleton
-
-
-        public static CarSpecInfo GetEngineSpecFromStatsAndTemplate(
+        private static CarSpecInfo GetEngineSpecFromStatsAndTemplate(
             in CarStats currentStats,
             in StatsConversionRates rates,
             in Race.Gameplay.CarSpecInfo template)
@@ -95,20 +82,29 @@ namespace Race.SceneTransition
         }
 
         // TODO:
-        public GameObject SpawnCar(Transform parent, int carIndex)
+        private GameObject SpawnCar(Transform parent, int carIndex)
         {
             return null;
         }
 
-        public static void ApplyColor(Color color, CarInfoComponent infoComponent)
+        private static void ApplyColor(Color color, CarInfoComponent infoComponent)
         {
             infoComponent.visualParts.meshRenderer.material.color = color;
         }
 
-        // Initialization always turns into a mess.
-        public void InitializeGameplayScene(Transform root, in GameplayInitializationInfo initInfo)
+        public void InitializePlayerCar(GameObject playerCar)
         {
-            // assert(initInfo.playerInfos.Length == 1, "For now only one player is allowed");
+            var carProperties = playerCar.GetComponent<Gameplay.CarProperties>();
+            assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
+            var infoComponent = playerCar.GetComponent<CarInfoComponent>();
+            FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
+            InitializePlayerInput(playerCar, carProperties);
+        }
+
+        // Initialization always turns into a mess.
+        public void InitializeGameplaySceneWithConfiguration(Transform root, in GameplayInitializationInfo initInfo)
+        {
+            assert(initInfo.playerInfos.Length == 1, "For now only one player is allowed");
 
             var playerInfos = initInfo.playerInfos;
 
@@ -127,57 +123,90 @@ namespace Race.SceneTransition
                     currentStats: playerInfo.carDataModel.statsInfo.currentStats,
                     rates: new StatsConversionRates(),
                     template: infoComponent.template.baseSpec);
-                
+
                 // TODO:
                 // The mesh renderer should be in a separate metadata component,
                 // or should be accessed in a standard way (there are other ways too, via interfaces).
-                ApplyColor(playerInfo.carDataModel.mainColor,
-                    // messy!
-                    carProperties.DataModel._infoComponent);    
+                ApplyColor(playerInfo.carDataModel.mainColor, infoComponent);
 
                 FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
-                
-                {
-                    // TODO: remove the factory, just pass adaptive input views?
-                    var factory = playerInfo.inputViewFactory;
-                    var cameraInput = factory.CreateCameraInputView(playerIndex, carProperties);
-                    var carInput = factory.CreateCarInputView(playerIndex, carProperties);
-                    
-                    {
-                        var cameraControlGameObject = GameObject.Instantiate(_cameraControlPrefab);
-                        var cameraControl = cameraControlGameObject.GetComponent<CameraControl>();
-                        cameraControl.Initialize(car.transform, cameraInput);
-                    }
-                    {
-                        var carController = car.GetComponent<CarController>();
-                        carController.Initialize(carProperties, carInput);
-                    }
-                }
+                InitializePlayerInput(car, carProperties);
             }
 
             var botInfos = initInfo.botInfos;
 
             for (int botIndex = 0; botIndex < botInfos.Length; botIndex++)
             {
-                ref var playerInfo = ref playerInfos[botIndex];
-
-                var car = SpawnCar(root, playerInfo.carIndex);
+                var car = SpawnCar(root, botInfos[botIndex].carIndex);
 
                 var carProperties = car.GetComponent<Gameplay.CarProperties>();
                 assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
                 var infoComponent = car.GetComponent<CarInfoComponent>();
 
-                var carSpec = infoComponent.template.baseSpec;
-
-                FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
+                FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
+                InitializeBotInput(car, carProperties);
             }
+        }
+
+        private static void FinalizeCarPropertiesInitializationWithDefaults(
+            Gameplay.CarProperties carProperties, CarInfoComponent infoComponent)
+        {
+            var carSpec = infoComponent.template.baseSpec;
+            FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
+        }
+
+        private static void InitializeBotInput(
+            GameObject car, Gameplay.CarProperties carProperties)
+        {
+            // TODO: settings for difficulty and such
+            var carInputView = new BotInputView();
+
+            var carController = car.GetComponent<CarController>();
+            InitializeCarController(carInputView, carController, carProperties);
+        }
+
+        private void InitializePlayerInput(
+            GameObject car, Gameplay.CarProperties carProperties)
+        {
+            // For now just get these from the object, but these should be created
+            // on demand for each new local player.
+            // TODO: something, don't know what yet.
+            var factory = GetComponent<IInputViewFactory>();
+            assert(factory != null);
+
+            ICameraInputView cameraInputView = factory.CreateCameraInputView(0, carProperties);
+            assert(cameraInputView != null);
+
+            ICarInputView carInputView = factory.CreateCarInputView(0, carProperties);
+            assert(carInputView != null);
+
+            {
+                var cameraControlGameObject = GameObject.Instantiate(_cameraControlPrefab);
+                var cameraControl = cameraControlGameObject.GetComponent<CameraControl>();
+                cameraControl.Initialize(car.transform, cameraInputView);
+            }
+            {
+                var carController = car.GetComponent<CarController>();
+                InitializeCarController(carInputView, carController, carProperties);
+            }
+        }
+
+        private static void InitializeCarController(
+            ICarInputView carInputView, CarController carController, Gameplay.CarProperties carProperties)
+        {
+            assert(carController != null);
+            assert(carInputView is not null);
+            assert(carProperties != null);
+
+            carInputView.ResetTo(carProperties);
+            carController.Initialize(carProperties, carInputView);
         }
 
         // I feel like initialization is a good cause for the code generator.
         // Adding features with this code is going to be a massive pain.
         // The initialization needs some actual thought.
 
-        public static void FinalizeCarPropertiesInitialization(
+        private static void FinalizeCarPropertiesInitialization(
             Gameplay.CarProperties carProperties,
             CarInfoComponent infoComponent,
             in CarSpecInfo carSpec)
@@ -199,23 +228,19 @@ namespace Race.SceneTransition
         // This will take a few other things eventually.
         // This one is only called through interface, because the Garage assembly must not reference
         // this script directly.
-        public void InitializeGameplaySceneFromGarage(
+        public void TransitionToGameplaySceneFromGarage(
             // This will have to be refactored when multiple users can participate.
             // It's good to keep the flexibility for possible multiplayer later, but 
             // it will still need tweeking if added.
-            Garage.CarProperties carProperties, Garage.UserDataModel userDataModel)
+            Garage.CarProperties carProperties,
+            Garage.UserDataModel userDataModel)
         {
             GameplayInitializationInfo info;
-            // For now
-            var inputFactory = GetComponent<IInputViewFactory>();
-            assert(inputFactory is not null);
 
             var playerInfo = new PlayerInfo
             {
                 carIndex = carProperties.CurrentCarIndex,
                 carDataModel = carProperties.CurrentCarInfo.dataModel,
-                // For now
-                inputViewFactory = inputFactory,
                 userDataModel = userDataModel,
             };
             // TODO: create a span from the thing directly.
@@ -225,8 +250,6 @@ namespace Race.SceneTransition
             var botInfo = new BotInfo
             {
                 carIndex = 0,
-                // TODO: settings for difficulty and such
-                inputView = new BotInputView(),
             };
             info.botInfos = new BotInfo[] { botInfo }.AsSpan();
 
@@ -238,14 +261,7 @@ namespace Race.SceneTransition
             Transform sceneRoot = null;
 
             // How do we integrate the loading screen here?
-            InitializeGameplayScene(sceneRoot, info);
-        }
-
-        /// <summary>
-        /// Called if the initial scene is the local scene.
-        /// </summary>
-        public void InitializeGameplaySceneLocal()
-        {
+            InitializeGameplaySceneWithConfiguration(sceneRoot, info);
         }
     }
 }

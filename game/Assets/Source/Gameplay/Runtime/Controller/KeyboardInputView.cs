@@ -5,17 +5,6 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    [System.Serializable]
-    public struct KeyboardInputSmoothingParameters
-    {
-        // 1.5, 2
-        public float maxSteeringAngleInputFactorChangePerSecond;
-
-        // This one here is used to simulate gradual input specifically.
-        // We might need another such engine-specific factor.
-        public float maxMotorTorqueInputFactorChangePerSecond;
-    }
-
     // TODO:
     // We should straight up have an adaptive input view that should handle any input source.
     // It should only be dependent on the input map, and select the way it interprets and how it
@@ -27,6 +16,7 @@ namespace Race.Gameplay
     {
         private KeyboardInputSmoothingParameters _smoothingParameters;
         private CarControls.PlayerActions _player;
+        private CarProperties _carProperties;
         
         public CarKeyboardInputView(KeyboardInputSmoothingParameters smoothingParameters, CarControls.PlayerActions player)
         {
@@ -34,7 +24,10 @@ namespace Race.Gameplay
             _player = player;
         }
 
-        public CarProperties CarProperties { get; set; }
+        public void ResetTo(CarProperties properties)
+        {
+            _carProperties = properties;
+        }
 
         public CarMovementInputValues Movement
         {
@@ -55,12 +48,12 @@ namespace Race.Gameplay
                 result.Brakes = player.Backward.ReadValue<float>();
 
                 result.Forward = MathHelper.GetValueChangedByAtMost(
-                    CarProperties.DataModel.DrivingState.motorTorqueInputFactor,
+                    _carProperties.DataModel.DrivingState.motorTorqueInputFactor,
                     desiredValue: player.Forward.ReadValue<float>(),
                     _smoothingParameters.maxMotorTorqueInputFactorChangePerSecond * timeSinceLastInput);
 
                 result.Turn = MathHelper.GetValueChangedByAtMost(
-                    CarProperties.DataModel.DrivingState.steeringInputFactor,
+                    _carProperties.DataModel.DrivingState.steeringInputFactor,
                     desiredValue: player.Turn.ReadValue<float>(),
                     // This one might be part of the controller tho,
                     // Because the amount a wheel can turn should be constrained.

@@ -22,14 +22,15 @@ namespace Race.Gameplay
         public bool Clutch => false;
         public GearInputType Gear => GearInputType.None;
 
-        public void Enable(CarProperties properties)
-        {
-            properties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
-        }
-
         public void OnDrivingStateChanged(CarProperties properties)
         {
             // do stuff.
+        }
+
+        public void ResetTo(CarProperties properties)
+        {
+            // TODO: obviously broken
+            properties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
         }
     }
 }

@@ -211,6 +211,7 @@ namespace Race.Gameplay
                 }
 
                 visualParts.body = bodyMeshTransform;
+                visualParts.meshRenderer = bodyMeshTransform.GetComponent<MeshRenderer>();
 
                 colliderParts.body = new CarPart<BoxCollider>()
                 {
@@ -219,6 +220,16 @@ namespace Race.Gameplay
                 };
             }
         }
-        #endif
+
+        // TODO
+        public static void FindColliders(CarInfoComponent carToUpdate, Transform targetRootTransform)
+        {
+        }
+
+        // TODO
+        public static void FindVisuals(CarInfoComponent carToUpdate, Transform targetRootTransform)
+        {
+        }
+#endif
     }
 }

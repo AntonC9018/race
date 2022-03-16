@@ -11,7 +11,13 @@ namespace Race.Gameplay
 
         void Awake()
         {
-            ref readonly var engine = ref _carProperties.DataModel.Spec.engine;
+            _carProperties.OnDataModelInitialized.AddListener(OnDataModelInitialized);
+            _carProperties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
+        }
+
+        public void OnDataModelInitialized(CarProperties properties)
+        {
+            ref readonly var engine = ref properties.DataModel.Spec.engine;
 
             _displayValueRange = new ValueRange
             {
@@ -20,7 +26,6 @@ namespace Race.Gameplay
             };
 
             _valueDisplay.ResetPipsAndTextsToValues(_displayValueRange, largePipGap: 500.0f);
-            _carProperties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
         }
 
         public void OnDrivingStateChanged(CarProperties properties)

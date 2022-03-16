@@ -19,6 +19,13 @@ namespace Race.Gameplay
             CarColliderSetupHelper.CreateDefaultColliders(_carToUpdate, _targetRootTransform, _wheelColliderPrefab);
             Debug.Log("The colliders have been set up.");
         }
+
+        // TODO
+        void FindColliders()
+        {
+            CarColliderSetupHelper.FindColliders(_carToUpdate, _targetRootTransform);
+            Debug.Log("The colliders have been set up.");
+        }
     }
     #endif
 }

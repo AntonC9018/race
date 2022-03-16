@@ -9,9 +9,16 @@ namespace Race.Gameplay
         [SerializeField] private RadialValueDisplay _valueDisplay;
         private float _maxSpeed;
 
+        // It's easier to wire it up dynamically.
         void Awake()
         {
-            var maxSpeed = _carProperties.DataModel.GetMaxSpeed();
+            _carProperties.OnDataModelInitialized.AddListener(OnDataModelInitialized);
+            _carProperties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
+        }
+
+        public void OnDataModelInitialized(CarProperties properties)
+        {
+            var maxSpeed = properties.DataModel.GetMaxSpeed();
             _maxSpeed = maxSpeed;
 
             var displayValueRange = new ValueRange
@@ -21,7 +28,6 @@ namespace Race.Gameplay
             };
 
             _valueDisplay.ResetPipsAndTextsToValues(displayValueRange, largePipGap: 10.0f);
-            _carProperties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
         }
 
         public void OnDrivingStateChanged(CarProperties properties)

@@ -9,30 +9,33 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0ead79b44154024bbf949cc9b9f00fb, type: 3}
-  m_Name: car_spec_0
+  m_Script: {fileID: 11500000, guid: 78739247278e5f440a5bde8fd7cfa27b, type: 3}
+  m_Name: car_template_0
   m_EditorClassIdentifier: 
-  info:
+  baseSpec:
     brakes:
-      maxTorque: 1000
+      maxTorque: 2000
     engine:
       maxRPM: 7000
       maxTorque: 400
       optimalRPM: 3000
       idleRPM: 500
-      minEfficiency: 0.3
-      maxIdleRPMIncreasePerSecond: 1000
-      maxIdleRPMDecreasePerSecond: 800
+      efficiencyAtIdleRPM: 0.3
+      efficiencyAtMaxRPM: 0.4
+      maxIdleRPMIncreasePerSecond: 2000
+      maxIdleRPMDecreasePerSecond: 1500
     transmission:
       gearRatios:
-      - -87.40164
-      - 87.40164
-      - 29.133879
-      - 14.566939
-      - 8.740164
-      - 4.8556466
+      - -21.85041
+      - 21.85041
+      - 13.15484
+      - 9.266915
+      - 6.967606
+      - 5.6716313
     steering:
       maxSteeringAngle: 30
     motorWheelLocations: 0000000001000000
     brakeWheelLocations: 0000000001000000
     steeringWheelLocations: 0200000003000000
+  centerOfMassAdjustmentParameters:
+    loweringRatio: 0.9

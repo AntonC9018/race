@@ -156,25 +156,28 @@ namespace Race.Gameplay
         public void Initialize(CarDataModel dataModel)
         {
             _dataModel = dataModel;
+            
+            {
+                ref readonly var spec = ref _dataModel.Spec;
+                assert(spec.motorWheelLocations is not null);
+                assert(spec.brakeWheelLocations is not null);
+                assert(spec.steeringWheelLocations is not null);
+            }
+
+            TriggerDataModelInitialized();
+            void TriggerDataModelInitialized()
+            {
+                OnDataModelInitialized.Invoke(this);
+            }
         }
 
         // TODO: A separate event object could be helpful.
         public UnityEvent<CarProperties> OnDrivingStateChanged;
+        public UnityEvent<CarProperties> OnDataModelInitialized;
 
         public void TriggerOnDrivingStateChanged()
         {
             OnDrivingStateChanged.Invoke(this);
-        }
-
-        void Awake()
-        {
-
-            ref readonly var spec = ref DataModel.Spec;
-            
-
-            assert(spec.motorWheelLocations is not null);
-            assert(spec.brakeWheelLocations is not null);
-            assert(spec.steeringWheelLocations is not null);
         }
 
         void Setup()

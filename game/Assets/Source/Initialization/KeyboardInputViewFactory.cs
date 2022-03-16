@@ -4,6 +4,15 @@ using static EngineCommon.Assertions;
 
 namespace Race.SceneTransition
 {
+    /// <summary>
+    /// Creates and initializes input views.
+    /// </summary>
+    public interface IInputViewFactory
+    {
+        ICarInputView CreateCarInputView(int participantIndex, Gameplay.CarProperties carProperties);
+        ICameraInputView CreateCameraInputView(int participantIndex, Gameplay.CarProperties carProperties);
+    }
+
     public class KeyboardInputViewFactory : MonoBehaviour, IInputViewFactory
     {
         [SerializeField] private KeyboardInputSmoothingParameters _smootingParameters;
@@ -21,6 +30,7 @@ namespace Race.SceneTransition
         void Awake()
         {
             var carControls = new CarControls();
+            carControls.Enable();
             _cameraInputView = new CameraKeyboardInputView(carControls.Player);
             _keyboardInputView = new CarKeyboardInputView(_smootingParameters, carControls.Player);
         }
@@ -34,7 +44,7 @@ namespace Race.SceneTransition
         public ICarInputView CreateCarInputView(int playerIndex, Gameplay.CarProperties carProperties)
         {
             assert(playerIndex == 0, "Multiple player keyboard input unimplemented.");
-            _keyboardInputView.CarProperties = carProperties;
+            _keyboardInputView.ResetTo(carProperties);
             return _keyboardInputView;
         }
     }
