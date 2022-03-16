@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78739247278e5f440a5bde8fd7cfa27b, type: 3}
+  m_Name: car_template_0
+  m_EditorClassIdentifier: 
+  baseSpec:
+    brakes:
+      maxTorque: 2000
+    engine:
+      maxRPM: 7000
+      maxTorque: 400
+      optimalRPM: 3000
+      idleRPM: 500
+      efficiencyAtIdleRPM: 0.3
+      efficiencyAtMaxRPM: 0.4
+      maxIdleRPMIncreasePerSecond: 2000
+      maxIdleRPMDecreasePerSecond: 1500
+    transmission:
+      gearRatios:
+      - -21.85041
+      - 21.85041
+      - 13.15484
+      - 9.266915
+      - 6.967606
+      - 5.6716313
+    steering:
+      maxSteeringAngle: 30
+    motorWheelLocations: 0000000001000000
+    brakeWheelLocations: 0000000001000000
+    steeringWheelLocations: 0200000003000000
+  centerOfMassAdjustmentParameters:
+    loweringRatio: 0.9

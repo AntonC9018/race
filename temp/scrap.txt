@@ -1,0 +1,49 @@
+        
+        internal float _largePipCount;
+        public float LargePipCount
+        {
+            get => _largePipCount;
+            set
+            {
+                _largePipCount = value;
+                SetVerticesDirty();
+            }
+        }
+
+        internal float _smallPipCount;
+        
+        public float SmallPipCount
+        {
+            get => _smallPipCount;
+            set
+            {
+                _smallPipCount = value;
+                SetVerticesDirty();
+            }
+        }
+
+        internal float _largePipAngleWidth;
+        /// <summary>
+        /// The width of the large pip, expressed in radians.
+        /// The actual pixel width of the pips will be dependent on the angle range.
+        /// </summary>
+        public float LargePipAngleWidth
+        {
+            get => _largePipAngleWidth;
+            set
+            {
+                _largePipAngleWidth = value;
+                SetVerticesDirty();
+            }
+        }
+
+        internal float _smallPipAngleWidth;
+        public float SmallPipAngleWidth
+        {
+            get => _smallPipAngleWidth;
+            set
+            {
+                _smallPipAngleWidth = value;
+                SetVerticesDirty();
+            }
+        }

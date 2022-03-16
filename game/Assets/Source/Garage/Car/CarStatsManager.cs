@@ -43,7 +43,7 @@ namespace Race.Garage
         //
         // Initially, I thought I'd store the "normalized" values for the stats in the fields,
         // but later decided that the stat ranges should really tell the weights of these stats.
-        // Like, how much stat value does maxing a stat cost.
+        // Like, how much stat value maxes out the stat.
         // For example, health is 2 times less valuable than the speed,
         // because the max value of speed is twice as high. 
         //
@@ -55,14 +55,20 @@ namespace Race.Garage
         /// The amount of overload a car can take, essentially.
         /// Driving in a wrong gear damages the car. 
         /// </summary>
-        [Range(1, 100)]
+        [Range(0, 100)]
         public float health;
         
         /// <summary>
         /// </summary>
         [DisplayName("speed")]
-        [Range(10, 200)]
+        [Range(0, 200)]
         public float accelerationModifier;
+
+        /// <summary>
+        /// Factor of weight reduction.
+        /// </summary>
+        // [Range(10, 200)]
+        // public float lightness;
     }
 
     /// <summary>

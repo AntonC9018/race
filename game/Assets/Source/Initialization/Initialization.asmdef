@@ -1,0 +1,21 @@
+{
+    "name": "SceneTransition",
+    "rootNamespace": "Race.SceneTransition",
+    "references": [
+        "Common",
+        "EngineCommon",
+        "Unity.InputSystem",
+        "Gameplay",
+        "Gameplay.Data",
+        "Garage"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

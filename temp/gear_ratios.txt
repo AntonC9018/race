@@ -1,0 +1,3 @@
+
+            // Approximate gear ratios I found online.
+            

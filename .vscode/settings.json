@@ -43,7 +43,7 @@
         "**/*.mat":true,
         "**/*.meta":true,
         "game/Build/":true,
-        "game/Library/[^P]*":true,
+        // "game/Library/[^P]*":true,
         "game/Obj/":true,
         "game/Temp/":true,
         "game/*.csproj": true,
