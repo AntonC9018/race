@@ -237,6 +237,10 @@ namespace Race.Garage
         /// </summary>
         [SerializeField] public UnityEvent<CarStatsChangedEventInfo> OnStatsChanged;
 
+        /// <summary>
+        /// </summary>
+        [SerializeField] public UnityEvent<CarProperties> OnCarsInitialized;
+
         void Awake()
         {
             assert(_carPrefabInfos is not null);
@@ -272,15 +276,22 @@ namespace Race.Garage
             {
                 return gameObject.scene.name is null;
             }
+
+            assert(_colorPicker != null);
+            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
         }
 
         void Start()
         {
-            if (IsAnyCarSelected)
-                ResetModelWithCarDataMaybeFromFile(ref CurrentCarInfo);
+            InvokeCarsInitialized();
+            // if (IsAnyCarSelected)
+                // ResetModelWithCarDataMaybeFromFile(ref CurrentCarInfo);
+        }
 
-            assert(_colorPicker != null);
-            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
+        private void InvokeCarsInitialized()
+        {
+            OnCarsInitialized.Invoke(this);
+            OnCarsInitialized.RemoveAllListeners();
         }
 
         internal void TriggerStatsChangedEvent(int statChangedIndex = -1)
@@ -490,6 +501,7 @@ namespace Race.Garage
         // This should definitely in some way get hooked up automatically.
         public void OnUserModelLoaded(UserDataModel model)
         {
+            InvokeCarsInitialized();
             for (int i = 0; i < CarInstanceInfos.Length; i++)
             {
                 if (CarInstanceInfos[i].name == model.defaultCarName)

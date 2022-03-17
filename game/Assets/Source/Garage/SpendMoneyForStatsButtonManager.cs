@@ -25,21 +25,33 @@ namespace Race.Garage
 
         void Start()
         {
-            // Reset the flags.
-            _currentFlags.Set(PossibilitiesFlags.NoCarSelected, _carProperties.IsAnyCarSelected);
-            if (_carProperties.IsAnyCarSelected)
-                ResetMaxStatsFlag(ref _carProperties.CurrentCarInfo);
-            ResetCoinsFlag(_userProperties);
-
             ResetButtonInteractability();
         }
 
-        void OnEnable()
+        void Awake()
         {
+            // TODO: simplify this.
+            _userProperties.OnDataModelLoaded.AddListener(OnDataModelLoaded);
+            _carProperties.OnCarsInitialized.AddListener(OnCarsInitialized);
+
             _carProperties.OnCarSelected.AddListener(OnCarSelected);
             _carProperties.OnStatsChanged.AddListener(OnStatsChanged);
             _userProperties.OnCurrencyChanged.AddListener(OnCurrencyChanged);
             _button.onClick.AddListener(TradeCoinsForStatValue);
+        }
+
+        private void OnDataModelLoaded(UserDataModel dataModel)
+        {
+            ResetCoinsFlag(dataModel);
+            ResetButtonInteractability();
+        }
+
+        private void OnCarsInitialized(CarProperties properties)
+        {
+            _currentFlags.Set(PossibilitiesFlags.NoCarSelected, properties.IsAnyCarSelected);
+            if (properties.IsAnyCarSelected)
+                ResetMaxStatsFlag(ref properties.CurrentCarInfo);
+            ResetButtonInteractability();
         }
 
         private void ResetMaxStatsFlag(ref CarInstanceInfo carInfo)
@@ -49,11 +61,11 @@ namespace Race.Garage
                 carInfo.dataModel.statsInfo.totalStatValue >= CarStatsHelper.MaxStatValue);
         }
 
-        private void ResetCoinsFlag(UserProperties userProperties)
+        private void ResetCoinsFlag(UserDataModel dataModel)
         {
             _currentFlags.Set(
                 PossibilitiesFlags.NotEnoughCoins,
-                userProperties.DataModel.currency.coins < _CoinUseAtATime);
+                dataModel.currency.coins < _CoinUseAtATime);
         }
 
         private void ResetButtonInteractability()
@@ -73,7 +85,7 @@ namespace Race.Garage
 
         public void OnCurrencyChanged(UserPropertyChangedEventInfo<Currency> info)
         {
-            ResetCoinsFlag(info.userProperties);
+            ResetCoinsFlag(info.userProperties.DataModel);
             ResetButtonInteractability();
         }
 
