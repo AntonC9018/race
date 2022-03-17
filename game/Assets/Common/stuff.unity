@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4ad2d1bb0c46c34a860eab2440ecd28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _resourceLabel: default_car_models
+  _resourceLabel: display
   _reference:
     m_AssetGUID: 040de42b61cc4ca4bbf09c7edaa74124
     m_SubObjectName: 

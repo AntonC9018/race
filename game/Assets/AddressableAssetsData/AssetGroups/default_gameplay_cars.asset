@@ -16,7 +16,22 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 5da1ccd9bd9878846919dfa768cf8116
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: b773acca8bbda1146b1cab322a5de301
+    m_Address: car_0
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - gameplay
+  - m_GUID: cb927a0ceffd0e94b94177637adfe90e
+    m_Address: car_1
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - gameplay
+  - m_GUID: e562aef30da9acd41b6b35e7a17c7eab
+    m_Address: car_2
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - gameplay
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 2ffc4cb9e209f4f4db2c5351f8ad028b, type: 2}
   m_SchemaSet:
