@@ -32,21 +32,12 @@ namespace Race.Garage
                 options.Add(new TMP_Dropdown.OptionData(instanceInfo.name));
 
             _carNameDropdown.AddOptions(options);
-        }
 
-        // I guess it's worth it to do it this way, instead of manually wiring it up,
-        // because we need to reference both of the objects anyway.
-        // And also we need to have more control over the order of initialization.
-        void OnEnable()
-        {
+            // I guess it's worth it to do it this way, instead of manually wiring it up,
+            // because we need to reference both of the objects anyway.
+            // And also we need to have more control over the order of initialization.
             _carNameDropdown.onValueChanged.AddListener(OnDropdownValueChanged);
             _carProperties.OnCarSelected.AddListener(OnCarSelected);
-        }
-
-        void OnDisable()
-        {
-            _carNameDropdown.onValueChanged.RemoveListener(OnDropdownValueChanged);
-            _carProperties.OnCarSelected.RemoveListener(OnCarSelected);
         }
         
         /// <summary>

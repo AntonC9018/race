@@ -275,6 +275,15 @@ namespace Race.Garage
             }
         }
 
+        void Start()
+        {
+            if (IsAnyCarSelected)
+                ResetModelWithCarDataMaybeFromFile(ref CurrentCarInfo);
+
+            assert(_colorPicker != null);
+            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
+        }
+
         internal void TriggerStatsChangedEvent(int statChangedIndex = -1)
         {
             var info = new CarStatsChangedEventInfo(
@@ -312,25 +321,6 @@ namespace Race.Garage
             instanceInfo.mainMaterial = material;
             instanceInfo.rootObject = carInstance;
         }
-
-        void OnEnable()
-        {
-            if (IsAnyCarSelected)
-                ResetModelWithCarDataMaybeFromFile(ref CurrentCarInfo);
-
-            assert(_colorPicker != null);
-            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
-        }
-        
-        void OnDisable()
-        {
-            if (_colorPicker != null)
-                _colorPicker.OnValueChangedEvent.RemoveListener(OnPickerColorSet);
-            
-            if (IsAnyCarSelected)
-                MaybeWriteCurrentModel();
-        }
-
 
         // TODO: might want to customize the way we get the file path.
         public static string GetSaveFilePath(string carName)

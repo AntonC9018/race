@@ -5,8 +5,8 @@
         "Common",
         "EngineCommon",
         "Unity.InputSystem",
+        "Unity.Addressables",
         "Gameplay",
-        "Gameplay.Data",
         "Garage"
     ],
     "includePlatforms": [],

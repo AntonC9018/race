@@ -139,8 +139,9 @@ More on the code / design:
   Wherever I do serialize the model manager for a component, I tend to hook up the handlers at runtime, but otherwise, it's done in the editor.
 
 
-- I'm not sure about unhooking callbacks in `OnDisable()`.
-  Whether I keep them or remove them will depend on the future usage (whether some data is used or not in other scenes).
+- I'm not unhooking some callbakcs in `OnDisable()`. This is a conscious decision.
+  The reason I'm not doing it is because I intend these pieces to either always be used in conjuction,
+  or disabled/destroyed all at once. They should never be disabled on individual basis. 
 
 
 - I'm using `UnityEvents` to connect everything together.

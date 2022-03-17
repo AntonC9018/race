@@ -16,7 +16,6 @@ namespace Race
             // This function does not work at all right now.
             // I'm getting an (undocumented) internal error in the unity console.
             // I'll need way more time to get down to the root of the problem.
-            // For now, just convert that png manually, I guess.
             [MenuItem("Assets/Convert SVG to sprite for normal image (doesn't work)", isValidateFunction: false, priority: 1000)]
             public static void ConvertSVGToSpriteUsableForNormalImage()
             {

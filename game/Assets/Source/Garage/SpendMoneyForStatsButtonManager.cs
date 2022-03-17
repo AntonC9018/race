@@ -42,14 +42,6 @@ namespace Race.Garage
             _button.onClick.AddListener(TradeCoinsForStatValue);
         }
 
-        void OnDisable()
-        {
-            _carProperties.OnCarSelected.RemoveListener(OnCarSelected);
-            _carProperties.OnStatsChanged.RemoveListener(OnStatsChanged);
-            _userProperties.OnCurrencyChanged.RemoveListener(OnCurrencyChanged);
-            _button.onClick.RemoveListener(TradeCoinsForStatValue);
-        }
-
         private void ResetMaxStatsFlag(ref CarInstanceInfo carInfo)
         {
             _currentFlags.Set(
