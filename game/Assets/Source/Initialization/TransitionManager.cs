@@ -89,9 +89,35 @@ namespace Race.SceneTransition
             }
 
             // This is stupid and I hate it ...
-            // Addressables' API is terrible IMO. I'd do a custom thing a be happy.
-            // Their code is complicated and unreadable too. 
+            // Addressables' API is terrible IMO. I'd do a custom thing and be happy.
+            // Their code is complicated and unreadable too.
             var gameplayCarsLocationsHandle = Addressables.LoadResourceLocationsAsync("gameplay");
+
+            /*
+                I'd do something like the following:
+                - Refer to anything by the group prefix, and their index in that group.
+                - Each group would have a metadata section, where the names can be mapped to indices if needed,
+                  and any other metadata would be stored.
+                  I think you'd still have to give some sort of "description" to the things that a bundle
+                  or a server contains.
+                  That section should be able to contain anything, perhaps even like smaller car models,
+                  so that the player could browse the cars without loading in whole detailed meshes.
+                - When loading the things, you must first collect the groups that you will be downloading from,
+                  which I guess should be known statically, or retrieved dynamically. If it's known statically,
+                  you can just get the needed group names synchronously.
+                  Then you'd load all things from the groups in bulk again.
+                  Once they have been loaded, you can just index directly into them.
+
+                So I guess I'd like a lower-level abstraction better than Addressables.
+                The lazy-loading of every object individually really gets to me.
+                I guess I just don't think in objects, but in data.
+
+                Like I would rather group the objects I need to query by their group name manually, than
+                downloading each one individually and handing all of that off to some magical system.
+                I would be much more efficient too.
+
+                I might be missing something at this point too tho.
+            */
 
             Task[] playerCarsTasks;
             {
