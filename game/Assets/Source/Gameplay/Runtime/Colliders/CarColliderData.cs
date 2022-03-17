@@ -82,7 +82,6 @@ namespace Race.Gameplay
         #if UNITY_EDITOR
         public static void CreateDefaultColliders(CarInfoComponent infoComponent, Transform rootTransform, GameObject wheelPrefab)
         {
-            // TODO: currently broken, DataModel does not exist in the editor
             ref var colliderParts = ref infoComponent.colliderParts;
             ref var visualParts = ref infoComponent.visualParts;
             // Parents

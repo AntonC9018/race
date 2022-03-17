@@ -29,7 +29,6 @@ namespace Race.Gameplay
 
         public void ResetTo(CarProperties properties)
         {
-            // TODO: obviously broken
             properties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
         }
     }

@@ -242,7 +242,6 @@ namespace Race.Garage
             assert(_carPrefabInfos is not null);
             _carInstanceInfos = new CarInstanceInfo[_carPrefabInfos.Length];
 
-            // TODO: serialize the currently selected car.
             for (int i = 0; i < _carPrefabInfos.Length; i++)
             {
                 var prefabInfo = _carPrefabInfos[i];
@@ -361,10 +360,8 @@ namespace Race.Garage
             void ResetModel(ref CarInstanceInfo info)
             {
                 info.mainMaterial.color = info.dataModel.mainColor;
-                _colorPicker.ColorRGB = info.dataModel.mainColor;    
-                // TODO: Fire callbacks and whatnot. Actually, I'm doing that below.
-                // The callbacks need to know the index of the previous car, which this func doesn't have.
-                // So it should either get this info, or the callback should happen elsewhere.
+                _colorPicker.ColorRGB = info.dataModel.mainColor;
+                // The callbacks are fired in the method below.
             }
         }
 

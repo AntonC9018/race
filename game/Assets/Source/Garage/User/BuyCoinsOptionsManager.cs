@@ -19,7 +19,7 @@ namespace Race.Garage
 
         public int coins;
 
-        public int CompareTo(BuyCoinsOptionData other)
+        public readonly int CompareTo(BuyCoinsOptionData other)
         {
             return coins - other.coins;
         }

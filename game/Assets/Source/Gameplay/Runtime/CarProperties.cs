@@ -54,8 +54,6 @@ namespace Race.Gameplay
 
     public static class CarDataModelHelper
     {
-        // TODO: refactor this logic to be able to reuse it in other calculations.
-
         /// <summary>
         /// Returns the max speed estimate in m/s.
         /// </summary>
