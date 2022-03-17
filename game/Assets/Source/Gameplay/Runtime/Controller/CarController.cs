@@ -307,7 +307,8 @@ namespace Race.Gameplay
                 for (int index = 0; index < colliderParts.wheels.Length; index++)
                 {
                     colliderParts.wheels[index].collider.GetWorldPose(out var position, out var rotation);
-                    visualWheels[index].SetPositionAndRotation(position, rotation);
+                    ref var visualWheel = ref visualWheels[index];
+                    visualWheel.transform.SetPositionAndRotation(position, rotation * visualWheel.initialRotation);
                 }
             }
 

@@ -4,10 +4,17 @@ using static EngineCommon.Assertions;
 namespace Race.Gameplay
 {
     [System.Serializable]
+    public struct VisualWheel
+    {
+        public Quaternion initialRotation;
+        public Transform transform;
+    }
+    
+    [System.Serializable]
     public struct CarVisualParts
     {
         public Transform body;
-        public Transform[] wheels;
+        public VisualWheel[] wheels;
 
         // TODO:
         // This one is shared between the two scenes.
@@ -97,7 +104,7 @@ namespace Race.Gameplay
                 assert(wheels != null, "Must have a `wheels` child with wheels.");
 
                 var outWheelColliderParts = new CarPart<WheelCollider>[4];
-                var outWheelVisualParts = new Transform[4];
+                var outWheelVisualParts = new VisualWheel[4];
                 CreateWheelColliderGameObjectsFromWheelMeshes(
                     parent, wheels, wheelPrefab, outWheelColliderParts, outWheelVisualParts);
                 colliderParts.wheels = outWheelColliderParts;
@@ -109,7 +116,7 @@ namespace Race.Gameplay
                     Transform visualWheelsContainer,
                     GameObject wheelColliderPrefab,
                     CarPart<WheelCollider>[] outColliderParts,
-                    Transform[] outVisualParts)
+                    VisualWheel[] outVisualParts)
                 {
                     var wheelNames = WheelHelper.WheelNames;
                     
@@ -165,7 +172,7 @@ namespace Race.Gameplay
                         {
                             // TODO: will this work if the rotation is not identity?
                             wheelColliderTransform.SetPositionAndRotation(meshWheelTransform.position, meshWheelTransform.rotation);
-                            // wheelTransform.position = meshWheelTransform.position;
+                            // wheelColliderTransform.position = meshWheelTransform.position;
                             // wheelTransform.localRotation = meshWheelTransform.localRotation;
                             wheelColliderTransform.SetParent(containerTransform, worldPositionStays: true);
                         }
@@ -184,7 +191,8 @@ namespace Race.Gameplay
                             collider = wheelCollider,
                         };
 
-                        outVisualParts[i] = meshWheelTransform;
+                        outVisualParts[i].transform = meshWheelTransform;
+                        outVisualParts[i].initialRotation = meshWheelTransform.localRotation;
                     }
                 }
             }
