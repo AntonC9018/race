@@ -1,6 +1,9 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
 using static EngineCommon.Assertions;
 
 namespace Race.SceneTransition
@@ -67,25 +70,63 @@ namespace Race.SceneTransition
             initializationComponent.Initialize();
         }
 
-        // private Task TransitionFromGarageToGameplay(in GameplayInitializationInfo info)
-        // {
-        //     assert(_garageTransform != null);
-        //     assert(_gameplayScenePrefab != null);
-        //     assert(_garageToGameplayTransitionScenePrefab != null);
+        private Task TransitionFromGarageToGameplay(in GameplayInitializationInfo info)
+        {
+            assert(_garageTransform != null);
+            assert(_gameplayScenePrefab != null);
+            assert(_garageToGameplayTransitionScenePrefab != null);
 
-        //     _garageTransform.gameObject.SetActive(false);
+            _garageTransform.gameObject.SetActive(false);
 
-        //     var gameplayScenePrefabTask = _gameplayScenePrefab.LoadAssetAsync();
+            var gameplayScenePrefabTask = _gameplayScenePrefab.LoadAssetAsync();
 
-        //     // var catalog = Addressables.LoadContentCatalogAsync();
+            static async Task<GameObject> GetCarPrefab(int index, AsyncOperationHandle<IList<IResourceLocation>> locationsHandle)
+            {
+                var locations = await locationsHandle.Task;
+                var correctLocation = locations[index];
+                var prefabHandle = Addressables.LoadAssetAsync<GameObject>(correctLocation);
+                return await prefabHandle.Task;
+            }
 
-        //     // _garageToGameplayTransitionScenePrefab.
+            // This is stupid and I hate it ...
+            // Addressables' API is terrible IMO. I'd do a custom thing a be happy.
+            // Their code is complicated and unreadable too. 
+            var gameplayCarsLocationsHandle = Addressables.LoadResourceLocationsAsync("gameplay");
 
-        //     if (_garageToGameplayTransitionTransform != null)
-        //     {
-        //         var initializationTransform = FindInitializationTransform(_garageToGameplayTransitionTransform);
-        //     }
-        // }
+            Task[] playerCarsTasks;
+            {
+                var playerCount = info.playerInfos.Length;
+                assert(playerCount == 1);
+
+                playerCarsTasks = new Task[playerCount];
+                for (int i = 0; i < playerCarsTasks.Length; i++)
+                {
+                    // This is again just stupid, because currently WE KNOW the cars are stored in the same bundle.
+                    // So they will always resolve instantly after the locations have been loaded.
+                    // We could've just iterated them manually at that point.
+                    var task = GetPlayerCar(info.playerInfos[i], gameplayCarsLocationsHandle);
+                    playerCarsTasks[i] = task;
+
+                    static async Task<GameObject> GetPlayerCar(PlayerInfo info, AsyncOperationHandle<IList<IResourceLocation>> locationsHandle)
+                    {
+                        var prefab = await GetCarPrefab(info.carIndex, locationsHandle);
+                        // TODO: all that other stuff from the Transition script.
+                        // Also, I think we have to delegate this to the main thread anyway.
+                        var car = GameObject.Instantiate(prefab);
+                        return car;
+                    }
+                }
+                // TODO: approximately the same for bots
+            }
+
+            //?
+            // if (_garageToGameplayTransitionTransform != null)
+            // {
+            //     var initializationTransform = FindInitializationTransform(_garageToGameplayTransitionTransform);
+            // }
+
+            return Task.WhenAll(playerCarsTasks);
+        }
 
         private Transform FindInitializationTransform(Transform root)
         {
