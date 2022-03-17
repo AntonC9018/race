@@ -12,7 +12,7 @@ namespace Race.Garage
         [SerializeField] private CarProperties _carProperties;
 
 
-        void Start()
+        void Awake()
         {
             // TODO: OnCarsListLoaded or something should be an event
             // The cars in fact are not going to be known in advance, so we also need
