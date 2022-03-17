@@ -3,16 +3,28 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    public class Tachometer : MonoBehaviour
+    public class Tachometer : MonoBehaviour, InitializationHelper.ISetCarProperties
     {
-        [SerializeField] private CarProperties _carProperties;
         [SerializeField] private RadialValueDisplay _valueDisplay;
+        private CarProperties _carProperties;
         public ValueRange _displayValueRange;
 
-        void Awake()
+        public CarProperties CarProperties
         {
-            _carProperties.OnDataModelInitialized.AddListener(OnDataModelInitialized);
-            _carProperties.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
+            set
+            {
+                if (_carProperties != null)
+                {
+                    _carProperties.OnDataModelInitialized.RemoveListener(OnDataModelInitialized);
+                    _carProperties.OnDrivingStateChanged.RemoveListener(OnDrivingStateChanged);
+                }
+
+                {
+                    _carProperties = value;
+                    value.OnDataModelInitialized.AddListener(OnDataModelInitialized);
+                    value.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
+                }
+            }
         }
 
         public void OnDataModelInitialized(CarProperties properties)

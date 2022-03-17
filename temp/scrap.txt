@@ -47,3 +47,24 @@
                 SetVerticesDirty();
             }
         }
+
+
+
+
+        
+
+            // var componentsCache = new List<ISetCarProperties>();
+            // var childUIsStack = new Stack<Transform>();
+            // var currentChildUI = ui;
+            // do
+            // {
+            //     int childCount = currentChildUI.childCount;
+            //     for (int i = 0; i < childCount; i++)
+            //     {
+            //         var childTransform = currentChildUI.GetChild(i);
+            //         var childGameObject = childTransform.gameObject;
+            //         var outComponentsCache
+            //         childGameObject.GetComponents(componentsCache);
+            //     }
+            // }
+            // while (childUIsStack.TryPop(out currentChildUI));

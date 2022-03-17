@@ -2,7 +2,7 @@ using UnityEngine;
 using Race.Gameplay;
 using static EngineCommon.Assertions;
 
-namespace Race.SceneTransition
+namespace Race.Gameplay
 {
     /// <summary>
     /// Creates and initializes input views.

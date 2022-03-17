@@ -92,15 +92,6 @@ namespace Race.SceneTransition
             infoComponent.visualParts.meshRenderer.material.color = color;
         }
 
-        public void InitializePlayerCar(GameObject playerCar)
-        {
-            var carProperties = playerCar.GetComponent<Gameplay.CarProperties>();
-            assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
-            var infoComponent = playerCar.GetComponent<CarInfoComponent>();
-            FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
-            InitializePlayerInput(playerCar, carProperties);
-        }
-
         // Initialization always turns into a mess.
         public void InitializeGameplaySceneWithConfiguration(Transform root, in GameplayInitializationInfo initInfo)
         {
@@ -129,7 +120,7 @@ namespace Race.SceneTransition
                 // or should be accessed in a standard way (there are other ways too, via interfaces).
                 ApplyColor(playerInfo.carDataModel.mainColor, infoComponent);
 
-                FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
+                Gameplay.InitializationHelper.FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
                 InitializePlayerInput(car, carProperties);
             }
 
@@ -143,16 +134,9 @@ namespace Race.SceneTransition
                 assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
                 var infoComponent = car.GetComponent<CarInfoComponent>();
 
-                FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
+                Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
                 InitializeBotInput(car, carProperties);
             }
-        }
-
-        private static void FinalizeCarPropertiesInitializationWithDefaults(
-            Gameplay.CarProperties carProperties, CarInfoComponent infoComponent)
-        {
-            var carSpec = infoComponent.template.baseSpec;
-            FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
         }
 
         private static void InitializeBotInput(
@@ -162,10 +146,10 @@ namespace Race.SceneTransition
             var carInputView = new BotInputView();
 
             var carController = car.GetComponent<CarController>();
-            InitializeCarController(carInputView, carController, carProperties);
+            Gameplay.InitializationHelper.InitializeCarController(carInputView, carController, carProperties);
         }
 
-        private void InitializePlayerInput(
+        public void InitializePlayerInput(
             GameObject car, Gameplay.CarProperties carProperties)
         {
             // For now just get these from the object, but these should be created
@@ -173,53 +157,12 @@ namespace Race.SceneTransition
             // TODO: something, don't know what yet.
             var factory = GetComponent<IInputViewFactory>();
             assert(factory != null);
+            
+            var cameraControlGameObject = GameObject.Instantiate(_cameraControlPrefab);
+            var cameraControl = cameraControlGameObject.GetComponent<CameraControl>();
 
-            ICameraInputView cameraInputView = factory.CreateCameraInputView(0, carProperties);
-            assert(cameraInputView != null);
-
-            ICarInputView carInputView = factory.CreateCarInputView(0, carProperties);
-            assert(carInputView != null);
-
-            {
-                var cameraControlGameObject = GameObject.Instantiate(_cameraControlPrefab);
-                var cameraControl = cameraControlGameObject.GetComponent<CameraControl>();
-                cameraControl.Initialize(car.transform, cameraInputView);
-            }
-            {
-                var carController = car.GetComponent<CarController>();
-                InitializeCarController(carInputView, carController, carProperties);
-            }
-        }
-
-        private static void InitializeCarController(
-            ICarInputView carInputView, CarController carController, Gameplay.CarProperties carProperties)
-        {
-            assert(carController != null);
-            assert(carInputView is not null);
-            assert(carProperties != null);
-
-            carInputView.ResetTo(carProperties);
-            carController.Initialize(carProperties, carInputView);
-        }
-
-        // I feel like initialization is a good cause for the code generator.
-        // Adding features with this code is going to be a massive pain.
-        // The initialization needs some actual thought.
-
-        private static void FinalizeCarPropertiesInitialization(
-            Gameplay.CarProperties carProperties,
-            CarInfoComponent infoComponent,
-            in CarSpecInfo carSpec)
-        {
-            // 3
-            CarColliderSetupHelper.AdjustCenterOfMass(
-                ref infoComponent.colliderParts, infoComponent.template.centerOfMassAdjustmentParameters);
-
-            // 4
-            {
-                var carDataModel = new Gameplay.CarDataModel(carSpec, infoComponent);
-                carProperties.Initialize(carDataModel);
-            }
+            Gameplay.InitializationHelper.InitializePlayerInput(
+                car, carProperties, cameraControl, factory);
         }
 
         /// <summary>
