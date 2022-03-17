@@ -6,6 +6,7 @@
         "EngineCommon",
         "Unity.InputSystem",
         "Unity.Addressables",
+        "Unity.ResourceManager",
         "Gameplay",
         "Garage"
     ],

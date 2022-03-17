@@ -5,6 +5,8 @@ Temp
 *.csproj
 UserSettings
 .vscode
+.vsconfig
+.vs
 obj
 
 EasyRoads3Dv3
