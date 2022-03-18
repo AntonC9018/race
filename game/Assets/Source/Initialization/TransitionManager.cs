@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Race.Gameplay;
 using Race.Garage;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -9,7 +12,7 @@ using static EngineCommon.Assertions;
 
 namespace Race.SceneTransition
 {
-    public class TransitionManager : MonoBehaviour
+    public class TransitionManager : MonoBehaviour, ITransitionFromGarageToGameplay
     {
         // These are not scenes, but gameobjects.
         // They act like scenes, but I'm using prefabs instead of actual scenes,
@@ -21,6 +24,7 @@ namespace Race.SceneTransition
         private Transform _garageTransform;
         private Transform _gameplayTransform;
         private Transform _garageToGameplayTransitionTransform;
+        private IEnableDisableInput _enableDisableInput;
 
         
         /*
@@ -56,28 +60,44 @@ namespace Race.SceneTransition
             task.ContinueWith((t) => Debug.Log("Done loading garage"));
         }
 
+        // private readonly struct Temp<TInitializationComponent>
+        // {
+        //     public readonly GameObject rootTransform;
+        //     public readonly TInitializationComponent initializationComponent;
+
+        //     public Temp(GameObject rootTransform, TInitializationComponent initializationComponent)
+        //     {
+        //         this.rootTransform = rootTransform;
+        //         this.initializationComponent = initializationComponent;
+        //     }
+        // }
+
+        // Tasks are not supported in WebGL, so might want to refactor this to use coroutines.
+        // https://docs.unity3d.com/Packages/com.unity.addressables@1.9/manual/AddressableAssetsAsyncOperationHandle.html
+        private async Task<(Transform, TInitializationComponent)> SpawnAndQueryForInitializationObject<TInitializationComponent>(
+            AssetReferenceGameObject prefabReference)
+        {
+            var gameObject = await prefabReference.InstantiateAsync().Task;
+            var transform = gameObject.transform;
+            
+            var initializationTransform = FindInitializationTransform(transform);
+            var initializationComponent = initializationTransform.GetComponent<TInitializationComponent>();
+
+            return (transform, initializationComponent);
+        }
+
         private async Task InitializeGarage()
         {
             assert(_garageScenePrefab != null);
             assert(_garageTransform == null);
 
-        
-            var handle = _garageScenePrefab.LoadAssetAsync();
+            var (t, initializationComponent) = await SpawnAndQueryForInitializationObject<IGarageInitialize>(_garageScenePrefab);
+            _garageTransform = t;
 
-            // Tasks are not supported in WebGL, so might want to refactor this to use coroutines.
-            // https://docs.unity3d.com/Packages/com.unity.addressables@1.9/manual/AddressableAssetsAsyncOperationHandle.html
-            var garagePrefab = await handle.Task;
-            var garageGameObject = GameObject.Instantiate(garagePrefab);
-            var garageTransform = garageGameObject.transform;
-
-            _garageTransform = garageTransform;
-
-            var initializationTransform = FindInitializationTransform(_garageTransform);
-            var initializationComponent = initializationTransform.GetComponent<IGarageInitialize>();
-            await initializationComponent.Initialize();
+            await initializationComponent.Initialize(new GarageInitializationInfo(this));
         }
 
-        private Task TransitionFromGarageToGameplay(in GameplayInitializationInfo info)
+        public async Task TransitionFromGarageToGameplay(GarageToGameplayTransitionInfo info)
         {
             assert(_garageTransform != null);
             assert(_gameplayScenePrefab != null);
@@ -126,39 +146,157 @@ namespace Race.SceneTransition
                 I might be missing something at this point too tho.
             */
 
-            Task[] playerCarsTasks;
+            Task<PlayerDriverInfo>[] playerTasks;
             {
                 var playerCount = info.playerInfos.Length;
                 assert(playerCount == 1);
 
-                playerCarsTasks = new Task[playerCount];
-                for (int i = 0; i < playerCarsTasks.Length; i++)
+                playerTasks = new Task<PlayerDriverInfo>[playerCount];
+                for (int i = 0; i < playerTasks.Length; i++)
                 {
                     // This is again just stupid, because currently WE KNOW the cars are stored in the same bundle.
                     // So they will always resolve instantly after the locations have been loaded.
                     // We could've just iterated them manually at that point.
                     var task = GetPlayerCar(info.playerInfos[i], gameplayCarsLocationsHandle);
-                    playerCarsTasks[i] = task;
+                    playerTasks[i] = task;
 
-                    static async Task<GameObject> GetPlayerCar(PlayerInfo info, AsyncOperationHandle<IList<IResourceLocation>> locationsHandle)
+                    static async Task<PlayerDriverInfo> GetPlayerCar(PlayerInfo info, AsyncOperationHandle<IList<IResourceLocation>> locationsHandle)
                     {
                         var prefab = await GetCarPrefab(info.carIndex, locationsHandle);
-                        // TODO: all that other stuff from the Transition script.
-                        // Also, I think we have to delegate this to the main thread anyway.
                         var car = GameObject.Instantiate(prefab);
-                        return car;
+
+                        var carProperties = car.GetComponent<Gameplay.CarProperties>();
+                        assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
+                        var infoComponent = car.GetComponent<CarInfoComponent>();
+
+                        InitializeCarPropertiesFromPlayerInfo(info, carProperties, infoComponent);
+                        
+                        static void InitializeCarPropertiesFromPlayerInfo(
+                            in PlayerInfo playerInfo,
+                            Gameplay.CarProperties carProperties,
+                            Gameplay.CarInfoComponent infoComponent)
+                        {
+                            // 2
+                            CarSpecInfo carSpec = GetEngineSpecFromStatsAndTemplate(
+                                currentStats: playerInfo.carDataModel.statsInfo.currentStats,
+                                rates: new StatsConversionRates(),
+                                template: infoComponent.template.baseSpec);
+
+                            // TODO:
+                            // The mesh renderer should be in a separate metadata component,
+                            // or should be accessed in a standard way (there are other ways too, via interfaces).
+                            ApplyColor(playerInfo.carDataModel.mainColor, infoComponent);
+                            Gameplay.InitializationHelper.FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
+                            
+                            static void ApplyColor(Color color, CarInfoComponent infoComponent)
+                            {
+                                infoComponent.visualParts.meshRenderer.material.color = color;
+                            }
+                        }
+
+
+                        return new PlayerDriverInfo(car, carProperties);
                     }
                 }
-                // TODO: approximately the same for bots
             }
 
-            //?
-            // if (_garageToGameplayTransitionTransform != null)
-            // {
-            //     var initializationTransform = FindInitializationTransform(_garageToGameplayTransitionTransform);
-            // }
+            Task<BotDriverInfo>[] botTasks;
+            {
+                var botCount = info.botInfos.Length;
+                assert(botCount == 1);
 
-            return Task.WhenAll(playerCarsTasks);
+                botTasks = new Task<BotDriverInfo>[botCount];
+                for (int i = 0; i < botTasks.Length; i++)
+                {
+                    // This is again just stupid, because currently WE KNOW the cars are stored in the same bundle.
+                    // So they will always resolve instantly after the locations have been loaded.
+                    // We could've just iterated them manually at that point.
+                    var task = GetPlayerCar(info.playerInfos[i], gameplayCarsLocationsHandle);
+                    botTasks[i] = task;
+
+                    static async Task<BotDriverInfo> GetPlayerCar(PlayerInfo info, AsyncOperationHandle<IList<IResourceLocation>> locationsHandle)
+                    {
+                        var prefab = await GetCarPrefab(info.carIndex, locationsHandle);
+                        var car = GameObject.Instantiate(prefab);
+                        
+                        var carProperties = car.GetComponent<Gameplay.CarProperties>();
+                        assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
+                        var infoComponent = car.GetComponent<CarInfoComponent>();
+
+                        Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
+
+                        return new BotDriverInfo(car, carProperties);
+                    }
+                }
+            }
+            
+            var (gameplaySceneRoot, initializationComponent) = 
+                await SpawnAndQueryForInitializationObject<IGameplayInitialization>(_gameplayScenePrefab);
+
+            var playerDriverInfos = await Task.WhenAll(playerTasks);
+            var botDriverInfos = await Task.WhenAll(botTasks);
+
+            var enableDisableInput = await Task.Run(() =>
+            {
+                var initializationInfo = new GameplayInitializationInfo
+                {
+                    rootTransform = gameplaySceneRoot,
+                    playerDriverInfos = playerDriverInfos,
+                    botDriverInfos = botDriverInfos,
+                };
+
+                return initializationComponent.Initialize(initializationInfo);
+            });
+            enableDisableInput.EnableAllInput();
+        }
+
+
+        [System.Serializable]
+        public struct StatsConversionRates
+        {
+            // for now keep it const
+            public const float c_torqueFactor = 1.0f;
+            public readonly float torqueFactor => c_torqueFactor;
+        }
+
+        private static CarSpecInfo GetEngineSpecFromStatsAndTemplate(
+            in CarStats currentStats,
+            in StatsConversionRates rates,
+            in Race.Gameplay.CarSpecInfo template)
+        {
+            // Initialize by copying (it's a struct).
+            var carSpec = template;
+
+            // We don't do a full copy, we only copy what we know is going to change.
+            // Right now the only reference type that gets changed is the gear ratios.
+            // Wheel locations for example still point to the template ones.
+            {
+                ref var g = ref carSpec.transmission.gearRatios;
+                g = g[..];
+            }
+            
+            float motorRPMAtOldTorque;
+            {
+                float a = currentStats.accelerationModifier;
+                float torqueBaseline = template.engine.maxTorque;
+                float newTorque = a * rates.torqueFactor + torqueBaseline;
+
+                // At optimalRPM the engine gave T torque.
+                // Now it will give T' torque at that same point.
+                // We shift it by dN to get the new desired RPM, such that at the old RPM it stays at T.  
+                float previousTorque = torqueBaseline;
+                // How much of the new torque is enough to get the previous torque.
+                float neededEfficiencyForOldTorque = previousTorque / newTorque;
+
+                motorRPMAtOldTorque = CarDataModelHelper.GetLowEngineRPMAtEngineEfficiency(neededEfficiencyForOldTorque, template.engine);
+
+                carSpec.engine.maxTorque = newTorque;
+            }
+            
+            foreach (ref var g in carSpec.transmission.gearRatios.AsSpan())
+                g = template.engine.optimalRPM / (g * motorRPMAtOldTorque);
+
+            return carSpec;
         }
 
         private Transform FindInitializationTransform(Transform root)

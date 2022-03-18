@@ -10,7 +10,7 @@ namespace Race.Gameplay
             GameObject car,
             Gameplay.CarProperties carProperties,
             CameraControl cameraControl,
-            IInputViewFactory viewFactory)
+            IInputViewManager viewFactory)
         {
             // For now just get these from the object, but these should be created
             // on demand for each new local player.
@@ -51,6 +51,16 @@ namespace Race.Gameplay
 
             carInputView.ResetTo(carProperties);
             carController.Initialize(carProperties, carInputView);
+        }
+        
+        private static void InitializeBotInput(
+            GameObject car, Gameplay.CarProperties carProperties)
+        {
+            // TODO: settings for difficulty and such
+            var carInputView = new BotInputView();
+
+            var carController = car.GetComponent<CarController>();
+            Gameplay.InitializationHelper.InitializeCarController(carInputView, carController, carProperties);
         }
 
         public static void FinalizeCarPropertiesInitialization(

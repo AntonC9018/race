@@ -4,16 +4,22 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
+    public interface IEnableDisableInput
+    {
+        void EnableAllInput();
+        void DisableAllInput();
+    }
+    
     /// <summary>
     /// Creates and initializes input views.
     /// </summary>
-    public interface IInputViewFactory
+    public interface IInputViewManager
     {
         ICarInputView CreateCarInputView(int participantIndex, Gameplay.CarProperties carProperties);
         ICameraInputView CreateCameraInputView(int participantIndex, Gameplay.CarProperties carProperties);
     }
 
-    public class KeyboardInputViewFactory : MonoBehaviour, IInputViewFactory
+    public class KeyboardInputViewFactory : MonoBehaviour, IInputViewManager, IEnableDisableInput
     {
         [SerializeField] private KeyboardInputSmoothingParameters _smootingParameters;
 
@@ -26,11 +32,12 @@ namespace Race.Gameplay
         // take a struct with these adaptive input views, initialized by the user.
         private CarKeyboardInputView _keyboardInputView;
         private CameraKeyboardInputView _cameraInputView;
+        private CarControls _carControls;
 
         void Awake()
         {
             var carControls = new CarControls();
-            carControls.Enable();
+            _carControls = carControls;
             _cameraInputView = new CameraKeyboardInputView(carControls.Player);
             _keyboardInputView = new CarKeyboardInputView(_smootingParameters, carControls.Player);
         }
@@ -46,6 +53,16 @@ namespace Race.Gameplay
             assert(playerIndex == 0, "Multiple player keyboard input unimplemented.");
             _keyboardInputView.ResetTo(carProperties);
             return _keyboardInputView;
+        }
+
+        public void EnableAllInput()
+        {
+            _carControls.Enable();
+        }
+
+        public void DisableAllInput()
+        {
+            _carControls.Disable();
         }
     }
 }

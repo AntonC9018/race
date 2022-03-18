@@ -2,7 +2,6 @@ using System.IO;
 using UnityEngine;
 using static EngineCommon.Assertions;
 
-
 namespace Race.Garage
 {
     public class LocalGarageInitialization : MonoBehaviour
@@ -13,7 +12,7 @@ namespace Race.Garage
 
         public void Start()
         {
-            ref var info = ref _initializationInfoComponent.info;
+            ref readonly var info = ref _initializationInfoComponent.info;
             InitializationHelper.InitializeGarage(in info, _carPrefabInfos);
         }
 

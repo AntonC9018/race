@@ -9,7 +9,7 @@ using static EngineCommon.Assertions;
 namespace Race.Garage
 {
     [System.Serializable]
-    public struct GarageInitializationInfo
+    public struct GarageFunctionalInfo
     {
         public CarProperties carProperties;
         public UserProperties userProperties;
@@ -18,14 +18,15 @@ namespace Race.Garage
 
     public interface IGarageInitialize
     {
-        Task Initialize();
+        Task Initialize(GarageInitializationInfo initializationInfo);
     }
 
     public class GarageInitialization : MonoBehaviour, IGarageInitialize
     {
-        public GarageInitializationInfo info;
+        public GarageFunctionalInfo info;
+        [SerializeField] private TransitionManager _transition;
 
-        public async Task Initialize()
+        async Task IGarageInitialize.Initialize(GarageInitializationInfo initializationInfo)
         {
             const string label = "display";
             var handle = Addressables.LoadResourceLocationsAsync(label);
@@ -35,6 +36,7 @@ namespace Race.Garage
             var arrayOfPrefabs = prefabs.Select(p => new CarPrefabInfo { prefab = p, }).ToArray();
 
             InitializationHelper.InitializeGarage(in info, arrayOfPrefabs);
+            _transition.Initalize(info, initializationInfo);
         }
     }
 
@@ -67,7 +69,7 @@ namespace Race.Garage
         }
 
         public static void InitializeGarage(
-            in GarageInitializationInfo initializationInfo,
+            in GarageFunctionalInfo initializationInfo,
             CarPrefabInfo[] carPrefabInfos)
         {
             var carProperties = initializationInfo.carProperties;
