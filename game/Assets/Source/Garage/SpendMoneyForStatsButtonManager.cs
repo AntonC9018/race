@@ -31,11 +31,6 @@ namespace Race.Garage
                 var car = properties.car;
                 car.OnCarSelected.AddListener(OnCarSelected);
                 car.OnStatsChanged.AddListener(OnStatsChanged);
-
-                _currentFlags.Set(PossibilitiesFlags.NoCarSelected, car.IsAnyCarSelected);
-                if (car.IsAnyCarSelected)
-                    ResetMaxStatsFlag(ref car.CurrentCarInfo);
-
                 _carProperties = car;
             }
             {
@@ -50,23 +45,7 @@ namespace Race.Garage
 
             ResetButtonInteractability();
         }
-        private void OnDataModelLoaded(UserDataModel dataModel)
-        {
-            ResetButtonInteractability();
-        }
-
-        private void OnCarsInitialized(CarProperties properties)
-        {
-            ResetButtonInteractability();
-        }
-
-        private void ResetMaxStatsFlag(ref CarInstanceInfo carInfo)
-        {
-            _currentFlags.Set(
-                PossibilitiesFlags.MaxStatsReached,
-                carInfo.dataModel.statsInfo.totalStatValue >= CarStatsHelper.MaxStatValue);
-        }
-
+        
         private void ResetCoinsFlag(UserDataModel dataModel)
         {
             _currentFlags.Set(
@@ -79,25 +58,23 @@ namespace Race.Garage
             _button.interactable = _currentFlags == 0;
         }
 
-        public void OnCarSelected(CarSelectionChangedEventInfo info)
+        private void OnCarSelected(CarSelectionChangedEventInfo info)
         {
             _currentFlags.Set(PossibilitiesFlags.NoCarSelected, info.currentIndex < 0);
-
-            if (info.currentIndex >= 0)
-                ResetMaxStatsFlag(ref info.CurrentCarInfo);
-
             ResetButtonInteractability();
         }
 
-        public void OnCurrencyChanged(UserPropertyChangedEventInfo<Currency> info)
+        private void OnCurrencyChanged(UserPropertyChangedEventInfo<Currency> info)
         {
             ResetCoinsFlag(info.userProperties.DataModel);
             ResetButtonInteractability();
         }
 
-        public void OnStatsChanged(CarStatsChangedEventInfo info)
+        private void OnStatsChanged(CarStatsChangedEventInfo info)
         {
-            // Not implemented, because the additional value changes nowhere else but here.
+            _currentFlags.Set(
+                PossibilitiesFlags.MaxStatsReached,
+                info.CurrentStatsInfo.totalStatValue >= CarStatsHelper.MaxStatValue);
         }
 
         public void TradeCoinsForStatValue()

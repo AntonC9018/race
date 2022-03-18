@@ -232,14 +232,8 @@ namespace Race.Garage
         /// <summary>
         /// </summary>
         [SerializeField] public UnityEvent<CarStatsChangedEventInfo> OnStatsChanged;
-
-        void Awake()
-        {
-            assert(_colorPicker != null);
-            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
-        }
-
-        public void Initialize(string defaultCarName, CarPrefabInfo[] carPrefabInfos)
+        
+        public void Initialize(CarPrefabInfo[] carPrefabInfos)
         {
             _carPrefabInfos = carPrefabInfos;
             _carInstanceInfos = new CarInstanceInfo[carPrefabInfos.Length];
@@ -266,21 +260,27 @@ namespace Race.Garage
 
                 _carInstanceInfos[i].name = name;
             }
-
-            for (int i = 0; i < CarInstanceInfos.Length; i++)
-            {
-                if (CarInstanceInfos[i].name == defaultCarName)
-                {
-                    SelectCar(i);
-                    break;
-                }
-            }
+            
+            assert(_colorPicker != null);
+            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
 
             // Check whether the object is a prefab or an instantiated object in the scene or not.
             // This check feels like a hack, but it seems reliable.
             static bool IsPrefab(GameObject gameObject)
             {
                 return gameObject.scene.name is null;
+            }
+        }
+
+        public void SelectCarByName(string carName)
+        {
+            for (int i = 0; i < CarInstanceInfos.Length; i++)
+            {
+                if (CarInstanceInfos[i].name == carName)
+                {
+                    SelectCar(i);
+                    break;
+                }
             }
         }
 
@@ -370,6 +370,12 @@ namespace Race.Garage
         {
             using var textWriter = new StreamWriter(fileName);
             CarDataModel.Serializer.Serialize(textWriter, model);
+        }
+
+        // TODO: centralize all serialization.
+        void OnDestroy()
+        {
+            MaybeWriteCurrentModel();
         }
 
         private void MaybeWriteCurrentModel()
@@ -467,6 +473,12 @@ namespace Race.Garage
             }
 
             OnCarSelected.Invoke(eventInfo);
+
+            if (carIndex >= 0)
+            {
+                // I guess all of the subevents should be called anyway.
+                TriggerStatsChangedEvent(-1);
+            }
         }
     }
 }

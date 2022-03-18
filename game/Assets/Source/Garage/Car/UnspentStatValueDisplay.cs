@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System;
 
 namespace Race.Garage
 {
@@ -15,32 +16,25 @@ namespace Race.Garage
             _initialText = _text.text;
         }
 
-
-        private void ResetThings(CarProperties carProperties)
-        {
-            if (carProperties.IsAnyCarSelected)
-            {
-                ref var statsInfo = ref carProperties.CurrentCarInfo.dataModel.statsInfo;
-                float currentTotalValue = statsInfo.currentStats.GetTotalValue();
-                float availableValue = statsInfo.totalStatValue - currentTotalValue;
-                _text.text = $"Unspent value: {availableValue:F2}";
-            }
-            else
-            {
-                _text.text = _initialText;
-            }
-        }
-
-        public void OnStatsChanged(CarStatsChangedEventInfo info)
-        {
-            ResetThings(info.carProperties);
-        }
-
         public void Initialize(in InitializationHelper.Properties properties)
         {
             var carProperties = properties.car;
             carProperties.OnStatsChanged.AddListener(OnStatsChanged);
-            ResetThings(carProperties);
+            carProperties.OnCarSelected.AddListener(OnCarSelected);
+        }
+
+        private void OnStatsChanged(CarStatsChangedEventInfo info)
+        {
+            ref var statsInfo = ref info.CurrentStatsInfo;
+            float currentTotalValue = statsInfo.currentStats.GetTotalValue();
+            float availableValue = statsInfo.totalStatValue - currentTotalValue;
+            _text.text = $"Unspent value: {availableValue:F2}";
+        }
+
+        private void OnCarSelected(CarSelectionChangedEventInfo info)
+        {
+            if (info.currentIndex == -1)
+                _text.text = _initialText;
         }
     }
 }

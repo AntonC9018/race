@@ -19,6 +19,7 @@ namespace Race.Garage
             }
         }
         
+        // TODO: allow only one of the properties, and do DI ina more streamlined way.
         public interface IInitialize
         {
             void Initialize(in Properties properties);
@@ -27,7 +28,7 @@ namespace Race.Garage
         // For now, inject the dependencies manually.
         public static void InjectProperties(Transform root, in Properties properties)
         {
-            var initializationComponents = root.GetComponentsInChildren<IInitialize>();
+            var initializationComponents = root.GetComponentsInChildren<IInitialize>(includeInactive: false);
             foreach (var component in initializationComponents)
                 component.Initialize(properties);
         }
@@ -47,14 +48,14 @@ namespace Race.Garage
             assert(_carProperties != null);
             assert(_userProperties != null);
             _userProperties.Initialize(_carProperties);
-            // Might want to do 2 phase initialization, like, first with prefabs, then with the user model.
-            // If the user data model depended on data from the car data model, we would have had a problem. 
-            _carProperties.Initialize(_userProperties.DataModel.defaultCarName, _carPrefabInfos);
+            _carProperties.Initialize(_carPrefabInfos);
 
             {
                 var properties = new InitializationHelper.Properties(_carProperties, _userProperties);
                 InitializationHelper.InjectProperties(_diRoot, properties);
             }
+
+            _carProperties.SelectCarByName(_userProperties.DataModel.defaultCarName);
         }
 
         private void DeleteSaveFiles()

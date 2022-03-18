@@ -248,8 +248,9 @@ namespace Race.Garage
                 _sliderValueChangedCaptures[i] = capture;
             }
 
-            _carProperties.OnCarSelected.AddListener(OnCarSelected);
-            _carProperties.OnStatsChanged.AddListener(OnStatsChanged);
+            // not sure about this aspect.
+            carProperties.OnCarSelected.AddListener(OnCarSelected);
+            carProperties.OnStatsChanged.AddListener(OnStatsChanged);
         }
 
         void Awake()

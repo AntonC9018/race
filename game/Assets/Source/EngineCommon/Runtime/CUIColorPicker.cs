@@ -4,6 +4,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using static EngineCommon.Assertions;
 
 namespace EngineCommon.ColorPicker
 {
@@ -102,28 +103,22 @@ namespace EngineCommon.ColorPicker
             set
             {
                 // Possibly a hack, used to prevent stuff.
-                if (HasInited)
-                    ResetToColor(value);
-                else
-                    Initialize(value);
-
+                assert(HasInited);
+                ResetToColor(value);
+                
                 // Do we always want to fire these?
                 OnValueChangedEvent?.Invoke(value);
             }
         }
         
-        private void Start()
-        {
-            if (!HasInited)
-                Initialize(initialColor);
-        }
-
         private void Awake()
         {
-            Debug.Assert(_saturationValueImage != null);
-            Debug.Assert(_saturationValueKnobTransform != null);
-            Debug.Assert(_hueImage != null);
-            Debug.Assert(_hueKnobTransform != null);
+            assert(!HasInited);
+
+            assert(_saturationValueImage != null);
+            assert(_saturationValueKnobTransform != null);
+            assert(_hueImage != null);
+            assert(_hueKnobTransform != null);
 
             // We allow null for this one.
             // Debug.Assert(_resultImage != null);
@@ -164,6 +159,8 @@ namespace EngineCommon.ColorPicker
                 new Rect(0.5f, 0.5f, 1, 1),
                 pivot: new Vector2(0.5f, 0.5f));
             _saturationValueRectTransform = ((RectTransform) _saturationValueImage.transform);
+            
+            Initialize(initialColor);
         }
 
         private void Update()
