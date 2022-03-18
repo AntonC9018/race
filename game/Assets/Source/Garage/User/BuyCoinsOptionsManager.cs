@@ -91,17 +91,6 @@ namespace Race.Garage
             }
         }
 
-        // I'm not sure I want this.
-        void OnDestroy()
-        {
-            for (int i = 0; i < _buttons.Length; i++)
-            {
-                var button = _buttons[i];
-                if (button != null)
-                    button.onClick.RemoveListener(_buttonClickedDelegates[i]);
-            }
-        }
-
         public UnityAction GetButtonClickedDelegate(int index)
         {
             return delegate()

@@ -6,6 +6,8 @@
         "EngineCommon",
         "Unity.VectorGraphics",
         "Unity.TextMeshPro",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
         "CommandTerminal"
     ],
     "includePlatforms": [],

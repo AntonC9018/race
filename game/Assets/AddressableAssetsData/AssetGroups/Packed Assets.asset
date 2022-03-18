@@ -16,7 +16,15 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: 6167f8f9ca33d254b9406ebc3540b10d
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: a2088143683298348b95290f8d935937
+    m_Address: Assets/Gameplay/Prefabs/New Prefab.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 1cf0eea7d4144254b96dbf8cafd7c69b
+    m_Address: Assets/Garage/garage_core.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 2ffc4cb9e209f4f4db2c5351f8ad028b, type: 2}
   m_SchemaSet:

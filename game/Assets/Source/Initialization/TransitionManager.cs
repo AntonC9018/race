@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Race.Garage;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -49,25 +50,31 @@ namespace Race.SceneTransition
             Could do something fancier when I understand the problem better.
         */
 
+        void Start()
+        {
+            var task = InitializeGarage();
+            task.ContinueWith((t) => Debug.Log("Done loading garage"));
+        }
+
         private async Task InitializeGarage()
         {
             assert(_garageScenePrefab != null);
             assert(_garageTransform == null);
 
+        
             var handle = _garageScenePrefab.LoadAssetAsync();
 
             // Tasks are not supported in WebGL, so might want to refactor this to use coroutines.
             // https://docs.unity3d.com/Packages/com.unity.addressables@1.9/manual/AddressableAssetsAsyncOperationHandle.html
-            var prefab = await handle.Task;
-
-            var garageGameObject = GameObject.Instantiate(prefab);
+            var garagePrefab = await handle.Task;
+            var garageGameObject = GameObject.Instantiate(garagePrefab);
             var garageTransform = garageGameObject.transform;
 
             _garageTransform = garageTransform;
 
             var initializationTransform = FindInitializationTransform(_garageTransform);
-            var initializationComponent = initializationTransform.GetComponent<IInitialization>();
-            initializationComponent.Initialize();
+            var initializationComponent = initializationTransform.GetComponent<IGarageInitialize>();
+            await initializationComponent.Initialize();
         }
 
         private Task TransitionFromGarageToGameplay(in GameplayInitializationInfo info)
@@ -158,10 +165,5 @@ namespace Race.SceneTransition
         {
             return root.Find("initialization");
         }
-    }
-
-    public interface IInitialization
-    {
-        void Initialize();
     }
 }
