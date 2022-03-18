@@ -5,7 +5,7 @@ namespace Race.Garage
 {
     // There must be a way to generate such classes automatically,
     // they are kind of stupid tbh.
-    public class UserCurrencyDisplay : MonoBehaviour
+    public class UserCurrencyDisplay : MonoBehaviour, InitializationHelper.IInitialize
     {
         [SerializeField] private TMP_Text _coinText;
         [SerializeField] private TMP_Text _rubyText;
@@ -21,9 +21,11 @@ namespace Race.Garage
             Display(info.newValue);
         }
 
-        public void OnUserDataModelLoaded(UserDataModel model)
+        public void Initialize(in InitializationHelper.Properties properties)
         {
-            Display(model.currency);
+            var userProperties = properties.user;
+            Display(userProperties.DataModel.currency);
+            userProperties.OnCurrencyChanged.AddListener(OnCurrencyChanged);
         }
     }
 }

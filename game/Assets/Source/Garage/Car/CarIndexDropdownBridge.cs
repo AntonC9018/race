@@ -6,24 +6,18 @@ using System;
 
 namespace Race.Garage
 {
-    public class CarIndexDropdownBridge : MonoBehaviour
+    public class CarIndexDropdownBridge : MonoBehaviour, InitializationHelper.IInitialize
     {
         [SerializeField] private TMP_Dropdown _carNameDropdown;
-        [SerializeField] private CarProperties _carProperties;
+        private CarProperties _carProperties;
 
 
-        // TODO: Some coordiation here, we need the carsInitialized event on the properties.
-        void Awake()
+        public void Initialize(in InitializationHelper.Properties properties)
         {
-            _carProperties.OnCarsInitialized.AddListener(OnCarsInitialized);
-        }
+            var carProperties = properties.car;
+            _carProperties = carProperties;
 
-        public void OnCarsInitialized(CarProperties properties)
-        {
-            // TODO: OnCarsListLoaded or something should be an event
-            // The cars in fact are not going to be known in advance, so we also need
-            // a way to add options dynamically, but that's way outside the current scope.
-            var options = new List<TMP_Dropdown.OptionData>(properties.CarInstanceInfos.Length + 1)
+            var options = new List<TMP_Dropdown.OptionData>(carProperties.CarInstanceInfos.Length + 1)
             {
                 // The first option is "no selection"
                 new TMP_Dropdown.OptionData("none"),
@@ -34,17 +28,14 @@ namespace Race.Garage
             // and I don't want to copy them.
             // There is this lib, which looks awesome, but I haven't used it yet.
             // https://github.com/VictorNicollet/NoAlloq
-            foreach (ref var instanceInfo in properties.CarInstanceInfos.AsSpan())
+            foreach (ref var instanceInfo in carProperties.CarInstanceInfos.AsSpan())
                 options.Add(new TMP_Dropdown.OptionData(instanceInfo.name));
 
             _carNameDropdown.AddOptions(options);
-            _carNameDropdown.value = properties.CurrentCarIndex + 1;
+            _carNameDropdown.value = carProperties.CurrentCarIndex + 1;
             _carNameDropdown.onValueChanged.AddListener(OnDropdownValueChanged);
             
-            // I guess it's worth it to do it this way, instead of manually wiring it up,
-            // because we need to reference both of the objects anyway.
-            // And also we need to have more control over the order of initialization.
-            properties.OnCarSelected.AddListener(OnCarSelected);
+            carProperties.OnCarSelected.AddListener(OnCarSelected);
         }
         
         /// <summary>

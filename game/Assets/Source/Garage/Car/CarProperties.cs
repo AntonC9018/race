@@ -178,13 +178,9 @@ namespace Race.Garage
     /// </summary>
     public class CarProperties : MonoBehaviour
     {
-        // TODO: codegen stuff.
-
-        [ContextMenuItem("Delete save files", nameof(DeleteSaveFiles))]
-        [SerializeField] internal CarPrefabInfo[] _carPrefabInfos;
-
         /// <summary>
         /// </summary>
+        private CarPrefabInfo[] _carPrefabInfos;
         private CarInstanceInfo[] _carInstanceInfos;
 
         // We need this one in the bridge script.
@@ -237,18 +233,20 @@ namespace Race.Garage
         /// </summary>
         [SerializeField] public UnityEvent<CarStatsChangedEventInfo> OnStatsChanged;
 
-        /// <summary>
-        /// </summary>
-        [SerializeField] public UnityEvent<CarProperties> OnCarsInitialized;
-
         void Awake()
         {
-            assert(_carPrefabInfos is not null);
-            _carInstanceInfos = new CarInstanceInfo[_carPrefabInfos.Length];
+            assert(_colorPicker != null);
+            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
+        }
 
-            for (int i = 0; i < _carPrefabInfos.Length; i++)
+        public void Initialize(string defaultCarName, CarPrefabInfo[] carPrefabInfos)
+        {
+            _carPrefabInfos = carPrefabInfos;
+            _carInstanceInfos = new CarInstanceInfo[carPrefabInfos.Length];
+
+            for (int i = 0; i < carPrefabInfos.Length; i++)
             {
-                var prefabInfo = _carPrefabInfos[i];
+                var prefabInfo = carPrefabInfos[i];
                 assert(prefabInfo.prefab != null);
 
                 // TODO:
@@ -269,6 +267,14 @@ namespace Race.Garage
                 _carInstanceInfos[i].name = name;
             }
 
+            for (int i = 0; i < CarInstanceInfos.Length; i++)
+            {
+                if (CarInstanceInfos[i].name == defaultCarName)
+                {
+                    SelectCar(i);
+                    break;
+                }
+            }
 
             // Check whether the object is a prefab or an instantiated object in the scene or not.
             // This check feels like a hack, but it seems reliable.
@@ -276,22 +282,6 @@ namespace Race.Garage
             {
                 return gameObject.scene.name is null;
             }
-
-            assert(_colorPicker != null);
-            _colorPicker.OnValueChangedEvent.AddListener(OnPickerColorSet);
-        }
-
-        void Start()
-        {
-            InvokeCarsInitialized();
-            // if (IsAnyCarSelected)
-                // ResetModelWithCarDataMaybeFromFile(ref CurrentCarInfo);
-        }
-
-        private void InvokeCarsInitialized()
-        {
-            OnCarsInitialized.Invoke(this);
-            OnCarsInitialized.RemoveAllListeners();
         }
 
         internal void TriggerStatsChangedEvent(int statChangedIndex = -1)
@@ -303,7 +293,7 @@ namespace Race.Garage
             _currentIsDirty = true;
         }
 
-        private void ResetInstanceInfo(ref CarInstanceInfo instanceInfo,
+        private static void ResetInstanceInfo(ref CarInstanceInfo instanceInfo,
             DisplayCarInfoComponent infoComponent, GameObject carInstance)
         {
             assert(infoComponent != null);
@@ -477,39 +467,6 @@ namespace Race.Garage
             }
 
             OnCarSelected.Invoke(eventInfo);
-        }
-
-        private void DeleteSaveFiles()
-        {
-            foreach (var prefabInfo in _carPrefabInfos)
-            {
-                var displayInfo = prefabInfo.prefab.GetComponent<DisplayCarInfoComponent>().info;
-                var saveFileFullPath = GetSaveFilePath(displayInfo.name);
-                if (File.Exists(saveFileFullPath))
-                {
-                    print("Deleting " + saveFileFullPath);
-                    File.Delete(saveFileFullPath);
-                }
-            }
-        }
-        
-        // TODO:
-        // Some tool that would find the needed `UserProperties` automatically in the editor
-        // when this object is added and hook it up automatically, without delegating to runtime,
-        // and without serializing the reference to `UserProperties`. Thus we'd get some of the benefits
-        // of singletons, while not actually making these global.
-        // This should definitely in some way get hooked up automatically.
-        public void OnUserModelLoaded(UserDataModel model)
-        {
-            InvokeCarsInitialized();
-            for (int i = 0; i < CarInstanceInfos.Length; i++)
-            {
-                if (CarInstanceInfos[i].name == model.defaultCarName)
-                {
-                    SelectCar(i);
-                    break;
-                }
-            }
         }
     }
 }

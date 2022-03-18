@@ -6,11 +6,13 @@ using static EngineCommon.Assertions;
 
 namespace Race.Garage
 {
-    public class SpendMoneyForStatsButtonManager : MonoBehaviour
+    public class SpendMoneyForStatsButtonManager : MonoBehaviour, InitializationHelper.IInitialize
     {
-        [SerializeField] private UserProperties _userProperties;
-        [SerializeField] private CarProperties _carProperties;
         [SerializeField] private Button _button;
+
+        private CarProperties _carProperties;
+        private UserProperties _userProperties;
+        
         private const float _StatIncreasePerCoin = 10;
         private const int _CoinUseAtATime = 50;
 
@@ -23,34 +25,38 @@ namespace Race.Garage
         }
         private PossibilitiesFlags _currentFlags = 0;
 
-        void Start()
+        public void Initialize(in InitializationHelper.Properties properties)
         {
+            {
+                var car = properties.car;
+                car.OnCarSelected.AddListener(OnCarSelected);
+                car.OnStatsChanged.AddListener(OnStatsChanged);
+
+                _currentFlags.Set(PossibilitiesFlags.NoCarSelected, car.IsAnyCarSelected);
+                if (car.IsAnyCarSelected)
+                    ResetMaxStatsFlag(ref car.CurrentCarInfo);
+
+                _carProperties = car;
+            }
+            {
+                var user = properties.user;
+                user.OnCurrencyChanged.AddListener(OnCurrencyChanged);
+
+                ResetCoinsFlag(user.DataModel);
+                
+                _userProperties = user;
+            }
+            _button.onClick.AddListener(TradeCoinsForStatValue);
+
             ResetButtonInteractability();
         }
-
-        void Awake()
-        {
-            // TODO: simplify this.
-            _userProperties.OnDataModelLoaded.AddListener(OnDataModelLoaded);
-            _carProperties.OnCarsInitialized.AddListener(OnCarsInitialized);
-
-            _carProperties.OnCarSelected.AddListener(OnCarSelected);
-            _carProperties.OnStatsChanged.AddListener(OnStatsChanged);
-            _userProperties.OnCurrencyChanged.AddListener(OnCurrencyChanged);
-            _button.onClick.AddListener(TradeCoinsForStatValue);
-        }
-
         private void OnDataModelLoaded(UserDataModel dataModel)
         {
-            ResetCoinsFlag(dataModel);
             ResetButtonInteractability();
         }
 
         private void OnCarsInitialized(CarProperties properties)
         {
-            _currentFlags.Set(PossibilitiesFlags.NoCarSelected, properties.IsAnyCarSelected);
-            if (properties.IsAnyCarSelected)
-                ResetMaxStatsFlag(ref properties.CurrentCarInfo);
             ResetButtonInteractability();
         }
 

@@ -25,13 +25,8 @@ namespace Race.Garage
         }
     }
 
-    public class BuyCoinsOptionsManager : MonoBehaviour
+    public class BuyCoinsOptionsManager : MonoBehaviour, InitializationHelper.IInitialize
     {
-        /// <summary>
-        /// The container in which to spawn the buttons.
-        /// </summary>
-        [SerializeField] private UserProperties _userProperties;
-
         /// <summary>
         /// The container in which to spawn the buttons.
         /// </summary>
@@ -48,6 +43,8 @@ namespace Race.Garage
         [ContextMenuItem("Sort in ascending order", nameof(SortOptions))]
         [SerializeField] private BuyCoinsOptionData[] _optionDatas;
 
+        private UserProperties _userProperties;
+        
         private void SortOptions()
         {
             Array.Sort(_optionDatas);
@@ -68,10 +65,8 @@ namespace Race.Garage
             assert(_optionDatas is not null);
             assert(_containerTransform != null);
             assert(_optionPrefab != null);
-            assert(_userProperties != null);
 
             _buttons = new Button[_optionDatas.Length];
-            _buttonClickedDelegates = new UnityAction[_buttons.Length];
 
             for (int i = 0; i < _optionDatas.Length; i++)
             {
@@ -82,10 +77,6 @@ namespace Race.Garage
                     var button = newTransform.GetComponentInChildren<Button>();
                     assert(button != null);
                     _buttons[i] = button;
-
-                    var deleg = GetButtonClickedDelegate(i);
-                    button.onClick.AddListener(deleg);
-                    _buttonClickedDelegates[i] = deleg;
                 }
 
                 {
@@ -121,6 +112,18 @@ namespace Race.Garage
                 _userProperties.DataModel.currency.coins += option.coins;
                 _userProperties.TriggerCurrencyChanged();
             };
+        }
+
+        public void Initialize(in InitializationHelper.Properties properties)
+        {
+            _userProperties = properties.user;
+            _buttonClickedDelegates = new UnityAction[_buttons.Length];
+            for (int i = 0; i < _buttons.Length; i++)
+            {
+                var deleg = GetButtonClickedDelegate(i);
+                _buttons[i].onClick.AddListener(deleg);
+                _buttonClickedDelegates[i] = deleg;
+            }
         }
     }
 }

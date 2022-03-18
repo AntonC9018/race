@@ -5,7 +5,7 @@ namespace Race.Garage
 {
     // There must be a way to generate such classes automatically,
     // they are kind of stupid tbh.
-    public class UserNicknameDisplay : MonoBehaviour
+    public class UserNicknameDisplay : MonoBehaviour, InitializationHelper.IInitialize
     {
         private TMP_Text _text;
 
@@ -19,9 +19,11 @@ namespace Race.Garage
             _text.text = info.newValue;
         }
 
-        public void OnUserDataModelLoaded(UserDataModel model)
+        public void Initialize(in InitializationHelper.Properties properties)
         {
-            _text.text = model.nickname;
+            var userProperties = properties.user;
+            _text.text = userProperties.DataModel.nickname;
+            userProperties.OnNickNameChanged.AddListener(OnNicknameChanged);
         }
     }
 }

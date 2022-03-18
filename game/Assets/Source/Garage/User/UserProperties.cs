@@ -85,7 +85,6 @@ namespace Race.Garage
         // invisibly at a wrong moment.
         public UnityEvent<UserPropertyChangedEventInfo<Currency>> OnCurrencyChanged;
         public UnityEvent<UserPropertyChangedEventInfo<string>> OnNickNameChanged;
-        public UnityEvent<UserDataModel> OnDataModelLoaded;
 
         public void TriggerCurrencyChanged()
         {
@@ -109,16 +108,13 @@ namespace Race.Garage
             OnNickNameChanged.Invoke(info);
         }
 
-        void Awake()
+        public void Initialize(CarProperties carProperties)
         {
+            carProperties.OnCarSelected.AddListener(OnCarSelectionChanged);
+            
             var model = new UserDataModel();
             TryLoadUserModelFromPlayerPrefs(model);
             _dataModel = model;
-        }
-
-        void Start()
-        {
-            OnDataModelLoaded.Invoke(_dataModel);
         }
 
         void OnDisable()
@@ -130,7 +126,6 @@ namespace Race.Garage
             }
         }
 
-        // Needs to be wired up to CarProperties.
         public void OnCarSelectionChanged(CarSelectionChangedEventInfo info)
         {
             if (info.carProperties.IsAnyCarSelected)

@@ -4,7 +4,7 @@ using TMPro;
 namespace Race.Garage
 {
     [RequireComponent(typeof(TMP_Text))]
-    public class UnspentStatValueDisplay : MonoBehaviour
+    public class UnspentStatValueDisplay : MonoBehaviour, InitializationHelper.IInitialize
     {
         private TMP_Text _text;
         private string _initialText;
@@ -15,11 +15,12 @@ namespace Race.Garage
             _initialText = _text.text;
         }
 
-        public void OnStatsChanged(CarStatsChangedEventInfo info)
+
+        private void ResetThings(CarProperties carProperties)
         {
-            if (info.carProperties.IsAnyCarSelected)
+            if (carProperties.IsAnyCarSelected)
             {
-                ref var statsInfo = ref info.CurrentStatsInfo;
+                ref var statsInfo = ref carProperties.CurrentCarInfo.dataModel.statsInfo;
                 float currentTotalValue = statsInfo.currentStats.GetTotalValue();
                 float availableValue = statsInfo.totalStatValue - currentTotalValue;
                 _text.text = $"Unspent value: {availableValue:F2}";
@@ -28,6 +29,18 @@ namespace Race.Garage
             {
                 _text.text = _initialText;
             }
+        }
+
+        public void OnStatsChanged(CarStatsChangedEventInfo info)
+        {
+            ResetThings(info.carProperties);
+        }
+
+        public void Initialize(in InitializationHelper.Properties properties)
+        {
+            var carProperties = properties.car;
+            carProperties.OnStatsChanged.AddListener(OnStatsChanged);
+            ResetThings(carProperties);
         }
     }
 }
