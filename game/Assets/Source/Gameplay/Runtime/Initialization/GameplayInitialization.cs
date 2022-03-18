@@ -41,7 +41,7 @@ namespace Race.Gameplay
         IEnableDisableInput Initialize(in GameplayInitializationInfo info);
     }
 
-    public class GameplayInitialization : MonoBehaviour
+    public class GameplayInitialization : MonoBehaviour, IGameplayInitialization
     {
         [SerializeField] private GameObject _cameraControlPrefab;
         [SerializeField] private KeyboardInputViewFactory _factory;
