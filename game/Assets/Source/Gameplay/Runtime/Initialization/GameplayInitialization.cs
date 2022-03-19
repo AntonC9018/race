@@ -7,6 +7,7 @@ namespace Race.Gameplay
 {
     public readonly struct PlayerDriverInfo
     {
+        // The car is disabled at this point in time.
         public readonly GameObject car;
         public readonly CarProperties carProperties;
 
@@ -19,6 +20,7 @@ namespace Race.Gameplay
 
     public readonly struct BotDriverInfo
     {
+        // The car is disabled at this point in time.
         public readonly GameObject car;
         public readonly CarProperties carProperties;
 
@@ -29,11 +31,11 @@ namespace Race.Gameplay
         }
     }
 
-    public ref struct GameplayInitializationInfo
+    public struct GameplayInitializationInfo
     {
         public Transform rootTransform;
-        public Span<PlayerDriverInfo> playerDriverInfos;
-        public Span<BotDriverInfo> botDriverInfos;
+        public PlayerDriverInfo[] playerDriverInfos;
+        public BotDriverInfo[] botDriverInfos;
     }
 
     public interface IGameplayInitialization
@@ -45,9 +47,12 @@ namespace Race.Gameplay
     {
         [SerializeField] private GameObject _cameraControlPrefab;
         [SerializeField] private KeyboardInputViewFactory _factory;
+        private GameplayInitializationInfo _initializationInfo;
 
         public IEnableDisableInput Initialize(in GameplayInitializationInfo info)
         {
+            _initializationInfo = info;
+
             assert(info.playerDriverInfos.Length == 1);
             assert(info.botDriverInfos.Length == 1);
 
@@ -56,13 +61,27 @@ namespace Race.Gameplay
 
             var cameraControl = cameraControlGameObject.GetComponent<CameraControl>();
 
+            var carContainer = new GameObject("car_container").transform;
+            carContainer.SetParent(info.rootTransform, worldPositionStays: false);
+
+            // TODO:
+            // 1. Map
+            // 2. Spawn points on the map
+            // 3. Place the cars at those points on init
+            // 4. Set the road data for the bot
+            // 5. other stuff.
+
             {
                 ref var playerInfo = ref info.playerDriverInfos[0];
                 var car = playerInfo.car;
                 var carProperties = playerInfo.carProperties;
 
-                InitializationHelper.InitializePlayerInput(playerInfo.car, playerInfo.carProperties, cameraControl, _factory);
+                InitializationHelper.InitializePlayerInput(car, carProperties, cameraControl, _factory);
+
+                car.transform.SetParent(carContainer, worldPositionStays: false);
+                car.name = "player";
             }
+
             {
                 ref var botInfo = ref info.botDriverInfos[0];
                 var car = botInfo.car;
@@ -75,6 +94,9 @@ namespace Race.Gameplay
                     var carController = car.GetComponent<CarController>();
                     Gameplay.InitializationHelper.InitializeCarController(carInputView, carController, carProperties);
                 }
+
+                car.transform.SetParent(carContainer, worldPositionStays: false);
+                car.name = "bot";
             }
 
             return _factory as IEnableDisableInput;

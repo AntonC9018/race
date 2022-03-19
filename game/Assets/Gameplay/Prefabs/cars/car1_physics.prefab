@@ -381,9 +381,6 @@ MonoBehaviour:
   OnDrivingStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  OnDataModelInitialized:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &7640424467764541753
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -402,6 +399,7 @@ MonoBehaviour:
     body:
       transform: {fileID: 7790357367912220192}
       collider: {fileID: 6818496762146046176}
+    rigidbody: {fileID: 6017377527919670717}
     wheels:
     - transform: {fileID: 6956972203208695225}
       collider: {fileID: 4357141149601354536}

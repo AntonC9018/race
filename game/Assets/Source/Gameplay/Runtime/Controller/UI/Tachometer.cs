@@ -14,15 +14,12 @@ namespace Race.Gameplay
             set
             {
                 if (_carProperties != null)
-                {
-                    _carProperties.OnDataModelInitialized.RemoveListener(OnDataModelInitialized);
                     _carProperties.OnDrivingStateChanged.RemoveListener(OnDrivingStateChanged);
-                }
 
                 {
                     _carProperties = value;
-                    value.OnDataModelInitialized.AddListener(OnDataModelInitialized);
                     value.OnDrivingStateChanged.AddListener(OnDrivingStateChanged);
+                    OnDataModelInitialized(value);
                 }
             }
         }

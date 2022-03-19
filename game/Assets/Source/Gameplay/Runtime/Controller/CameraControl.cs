@@ -33,6 +33,11 @@ namespace Race.Gameplay
             #endif
             _followedTransform = followedTransform;
             _inputView = cameraInputView;
+
+            _hasBeenInitialized = true;
+            assert(_followedTransform != null);
+            assert(_inputView is not null);
+            _inputView.AddOnCameraSwitchedListener(OnSwitchCamera);
         }
 
         void Awake()
@@ -45,16 +50,6 @@ namespace Race.Gameplay
             transform.GetChild(0).gameObject.SetActive(true);
             for (int i = 1; i < childCount; i++)
                 transform.GetChild(i).gameObject.SetActive(false);
-        }
-
-        void Start()
-        {
-            _hasBeenInitialized = true;
-            
-            assert(_followedTransform != null);
-            assert(_inputView is not null);
-
-            _inputView.AddOnCameraSwitchedListener(OnSwitchCamera);
         }
 
         void Destroy()

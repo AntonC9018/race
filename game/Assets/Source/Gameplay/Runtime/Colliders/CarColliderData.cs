@@ -34,7 +34,7 @@ namespace Race.Gameplay
     {
         public Transform container;
         public CarPart<BoxCollider> body;
-        public readonly Rigidbody Rigidbody => body.collider.attachedRigidbody; 
+        public Rigidbody rigidbody; 
 
         // The wheels are positioned according to WheelLocation.
         public CarPart<WheelCollider>[] wheels;
@@ -70,7 +70,7 @@ namespace Race.Gameplay
                 centerOfMassAdjustmentVector = new Vector3(0, altitudeLowering, 0);
             }
 
-            var rigidbody = colliderParts.Rigidbody;
+            var rigidbody = colliderParts.rigidbody;
             assert(rigidbody != null);
             // As far as I understand, centerOfMass is a runtime thing only (not serialized).
             // assert(rigidbody.centerOfMass == Vector3.zero, "What? already adjusted?");
@@ -84,6 +84,20 @@ namespace Race.Gameplay
         {
             ref var colliderParts = ref infoComponent.colliderParts;
             ref var visualParts = ref infoComponent.visualParts;
+            
+            // Rigidbody
+            {
+                var rigidbody = rootTransform.GetComponent<Rigidbody>();
+                if (rigidbody == null)
+                {
+                    Debug.Log("The root does not contain a Rigidbody component. Add it, or specify the Rigidbody of the parent manually.");
+                }
+                else
+                {
+                    colliderParts.rigidbody = rigidbody;
+                }
+            }
+
             // Parents
             Transform parent;
             Transform carModelTransform;

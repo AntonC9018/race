@@ -161,26 +161,14 @@ namespace Race.Gameplay
                 assert(spec.brakeWheelLocations is not null);
                 assert(spec.steeringWheelLocations is not null);
             }
-
-            TriggerDataModelInitialized();
-            void TriggerDataModelInitialized()
-            {
-                OnDataModelInitialized.Invoke(this);
-            }
         }
 
         // TODO: A separate event object could be helpful.
         public UnityEvent<CarProperties> OnDrivingStateChanged;
-        public UnityEvent<CarProperties> OnDataModelInitialized;
 
         public void TriggerOnDrivingStateChanged()
         {
             OnDrivingStateChanged.Invoke(this);
-        }
-
-        void Setup()
-        {
-            TriggerOnDrivingStateChanged();
         }
     }
 }

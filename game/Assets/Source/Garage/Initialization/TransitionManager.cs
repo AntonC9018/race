@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Kari.Plugins.Terminal;
 using UnityEngine;
@@ -47,7 +48,7 @@ namespace Race.Garage
         private GarageFunctionalInfo _garageInfo;
         private GarageInitializationInfo _transitionInfo;
 
-        public void Initalize(GarageFunctionalInfo garageInfo, GarageInitializationInfo handler)
+        public void Initialize(GarageFunctionalInfo garageInfo, GarageInitializationInfo handler)
         {
             _garageInfo = garageInfo;
             _transitionInfo = handler;
