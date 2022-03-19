@@ -297,7 +297,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1921171471085227261, guid: 6dc21cbc56720b24f887d8492e665c92, type: 3}
       propertyPath: m_RootOrder
-      value: 4
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 1921171471085227261, guid: 6dc21cbc56720b24f887d8492e665c92, type: 3}
       propertyPath: m_LocalPosition.x
@@ -475,11 +475,11 @@ MonoBehaviour:
   - 55
   - 90
   _computedGearRatios:
-  - -56.548668
-  - 56.548668
-  - 32.313526
-  - 23.982695
-  - 16.156763
+  - -75.398224
+  - 75.398224
+  - 41.887905
+  - 28.99932
+  - 20.563152
   - 12.566371
 --- !u!4 &1054960052
 Transform:
