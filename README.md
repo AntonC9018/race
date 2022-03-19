@@ -168,6 +168,8 @@ More on the code / design:
 
 - The speedometer and the tachometer are created dynamically based on the properties of the selected car.
 
+- I'm using prefabs to represent scenes instead of using actual scenes.
+  It makes the transition between scenes a lot simpler and more manageable.
 
 ## Links
 

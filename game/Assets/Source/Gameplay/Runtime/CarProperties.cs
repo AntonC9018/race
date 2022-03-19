@@ -54,14 +54,30 @@ namespace Race.Gameplay
 
     public static class CarDataModelHelper
     {
+        // Since the gear ratio is expressed for a generic wheel (radius of 1),
+        // it gets divided by the wheel radius.
+        // Think of it as though the wheel of the car were connected to the transmission
+        // via another wheel of radius 1. If the larger wheel does 1 revolution, the smaller wheel
+        // will do Radius revolutions. Then go the actual gears, which would rescale it further.
+        public static float AdjustGearRatioToCarWheels(float genericGearRatio, float wheelRadius)
+        {
+            return genericGearRatio * wheelRadius;
+        }
+
+        public static float AdjustGearRatioToCarWheels(float genericGearRatio, in CarColliderParts parts)
+        {
+            return AdjustGearRatioToCarWheels(genericGearRatio, parts.wheels[0].collider.radius);
+        }
+
         /// <summary>
         /// Returns the max speed estimate in m/s.
         /// </summary>
         public static float GetMaxSpeed(this CarDataModel dataModel)
         {
             var maxMotorRPM = dataModel.Spec.engine.maxRPM;
-            var maxGearRatio = dataModel.Spec.transmission.gearRatios[^1];
-            var circumferenceOfWheel = dataModel.ColliderParts.wheels[0].collider.GetCircumference();
+            ref var wheel = ref dataModel.ColliderParts.wheels[0].collider;
+            var maxGearRatio = AdjustGearRatioToCarWheels(dataModel.Spec.transmission.gearRatios[^1], wheel.radius);
+            var circumferenceOfWheel = wheel.GetCircumference();
             var maxWheelRPM = maxMotorRPM / maxGearRatio;
             var maxSpeed = FromRPMToSpeed(maxWheelRPM, circumferenceOfWheel);
             return maxSpeed;

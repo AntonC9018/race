@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657844, g: 0.49641222, b: 0.57481694, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -468,19 +468,19 @@ MonoBehaviour:
   RightClickMe: 0
   _carInfo: {fileID: 1942887471}
   _desiredOptimalSpeeds:
-  - -20
-  - 20
-  - 35
-  - 47.157894
-  - 70
+  - -15
+  - 15
+  - 27
+  - 39
+  - 55
   - 90
   _computedGearRatios:
-  - -21.85041
-  - 21.85041
-  - 13.15484
-  - 9.266915
-  - 6.967606
-  - 5.6716313
+  - -56.548668
+  - 56.548668
+  - 32.313526
+  - 23.982695
+  - 16.156763
+  - 12.566371
 --- !u!4 &1054960052
 Transform:
   m_ObjectHideFlags: 0

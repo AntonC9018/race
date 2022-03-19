@@ -24,7 +24,7 @@ namespace Race.Garage
     public class GarageInitialization : MonoBehaviour, IGarageInitialize
     {
         public GarageFunctionalInfo info;
-        [SerializeField] private TransitionManager _transition;
+        [SerializeField] private FromGarageToGameplayTransitionManager _transition;
 
         async Task IGarageInitialize.Initialize(GarageInitializationInfo initializationInfo)
         {

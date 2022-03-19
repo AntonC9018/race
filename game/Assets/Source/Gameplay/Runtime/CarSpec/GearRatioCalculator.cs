@@ -12,28 +12,29 @@ namespace Race.Gameplay
     /// </summary>
     public class GearRatioCalculator : MonoBehaviour
     {
-        [ContextMenuItem("Compute gear ratios", nameof(Compute))]
-        [ContextMenuItem("Set the gear ratios on the controller", nameof(Set))]
-        [ContextMenuItem("Compute speeds from the first speed (default ratio ratios)", nameof(ComputeSpeedsFromFirstGear))]
+        [ContextMenuItem("Compute gear ratios", nameof(ComputeGearRatios))]
+        [ContextMenuItem("Set the gear ratios on the controller", nameof(SetGearRatiosOnController))]
+        [ContextMenuItem("Compute speeds from the first speed (default ratio ratios)", nameof(ComputeSpeedsFromSpeedInFirstGear))]
         public bool RightClickMe;
 
         [SerializeField] private CarInfoComponent _carInfo;
         [SerializeField] private float[] _desiredOptimalSpeeds;
         [SerializeField] private float[] _computedGearRatios;
 
+        private static readonly float _GenericCircumference = Mathf.PI * 2;
         
-        private static float GetSpeedFromGearRatio(float gearRatio, float circumference, float optimalRPM)
+        private static float GetSpeedFromGearRatio(float gearRatio, float optimalRPM)
         {
             float wheelRPM = optimalRPM / gearRatio;
-            float metersPerMinute = circumference * wheelRPM;
+            float metersPerMinute = _GenericCircumference * wheelRPM;
             float kmPerHour = metersPerMinute * 60.0f / 1000.0f;
             return kmPerHour;
         }
 
-        public static float GetGearRatioFromSpeed(float speedKmPerHour, float circumference, float optimalRPM)
+        public static float GetGearRatioFromSpeed(float speedKmPerHour, float optimalRPM)
         {
             float metersPerMinute = speedKmPerHour / 60.0f * 1000.0f;
-            float wheelRPM = metersPerMinute / circumference;
+            float wheelRPM = metersPerMinute / _GenericCircumference;
             float gearRatio = optimalRPM / wheelRPM;
             return gearRatio;
         }
@@ -48,7 +49,7 @@ namespace Race.Gameplay
             0.814f,
         };
 
-        public void ComputeSpeedsFromFirstGear()
+        public void ComputeSpeedsFromSpeedInFirstGear()
         {
             assert(_desiredOptimalSpeeds is not null);
             assert(_desiredOptimalSpeeds.Length > 0);
@@ -62,14 +63,14 @@ namespace Race.Gameplay
             {
                 fixedGearIndex = 0;
                 ref float speed = ref _desiredOptimalSpeeds[0];
-                fixedGearRatio = GetGearRatioFromSpeed(speed, circumference, optimalRPM) / _ReferenceGearRatios[1];
+                fixedGearRatio = GetGearRatioFromSpeed(speed, optimalRPM) / _ReferenceGearRatios[1];
                 speed = -speed;
             }
             else
             {
                 fixedGearIndex = 1;
                 var speed = _desiredOptimalSpeeds[1];
-                fixedGearRatio = GetGearRatioFromSpeed(speed, circumference, optimalRPM) / _ReferenceGearRatios[1];
+                fixedGearRatio = GetGearRatioFromSpeed(speed, optimalRPM) / _ReferenceGearRatios[1];
             }
 
             Array.Resize(ref _desiredOptimalSpeeds, _ReferenceGearRatios.Length);
@@ -79,14 +80,12 @@ namespace Race.Gameplay
                 if (fixedGearIndex == i)
                     continue;
                 float g = fixedGearRatio * _ReferenceGearRatios[i];
-                _desiredOptimalSpeeds[i] = GetSpeedFromGearRatio(g, circumference, optimalRPM);
+                _desiredOptimalSpeeds[i] = GetSpeedFromGearRatio(g, optimalRPM);
             }
         }
 
-        public void Compute()
+        public void ComputeGearRatios()
         {
-            float circumference = _carInfo.colliderParts.wheels[0].GetCircumference();
-
             _computedGearRatios = new float[_desiredOptimalSpeeds.Length];
             
             float optimalRPM = _carInfo.template.baseSpec.engine.optimalRPM;
@@ -95,7 +94,7 @@ namespace Race.Gameplay
             {
                 float s = _desiredOptimalSpeeds[index];
                 float s_m_per_min = s * 1000.0f / 60.0f;
-                float rpm_at_s = s_m_per_min / circumference;
+                float rpm_at_s = s_m_per_min / _GenericCircumference;
                 float g = optimalRPM / rpm_at_s;
                 _computedGearRatios[index] = g;
             }
@@ -103,7 +102,7 @@ namespace Race.Gameplay
             Debug.Log("Computed.");
         }
 
-        public void Set()
+        public void SetGearRatiosOnController()
         {
             _carInfo.template.baseSpec.transmission.gearRatios = _computedGearRatios;
             Debug.Log("Ratios have been set.");

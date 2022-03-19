@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Race
 {
-    public class Initialization
+    public static class GlobalInitialization
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void SetBuiltinCommands()

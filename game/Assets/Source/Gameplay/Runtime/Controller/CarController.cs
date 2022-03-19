@@ -135,15 +135,6 @@ namespace Race.Gameplay
             GUILayout.Label($"motorRPM: {drivingState.motorRPM}");
             GUILayout.Label($"wheelRPM: {drivingState.wheelRPM}");
 
-            float speedMetersPerSecond = rigidbody.velocity.magnitude;
-            float speedMetersPerMinute = speed * 60.0f;
-            float circumference = dataModel.ColliderParts.wheels[0].collider.GetCircumference();
-            float expectedWheelRPM = speedMetersPerMinute / circumference;
-
-            GUILayout.Label($"expectedWheelRPM: {expectedWheelRPM}");
-            GUILayout.Label($"expectedMotorRPM: {expectedWheelRPM * dataModel.Spec.transmission.gearRatios[drivingState.gearIndex]}");
-
-
             GUILayout.Label($"speed: {speed} m/s, {speed / 1000 * 3600} km/h");
 
             GUILayout.EndVertical();
@@ -237,10 +228,12 @@ namespace Race.Gameplay
                 ref readonly var engine = ref spec.engine;
 
                 // Clutch means the engine is detached from the wheels.
-                // Then it follows a completely different se of rules.
+                // Then it follows a completely different set of rules.
                 if (!isClutch)
                 {
-                    float gearRatio = spec.transmission.gearRatios[drivingState.gearIndex];
+                    float genericGearRatio = spec.transmission.gearRatios[drivingState.gearIndex];
+                    float gearRatio = CarDataModelHelper.AdjustGearRatioToCarWheels(genericGearRatio, colliderParts);
+
                     // RPM between the engine and the wheels.
                     // We don't do any damping here either (at least for now).
                     float desiredMotorRPM = wheelRPM * gearRatio;

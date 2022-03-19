@@ -20,6 +20,8 @@ namespace Race.Gameplay
     {
         /// <summary>
         /// engineRPM / wheelRPM
+        /// Expressed for a generic wheel, that is, a wheel with the radius of 1.
+        /// Done this way for the sake of being able to reuse the same configuration for different cars.
         /// </summary>
         public float[] gearRatios;
     }

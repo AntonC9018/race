@@ -43,7 +43,7 @@ namespace Race.Garage
         Task TransitionFromGarageToGameplay(GarageToGameplayTransitionInfo info);
     }
 
-    public class TransitionManager : MonoBehaviour
+    public class FromGarageToGameplayTransitionManager : MonoBehaviour
     {
         private GarageFunctionalInfo _garageInfo;
         private GarageInitializationInfo _transitionInfo;
@@ -58,7 +58,13 @@ namespace Race.Garage
         public void OnButtonClicked()
         {
             if (_transitionInfo.fromGarageToGameplay == null)
+            {
+                #if UNITY_EDITOR
+                    Debug.Log("The gameplay won't start unless initialized from the main scene.");
+                #endif
+                
                 return;
+            }
 
             var carProperties = _garageInfo.carProperties;
             var transitionInfo = new GarageToGameplayTransitionInfo
@@ -88,7 +94,7 @@ namespace Race.Garage
         [Command("go", "Transition from garage to gameplay")]
         public static void InitiateTransitionCommand()
         {
-            var transition = Transform.FindObjectOfType<TransitionManager>();
+            var transition = Transform.FindObjectOfType<FromGarageToGameplayTransitionManager>();
             if (transition == null)
             {
                 Debug.LogError("Could not do find transition");

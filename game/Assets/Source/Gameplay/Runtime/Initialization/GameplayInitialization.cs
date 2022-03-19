@@ -47,6 +47,7 @@ namespace Race.Gameplay
     {
         [SerializeField] private GameObject _cameraControlPrefab;
         [SerializeField] private KeyboardInputViewFactory _factory;
+        [SerializeField] private Transform _diRootTransform;
         private GameplayInitializationInfo _initializationInfo;
 
         public IEnableDisableInput Initialize(in GameplayInitializationInfo info)
@@ -64,6 +65,7 @@ namespace Race.Gameplay
             var carContainer = new GameObject("car_container").transform;
             carContainer.SetParent(info.rootTransform, worldPositionStays: false);
 
+
             // TODO:
             // 1. Map
             // 2. Spawn points on the map
@@ -80,6 +82,8 @@ namespace Race.Gameplay
 
                 car.transform.SetParent(carContainer, worldPositionStays: false);
                 car.name = "player";
+
+                InitializationHelper.InitializeUI(_diRootTransform, carProperties);
             }
 
             {

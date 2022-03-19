@@ -20,7 +20,7 @@ namespace Race.Gameplay
         [SerializeField] private CameraControl _cameraControl;
         [SerializeField] private Transform _uiTransform;
 
-        void Awake()
+        void Start()
         {
             if (_car == null)
                 return;
@@ -28,13 +28,12 @@ namespace Race.Gameplay
             var playerCar = _car;
             var carProperties = playerCar.GetComponent<Gameplay.CarProperties>();
             {
-                InitializationHelper.InitializeUI(_uiTransform, carProperties);
-            }
-            {
                 var infoComponent = playerCar.GetComponent<CarInfoComponent>();
                 Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
                 InitializationHelper.InitializePlayerInput(playerCar, carProperties, _cameraControl, _inputViewFactory);
+                _inputViewFactory.EnableAllInput();
             }
+            InitializationHelper.InitializeUI(_uiTransform, carProperties);
         }
     }
 }
