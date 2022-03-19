@@ -30,11 +30,12 @@ namespace Race.Gameplay
         {
             #if DEBUG
                 assert(!_hasBeenInitialized);
+                _hasBeenInitialized = true;
             #endif
+            
             _followedTransform = followedTransform;
             _inputView = cameraInputView;
 
-            _hasBeenInitialized = true;
             assert(_followedTransform != null);
             assert(_inputView is not null);
             _inputView.AddOnCameraSwitchedListener(OnSwitchCamera);
