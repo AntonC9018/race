@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: default_gameplay_cars_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
   m_Group: {fileID: 11400000, guid: 2d4532a23c3de8c4fa95a55c6b19628f, type: 2}
-  m_StaticContent: 0
+  m_StaticContent: 1
