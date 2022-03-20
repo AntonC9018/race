@@ -249,7 +249,7 @@ namespace Race.Garage
                 var infoComponent = prefabInfo.prefab.GetComponent<DisplayCarInfoComponent>();
                 assert(infoComponent != null);
 
-                // if (prefabInfo.flags.HasFlag(CarPrefabInfoFlags.IsPrespawnedBit))
+                // if (prefabInfo.flags.Has(CarPrefabInfoFlags.IsPrespawnedBit))
                 if (!IsPrefab(prefabInfo.prefab))
                 {
                     prefabInfo.prefab.SetActive(false);

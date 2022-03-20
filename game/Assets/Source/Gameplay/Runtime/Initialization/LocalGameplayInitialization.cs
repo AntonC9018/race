@@ -19,11 +19,17 @@ namespace Race.Gameplay
         [SerializeField] private KeyboardInputViewFactory _inputViewFactory;
         [SerializeField] private CameraControl _cameraControl;
         [SerializeField] private Transform _uiTransform;
+        [SerializeField] private TrackManager _trackManager;
 
         void Start()
         {
             if (_car == null)
                 return;
+
+            assert(_inputViewFactory != null);
+            assert(_cameraControl != null);
+            assert(_uiTransform != null);
+            assert(_trackManager != null);
             
             var playerCar = _car;
             var carProperties = playerCar.GetComponent<Gameplay.CarProperties>();
@@ -34,6 +40,8 @@ namespace Race.Gameplay
                 _inputViewFactory.EnableAllInput();
             }
             InitializationHelper.InitializeUI(_uiTransform, carProperties);
+
+            _trackManager.Initialize(playerCar.transform, carProperties);
         }
     }
 }

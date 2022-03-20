@@ -48,6 +48,7 @@ namespace Race.Gameplay
         [SerializeField] private GameObject _cameraControlPrefab;
         [SerializeField] private KeyboardInputViewFactory _factory;
         [SerializeField] private Transform _diRootTransform;
+        private TrackManager _trackManager;
         private GameplayInitializationInfo _initializationInfo;
 
         public IEnableDisableInput Initialize(in GameplayInitializationInfo info)
@@ -102,6 +103,8 @@ namespace Race.Gameplay
                 car.transform.SetParent(carContainer, worldPositionStays: false);
                 car.name = "bot";
             }
+
+            // _trackManager.Initialize();
 
             return _factory as IEnableDisableInput;
         }

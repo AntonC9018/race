@@ -7,6 +7,8 @@
 
 using System;
 using EngineCommon;
+using Kari.Plugins.Flags;
+using Race.Gameplay.Generated;
 using UnityEngine;
 using static EngineCommon.Assertions;
 
@@ -54,12 +56,24 @@ namespace Race.Gameplay
         /// </summary>
         public float wheelRPM;
 
+        [NiceFlags]
+        public enum Flags
+        {
+            /// <summary>
+            /// The engine is detatched from wheels (does not produce torque) while the clutch is active.
+            /// Clutch allows switching gears.
+            /// </summary>
+            Clutch = 1 << 0,
+
+            /// <summary>
+            /// The car is disabled while respawning.
+            /// </summary>
+            Disabled = 1 << 1,
+        }
+
         /// <summary>
-        /// The engine is detatched from wheels (does not produce torque) while the clutch is active.
-        /// Clutch allows switching gears.
-        /// TODO: might want a flags enum.
         /// </summary>
-        public bool isClutch;
+        public Flags flags;
     }
 
     public interface ICarInputView
@@ -103,20 +117,10 @@ namespace Race.Gameplay
             _carProperties = carProperties;
 
             // Should the initial gear be set here?
-            ref var dataModel = ref carProperties.DataModel;
+            var dataModel = carProperties.DataModel;
             var gearRatios = dataModel.Spec.transmission.gearRatios;
-            assert(gearRatios is not null);
-            assert(gearRatios.Length > 0);
-
-            int firstPositiveGearIndex = -1;
-            for (int i = 0; i < gearRatios.Length; i++)
-            {
-                if (gearRatios[i] > 0)
-                {
-                    firstPositiveGearIndex = i;
-                    break;
-                }
-            }
+            int firstPositiveGearIndex = dataModel.Spec.transmission.GetIndexOfFirstPositiveGear();
+            assert(firstPositiveGearIndex != -1, "No positive gears were found");
             dataModel.DrivingState.gearIndex = firstPositiveGearIndex;
         }
 
@@ -124,11 +128,10 @@ namespace Race.Gameplay
         {
             var rigidbody = GetComponent<Rigidbody>();
             var speed = rigidbody.velocity.magnitude;
-            ref var dataModel = ref _carProperties.DataModel;
 
             GUILayout.BeginVertical();
             GUI.color = Color.white;
-            ref readonly var drivingState = ref dataModel.DrivingState;
+            ref readonly var drivingState = ref _carProperties.DataModel.DrivingState;
             GUILayout.Label($"torqueInputFactor: {drivingState.motorTorqueInputFactor}");
             GUILayout.Label($"steeringInputFactor: {drivingState.steeringInputFactor}");
             GUILayout.Label($"gearIndex: {drivingState.gearIndex}");
@@ -145,7 +148,7 @@ namespace Race.Gameplay
             ref var drivingState = ref _carProperties.DataModel.DrivingState;
 
             // TODO: a separate event for these??
-            if (drivingState.isClutch)
+            if (drivingState.flags.Has(CarDrivingState.Flags.Clutch))
             {
                 var gearInput = _inputView.Gear;
 
@@ -170,6 +173,9 @@ namespace Race.Gameplay
             ref readonly var spec = ref _carProperties.DataModel.Spec;
             ref var drivingState = ref _carProperties.DataModel.DrivingState;
 
+            if (drivingState.flags.Has(CarDrivingState.Flags.Disabled))
+                return;
+
             // Not done:
             // 1. timeout on gear switching and the clutch becoming active.
             // 2. possibility of stalling the engine by driving in wrong gear.
@@ -180,7 +186,7 @@ namespace Race.Gameplay
             bool isClutch;
             {
                 isClutch = _inputView.Clutch;
-                drivingState.isClutch = isClutch;
+                drivingState.flags.Set(CarDrivingState.Flags.Clutch, isClutch);
             }
 
             // We process input events in FixedUpdate (see the input system settings).

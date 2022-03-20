@@ -4,11 +4,20 @@ using EngineCommon;
 
 namespace Race.Gameplay
 {
-    public class StraightTrack : MonoBehaviour, IStaticTrack
+    public class StraightTrack : IStaticTrack
     {
-        [SerializeField] private Vector3 _startPoint;
-        [SerializeField] private Vector3 _endPoint;
-        [SerializeField] private float _roadWidth;
+        private readonly Vector3 _startPoint;
+        private readonly Vector3 _endPoint;
+        private readonly float _roadWidth;
+
+        public StraightTrack(Vector3 startPoint, Vector3 endPoint, float roadWidth)
+        {
+            _startPoint = startPoint;
+            _endPoint = endPoint;
+            _roadWidth = roadWidth;
+        }
+
+        public RoadSegment StartingSegment => 0;
 
         [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
         private static void AssertPointValid(RoadPoint point)
@@ -35,7 +44,7 @@ namespace Race.Gameplay
         public Vector3 GetRoadMiddlePosition(RoadPoint point)
         {
             AssertPointValid(point);
-            return (_endPoint - _startPoint) * point.position;
+            return (_endPoint - _startPoint) * point.position + _startPoint;
         }
 
         public RoadPoint GetRoadPointAt(Vector3 position)

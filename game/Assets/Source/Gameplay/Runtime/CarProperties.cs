@@ -1,4 +1,5 @@
 using System;
+using Race.Gameplay.Generated;
 using UnityEngine;
 using UnityEngine.Events;
 using static EngineCommon.Assertions;
@@ -54,8 +55,77 @@ namespace Race.Gameplay
 
     public static class CarDataModelHelper
     {
+        public static int GetIndexOfFirstPositiveGear(in this CarTransmissionInfo transmission)
+        {
+            for (int i = 0; i < transmission.gearRatios.Length; i++)
+            {
+                if (transmission.gearRatios[i] > 0)
+                    return i;
+            }
+            return -1;
+        }
+        
+        public static void StopCar(Transform carTransform, CarProperties properties)
+        {
+            var carDataModel = properties.DataModel;
+            {
+                var rb = carDataModel.ColliderParts.rigidbody;
+                rb.isKinematic = true;
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+
+                foreach (ref var wheel in carDataModel.ColliderParts.wheels.AsSpan())
+                {
+                    var collider = wheel.collider;
+                    collider.brakeTorque = float.MaxValue;
+                    collider.motorTorque = 0;
+                }
+            }
+            {
+                ref var drivingState = ref carDataModel.DrivingState;
+                drivingState.flags.Set(CarDrivingState.Flags.Disabled);
+            }
+            properties.TriggerOnDrivingToggled();
+        }
+
+        public static void RestartCar(
+            Transform carTransform, CarProperties properties,
+            Vector3 targetPosition, Quaternion targetRotation)
+        {
+            var carDataModel = properties.DataModel;
+            
+            {
+                var neededUpDisplacement = carDataModel._infoComponent.elevationSuchThatWheelsAreLevelWithTheGround * Vector3.up;
+                var position = targetPosition + targetRotation * neededUpDisplacement;
+                carTransform.SetPositionAndRotation(position, targetRotation);
+            }
+            {
+                var rb = carDataModel.ColliderParts.rigidbody;
+                rb.isKinematic = false;
+
+                foreach (ref var wheel in carDataModel.ColliderParts.wheels.AsSpan())
+                {
+                    var collider = wheel.collider;
+                    collider.brakeTorque = 0;
+                    collider.motorTorque = 0;
+                }
+            }
+            {
+                ref var s = ref carDataModel.DrivingState;
+                s.gearIndex = carDataModel.Spec.transmission.GetIndexOfFirstPositiveGear();
+                s.flags.Unset(CarDrivingState.Flags.Disabled);
+                s.motorTorqueInputFactor = 0;
+                s.brakeTorqueInputFactor = 0;
+                s.steeringInputFactor = 0;
+                s.motorRPM = 0;
+                s.wheelRPM = 0;
+            }
+            properties.TriggerOnDrivingStateChanged();
+            properties.TriggerOnDrivingToggled();
+        }
+
         // Since the gear ratio is expressed for a generic wheel (radius of 1),
-        // it gets divided by the wheel radius.
+        // it gets multiplied by the wheel radius.
         // Think of it as though the wheel of the car were connected to the transmission
         // via another wheel of radius 1. If the larger wheel does 1 revolution, the smaller wheel
         // will do Radius revolutions. Then go the actual gears, which would rescale it further.
@@ -165,7 +235,7 @@ namespace Race.Gameplay
     public class CarProperties : MonoBehaviour
     {
         private CarDataModel _dataModel;
-        public ref CarDataModel DataModel => ref _dataModel;
+        public CarDataModel DataModel => _dataModel;
 
         public void Initialize(CarDataModel dataModel)
         {
@@ -176,15 +246,22 @@ namespace Race.Gameplay
                 assert(spec.motorWheelLocations is not null);
                 assert(spec.brakeWheelLocations is not null);
                 assert(spec.steeringWheelLocations is not null);
+                assert(spec.transmission.gearRatios is not null);
             }
         }
 
         // TODO: A separate event object could be helpful.
         public UnityEvent<CarProperties> OnDrivingStateChanged;
+        public UnityEvent<CarProperties> OnDrivingToggled;
 
         public void TriggerOnDrivingStateChanged()
         {
             OnDrivingStateChanged.Invoke(this);
+        }
+
+        public void TriggerOnDrivingToggled()
+        {
+            OnDrivingToggled.Invoke(this);
         }
     }
 }

@@ -11,6 +11,8 @@ namespace Race.Gameplay
     /// </summary>
     public interface IStaticTrack
     {
+        RoadSegment StartingSegment { get; }
+        
         /// <summary>
         /// Use this function to get the road segment from the current position.
         /// If the position is outside the track in any direction, returns a point outside the track.

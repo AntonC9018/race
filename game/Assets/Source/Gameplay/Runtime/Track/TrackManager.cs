@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Race.Gameplay
@@ -7,11 +8,63 @@ namespace Race.Gameplay
         Vector3 Position { get; }
     }
 
-    public class TrackManager
+    public class TrackManager : MonoBehaviour
     {
-        private RoadPoint[] _participantPositions;
-        private RoadPoint[] _participantCheckpoints;
-        private IStaticTrack _track;
+        private LowLevelTrackManager _underlyingManager;
+        private Vector3 initialPosition;
+
+
+        public void Initialize(Transform playerTransform, CarProperties playerCarProperties)
+        {
+            var track = MakeTrack();
+            IStaticTrack MakeTrack()
+            {
+                var transform = this.transform;
+                var center = transform.position;
+                var scale = transform.rotation * transform.localScale;
+                var length = scale.z;
+                var width = scale.x;
+
+                // hack: does not handle slopes
+                var halfLengthVector = new Vector3(0, 0, length / 2);
+
+                var startPoint = center - halfLengthVector;
+                var endPoint = center + halfLengthVector;
+
+                return new StraightTrack(startPoint, endPoint, width);
+            }
+
+            _underlyingManager = new LowLevelTrackManager();
+            _underlyingManager.Reset(track, 1);
+
+            {
+                _underlyingManager.GetPositionAndRotation(participantIndex: 0, out var p, out var r);
+                CarDataModelHelper.RestartCar(playerTransform, playerCarProperties, p, r);
+            }
+        }
+    }
+
+    public class LowLevelTrackManager
+    {
+        internal RoadPoint[] _participantPositions;
+        internal RoadPoint[] _participantCheckpoints;
+        internal IStaticTrack _track;
+
+        public void Reset(IStaticTrack track, int count)
+        {
+            Array.Resize(ref _participantPositions, count);
+            Array.Resize(ref _participantCheckpoints, count);
+            _track = track;
+
+            {
+                var p = new RoadPoint(track.StartingSegment, 0);
+                for (int i = 0; i < count; i++)
+                {
+                    _participantCheckpoints[i] = p;
+                    _participantPositions[i] = p;
+                }
+            }
+        }
 
         public Vector3 GetCheckpointPosition(int participantIndex)
         {
@@ -57,15 +110,16 @@ namespace Race.Gameplay
             return new UpdateInfo(shouldReturnToCheckpoint: isUpsideDown);
         }
 
-        public void ReturnToCheckpoint(int participantIndex, out Vector3 newPosition, out Quaternion newRotation)
+        public void GetPositionAndRotation(int participantIndex, out Vector3 position, out Quaternion rotation)
         {
-            ref var location = ref _participantPositions[participantIndex];
-            var checkpoint = _participantCheckpoints[participantIndex];
-            
-            location = checkpoint;
-            
-            newPosition = _track.GetRoadMiddlePosition(checkpoint);
-            newRotation = _track.GetRegularRotation(checkpoint);
+            var location = _participantPositions[participantIndex];
+            position = _track.GetRoadMiddlePosition(location);
+            rotation = _track.GetRegularRotation(location);
+        }
+
+        public void ReturnToCheckpoint(int participantIndex)
+        {
+            _participantPositions[participantIndex] = _participantCheckpoints[participantIndex];
         }
     }
 }

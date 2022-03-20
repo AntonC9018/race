@@ -17,5 +17,6 @@ namespace Race.Gameplay
         public CarTemplate template;
         public CarColliderParts colliderParts;
         public CarVisualParts visualParts;
+        public float elevationSuchThatWheelsAreLevelWithTheGround;
     }
 }

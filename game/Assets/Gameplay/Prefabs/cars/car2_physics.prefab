@@ -443,6 +443,9 @@ MonoBehaviour:
   OnDrivingStateChanged:
     m_PersistentCalls:
       m_Calls: []
+  OnDrivingToggled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &4891936849928834384
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -483,6 +486,7 @@ MonoBehaviour:
     - initialRotation: {x: 0, y: 0.7071066, z: 0, w: 0.70710695}
       transform: {fileID: 8257809110278159804}
     meshRenderer: {fileID: 1059333959593034784}
+  elevationSuchThatWheelsAreLevelWithTheGround: 0.4
 --- !u!1001 &7833936132653448824
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -115,6 +115,9 @@ MonoBehaviour:
   OnDrivingStateChanged:
     m_PersistentCalls:
       m_Calls: []
+  OnDrivingToggled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &2377223954822095977
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -155,6 +158,7 @@ MonoBehaviour:
     - initialRotation: {x: 0, y: -0, z: -0, w: 1}
       transform: {fileID: 6039305335809462950}
     meshRenderer: {fileID: 7796798910861025392}
+  elevationSuchThatWheelsAreLevelWithTheGround: 1.25
 --- !u!1 &3219155636731242334
 GameObject:
   m_ObjectHideFlags: 0
