@@ -47,7 +47,14 @@ namespace Race.Gameplay
             if (location.IsOutsideTrack)
                 return new UpdateInfo(shouldReturnToCheckpoint: true);
 
-            return new UpdateInfo(shouldReturnToCheckpoint: IsUpsideDown(participantIndex, participantTransform));
+            bool isUpsideDown = IsUpsideDown(participantIndex, participantTransform);
+            if (!isUpsideDown)
+            {
+                // TODO: maybe snap
+                _participantCheckpoints[participantIndex] = location;
+            }
+                
+            return new UpdateInfo(shouldReturnToCheckpoint: isUpsideDown);
         }
 
         public void ReturnToCheckpoint(int participantIndex, out Vector3 newPosition, out Quaternion newRotation)
