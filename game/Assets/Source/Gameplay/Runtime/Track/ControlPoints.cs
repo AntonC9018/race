@@ -67,7 +67,7 @@ namespace Race.Gameplay
         }
 
         public static implicit operator RoadSegment(RoadSegmentID id) => new RoadSegment(id);
-        public static implicit operator RoadSegmentID(RoadSegment id) => id;
+        public static implicit operator RoadSegmentID(RoadSegment segment) => segment.id;
     }
 
     public readonly struct RoadPoint
@@ -98,7 +98,17 @@ namespace Race.Gameplay
 
         public static RoadPoint CreateOutsideTrack(int segment = -1)
         {
-            return new RoadPoint(0, -1);
+            return new RoadPoint(segment, -1);
+        }
+
+        public static RoadPoint CreateStartOf(int segment)
+        {
+            return new RoadPoint(segment, 0);
+        }
+
+        public static RoadPoint CreateEndOf(int segment)
+        {
+            return new RoadPoint(segment, 1);
         }
     }
 

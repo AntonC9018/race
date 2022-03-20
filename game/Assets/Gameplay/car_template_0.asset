@@ -26,12 +26,12 @@ MonoBehaviour:
       maxIdleRPMDecreasePerSecond: 1500
     transmission:
       gearRatios:
-      - -21.85041
-      - 21.85041
-      - 13.15484
-      - 9.266915
-      - 6.967606
-      - 5.6716313
+      - -75.398224
+      - 75.398224
+      - 41.887905
+      - 28.99932
+      - 20.563152
+      - 12.566371
     steering:
       maxSteeringAngle: 30
     motorWheelLocations: 0000000001000000

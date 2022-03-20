@@ -1,9 +1,11 @@
+#if UNITY_EDITOR
+
+using UnityEditor;
 using UnityEngine;
 using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    #if UNITY_EDITOR
     public class CarColliderSetupComponent : MonoBehaviour
     {
         [SerializeField] internal GameObject _wheelColliderPrefab;
@@ -18,6 +20,7 @@ namespace Race.Gameplay
         void CreateDefaultColliders()
         {
             CarColliderSetupHelper.CreateDefaultColliders(_carToUpdate, _targetRootTransform, _wheelColliderPrefab);
+            EditorUtility.SetDirty(_carToUpdate);
             Debug.Log("The colliders have been set up.");
         }
 
@@ -25,6 +28,7 @@ namespace Race.Gameplay
         {
             // I'm just going to put this in here for now.
             _carToUpdate.elevationSuchThatWheelsAreLevelWithTheGround = _targetRootTransform.localPosition.y;
+            EditorUtility.SetDirty(_carToUpdate);
         }
 
         // TODO
@@ -34,5 +38,6 @@ namespace Race.Gameplay
             Debug.Log("The colliders have been set up.");
         }
     }
-    #endif
 }
+
+#endif

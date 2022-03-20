@@ -11,41 +11,16 @@ namespace EngineCommon
     /// </summary>
     public static class Assertions
     {
-        public class AssertionException : System.Exception
-        {
-            public AssertionException(string message = null) : base(message){}
-        }
-
-        [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
-        public static void Assert(bool condition, string message)
-        {
-            Debug.Assert(condition, message);
-            if (!condition)
-                throw new AssertionException(message);
-        }
-        
-        [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
-        public static void Assert(bool condition)
-        {
-            Debug.Assert(condition);
-            if (!condition)
-                throw new AssertionException();
-        }
-
         [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
         public static void assert(bool condition, string message)
         {
-            Debug.Assert(condition, message);
-            if (!condition)
-                throw new AssertionException(message);
+            UnityEngine.Assertions.Assert.IsTrue(condition, message);
         }
         
         [System.Diagnostics.Conditional("UNITY_ASSERTIONS")]
         public static void assert(bool condition)
         {
-            Debug.Assert(condition);
-            if (!condition)
-                throw new AssertionException();
+            UnityEngine.Assertions.Assert.IsTrue(condition);
         }
     }
 

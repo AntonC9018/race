@@ -1,12 +1,13 @@
+#if UNITY_EDITOR
+
 using UnityEngine;
 using static EngineCommon.Assertions;
 using System.Linq;
 using System;
+using UnityEditor;
 
 namespace Race.Gameplay
 {
-    #if UNITY_EDITOR
-    
     /// <summary>
     /// Helper for computing gear rations from speeds.
     /// </summary>
@@ -105,8 +106,11 @@ namespace Race.Gameplay
         public void SetGearRatiosOnController()
         {
             _carInfo.template.baseSpec.transmission.gearRatios = _computedGearRatios;
+            EditorUtility.SetDirty(_carInfo.template);
+
             Debug.Log("Ratios have been set.");
         }
     }
-    #endif
 }
+
+#endif

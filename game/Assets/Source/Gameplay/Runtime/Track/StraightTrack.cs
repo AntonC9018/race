@@ -6,14 +6,14 @@ namespace Race.Gameplay
 {
     public class StraightTrack : IStaticTrack
     {
-        private readonly Vector3 _startPoint;
-        private readonly Vector3 _endPoint;
-        private readonly float _roadWidth;
+        internal readonly Vector3 _startPosition;
+        internal readonly Vector3 _endPosition;
+        internal readonly float _roadWidth;
 
         public StraightTrack(Vector3 startPoint, Vector3 endPoint, float roadWidth)
         {
-            _startPoint = startPoint;
-            _endPoint = endPoint;
+            _startPosition = startPoint;
+            _endPosition = endPoint;
             _roadWidth = roadWidth;
         }
 
@@ -26,41 +26,35 @@ namespace Race.Gameplay
             assert(point.segment == 0);
         }
 
-        public Vector3 GetRoadCenterPointFromProgress(float progress)
-        {
-            Vector3 a = _endPoint - _startPoint;
-            return progress * a;
-        }
-
         public CurvatureInfo GetCurvatureAtRoadPoint(RoadPoint point)
         {
             AssertPointValid(point);
 
             // no turns
-            Vector3 tangent = (_endPoint - _startPoint).normalized;
+            Vector3 tangent = (_endPosition - _startPosition).normalized;
             return new CurvatureInfo(tangent, Vector3.positiveInfinity);
         }
 
         public Vector3 GetRoadMiddlePosition(RoadPoint point)
         {
             AssertPointValid(point);
-            return (_endPoint - _startPoint) * point.position + _startPoint;
+            return (_endPosition - _startPosition) * point.position + _startPosition;
         }
 
         public RoadPoint GetRoadPointAt(Vector3 position)
         {
-            Vector3 startToEnd = _endPoint - _startPoint;
+            Vector3 startToEnd = _endPosition - _startPosition;
+            Vector3 startToPos = position - _startPosition;
 
             float progress;
             {
-                Vector3 b = position - _startPoint;
-                float p = Vector3.Dot(startToEnd, b);
-                progress = p / startToEnd.magnitude;
+                float p = Vector3.Dot(startToEnd, startToPos);
+                progress = p / (startToEnd.sqrMagnitude);
             }
             
             // Is outside track?
             {
-                Vector3 off = position - startToEnd * progress;
+                Vector3 off = startToPos - startToEnd * progress;
                 if (off.magnitude > _roadWidth / 2)
                     return RoadPoint.CreateOutsideTrack(segment: 0);
             }
@@ -85,8 +79,8 @@ namespace Race.Gameplay
 
         public Vector3 GetRoadNormal(RoadPoint point)
         {
-            var a = _startPoint;
-            var b = _endPoint;
+            var a = _startPosition;
+            var b = _endPosition;
             
             // We assume roll = 0
             var perp = a.With(y: 0);
@@ -99,10 +93,10 @@ namespace Race.Gameplay
         {
             AssertPointValid(point);
 
-            var tangent = (_endPoint - _startPoint).normalized;
+            var tangent = (_endPosition - _startPosition).normalized;
             var projectedLength = tangent.With(y: 0).magnitude;
             var angle = Mathf.Atan2(tangent.y, projectedLength);
-            var perp = _startPoint.With(y: 0).normalized;
+            var perp = _startPosition.With(y: 0).normalized;
             
             return Quaternion.AngleAxis(angle, perp);
         }

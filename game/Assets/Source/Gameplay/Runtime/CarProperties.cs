@@ -92,13 +92,28 @@ namespace Race.Gameplay
             Transform carTransform, CarProperties properties,
             Vector3 targetPosition, Quaternion targetRotation)
         {
+            ResetPositionAndRotationOfBackOfCar(carTransform, properties, targetPosition, targetRotation);
+            RestartDisabledDriving(properties);
+        }
+
+        public static void RestartDisabledDriving(CarProperties properties)
+        {
             var carDataModel = properties.DataModel;
-            
+
             {
-                var neededUpDisplacement = carDataModel._infoComponent.elevationSuchThatWheelsAreLevelWithTheGround * Vector3.up;
-                var position = targetPosition + targetRotation * neededUpDisplacement;
-                carTransform.SetPositionAndRotation(position, targetRotation);
+                ref var s = ref carDataModel.DrivingState;
+                
+                assert(s.flags.Has(CarDrivingState.Flags.Disabled));
+                
+                s.gearIndex = carDataModel.Spec.transmission.GetIndexOfFirstPositiveGear();
+                s.flags.Unset(CarDrivingState.Flags.Disabled);
+                s.motorTorqueInputFactor = 0;
+                s.brakeTorqueInputFactor = 0;
+                s.steeringInputFactor = 0;
+                s.motorRPM = 0;
+                s.wheelRPM = 0;
             }
+
             {
                 var rb = carDataModel.ColliderParts.rigidbody;
                 rb.isKinematic = false;
@@ -110,18 +125,27 @@ namespace Race.Gameplay
                     collider.motorTorque = 0;
                 }
             }
-            {
-                ref var s = ref carDataModel.DrivingState;
-                s.gearIndex = carDataModel.Spec.transmission.GetIndexOfFirstPositiveGear();
-                s.flags.Unset(CarDrivingState.Flags.Disabled);
-                s.motorTorqueInputFactor = 0;
-                s.brakeTorqueInputFactor = 0;
-                s.steeringInputFactor = 0;
-                s.motorRPM = 0;
-                s.wheelRPM = 0;
-            }
+
             properties.TriggerOnDrivingStateChanged();
             properties.TriggerOnDrivingToggled();
+        }
+
+        public static void ResetPositionAndRotationOfBackOfCar(Transform carTransform, CarProperties properties, Vector3 targetPosition, Quaternion targetRotation)
+        {
+            var carDataModel = properties.DataModel;
+
+            Vector3 additionalDisplacement;
+            {
+                var elevation = carDataModel._infoComponent.elevationSuchThatWheelsAreLevelWithTheGround;
+                var up = elevation * Vector3.up;
+                
+                var halfLength = properties.DataModel.ColliderParts.body.collider.bounds.extents.z;
+                var forward = halfLength * Vector3.forward;
+
+                additionalDisplacement = up + forward;
+            }
+            var position = targetPosition + targetRotation * additionalDisplacement;
+            carTransform.SetPositionAndRotation(position, targetRotation);
         }
 
         // Since the gear ratio is expressed for a generic wheel (radius of 1),
@@ -231,7 +255,6 @@ namespace Race.Gameplay
         }
     }
 
-    [RequireComponent(typeof(CarInfoComponent))]
     public class CarProperties : MonoBehaviour
     {
         private CarDataModel _dataModel;

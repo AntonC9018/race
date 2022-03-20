@@ -30,7 +30,6 @@ namespace Race.Gameplay
         {
             var maxSpeed = properties.DataModel.GetMaxSpeed();
             _maxSpeed = maxSpeed;
-            Debug.Log(maxSpeed);
 
             var displayValueRange = new ValueRange
             {
