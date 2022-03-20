@@ -45,6 +45,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1bdd32c690e2cbb4ab2216b5f4f77a1b, type: 2}
   - {fileID: 11400000, guid: ef42d54191242cf488f2e7c2078a5715, type: 2}
   - {fileID: 11400000, guid: 2d4532a23c3de8c4fa95a55c6b19628f, type: 2}
+  - {fileID: 11400000, guid: 62fd383f475dc2f499e5e976a1693bb2, type: 2}
   - {fileID: 11400000, guid: 1c21f20730f782c4293286b8d53e3763, type: 2}
   m_BuildSettings:
     m_CompileScriptsInVirtualMode: 0
@@ -90,6 +91,7 @@ MonoBehaviour:
     - gameplay
     - display
     - model
+    - track
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 89ca16a99fb2d37449ee9cc9af88d3b1, type: 2}

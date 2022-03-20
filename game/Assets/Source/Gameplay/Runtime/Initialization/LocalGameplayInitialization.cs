@@ -15,33 +15,43 @@ namespace Race.Gameplay
     // Only useful for the editor.
     public class LocalGameplayInitialization : MonoBehaviour
     {
+        [SerializeField] private CommonInitializationStuff _commonStuff;
         [SerializeField] private GameObject _car;
-        [SerializeField] private KeyboardInputViewFactory _inputViewFactory;
         [SerializeField] private CameraControl _cameraControl;
-        [SerializeField] private Transform _uiTransform;
-        [SerializeField] private TrackManager _trackManager;
+        [SerializeField] private Transform _trackQuad;
+        private TrackManager _trackManager;
 
         void Start()
         {
             if (_car == null)
                 return;
 
-            assert(_inputViewFactory != null);
+            var commonStuff = _commonStuff;
+
+            assert(commonStuff.inputViewFactory != null);
             assert(_cameraControl != null);
-            assert(_uiTransform != null);
-            assert(_trackManager != null);
-            
+            assert(commonStuff.diRootTransform != null);
+            assert(_trackManager == null);
+
+            // Initialize player
             var playerCar = _car;
             var carProperties = playerCar.GetComponent<Gameplay.CarProperties>();
             {
                 var infoComponent = playerCar.GetComponent<CarInfoComponent>();
-                Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
-                InitializationHelper.InitializePlayerInput(playerCar, carProperties, _cameraControl, _inputViewFactory);
-                _inputViewFactory.EnableAllInput();
-            }
-            InitializationHelper.InitializeUI(_uiTransform, carProperties);
+                Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent, playerCar.transform);
 
-            _trackManager.Initialize(playerCar.transform, carProperties);
+                InitializationHelper.InitializePlayerInputAndInjectDependencies(
+                    commonStuff, _cameraControl, playerCar, carProperties);
+            }
+
+            commonStuff.inputViewFactory.EnableAllInput();
+
+            // Initialize track
+            {
+                var driverInfos = new[] { new DriverInfo(playerCar, carProperties), };
+                var (_, _trackManager) = InitializationHelper.InitializeTrackAndTrackManagerFromTrackQuad(
+                    driverInfos, _trackQuad);
+            }
         }
     }
 }

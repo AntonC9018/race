@@ -26,6 +26,7 @@ namespace Race.Garage
         // TODO: Could pass IEnumerable's?
         public PlayerInfo[] playerInfos;
         public BotInfo[] botInfos;
+        public int trackIndex;
     }
 
     public readonly struct GarageInitializationInfo
@@ -86,6 +87,9 @@ namespace Race.Garage
                         carIndex = 0,
                     }
                 },
+
+                // TODO: Allow map selection.
+                trackIndex = 0,
             };
             
             _transitionInfo.fromGarageToGameplay.TransitionFromGarageToGameplay(transitionInfo);

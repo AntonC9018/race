@@ -10,12 +10,18 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceLocations;
 using static EngineCommon.Assertions;
 
+// for now
+using BotDriverInfo = Race.Gameplay.DriverInfo;
+
 using LocationsHandle = UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle<System.Collections.Generic.IList<UnityEngine.ResourceManagement.ResourceLocations.IResourceLocation>>;
 
 namespace Race.SceneTransition
 {
     public class TransitionManager : MonoBehaviour, ITransitionFromGarageToGameplay
     {
+        private const string GameplayLabel = "gameplay";
+        private const string TracksLabel = "track";
+
         // These are not scenes, but gameobjects.
         // They act like scenes, but I'm using prefabs instead of actual scenes,
         // because scenes have no benefits over prefabs as far as I can tell.
@@ -133,7 +139,7 @@ namespace Race.SceneTransition
             // This is stupid and I hate it ...
             // Addressables' API is terrible IMO. I'd do a custom thing and be happy.
             // Their code is complicated and unreadable too.
-            LocationsHandle gameplayCarsLocationsHandle = Addressables.LoadResourceLocationsAsync("gameplay");
+            LocationsHandle gameplayCarsLocationsHandle = Addressables.LoadResourceLocationsAsync(GameplayLabel);
 
             /*
                 I'd do something like the following:
@@ -160,7 +166,7 @@ namespace Race.SceneTransition
 
                 I might be missing something at this point too tho.
             */
-            static async Task<GameObject> GetCarPrefab(
+            static async Task<GameObject> GetPrefabByIndex(
                 int index, LocationsHandle locationsHandle)
             {
                 var locations = await locationsHandle.Task;
@@ -170,15 +176,21 @@ namespace Race.SceneTransition
                 return await prefabHandle.Task;
             }
 
-            static async Task<(GameObject, Gameplay.CarProperties, CarInfoComponent)> CreateCarAndGetSomeComponents(
-                int carIndex, LocationsHandle locationsHandle)
+            static async Task<GameObject> InstantiateAsyncByIndex(int index, LocationsHandle locationsHandle)
             {
                 // This is again just stupid, because currently WE KNOW the cars are stored in the same bundle.
                 // So they will always resolve instantly after the locations have been loaded.
                 // We could've just iterated them manually at that point.
-                var prefab = await GetCarPrefab(carIndex, locationsHandle);
-                var car = Instantiate_RunAwakes_DisableUpdates(prefab);
-                
+                var prefab = await GetPrefabByIndex(index, locationsHandle);
+                var thing = Instantiate_RunAwakes_DisableUpdates(prefab);
+                return thing;
+            }
+
+            static async Task<(GameObject, Gameplay.CarProperties, CarInfoComponent)> CreateCarAndGetSomeComponents(
+                int carIndex, LocationsHandle locationsHandle)
+            {
+                GameObject car = await InstantiateAsyncByIndex(carIndex, locationsHandle);
+
                 var carProperties = car.GetComponent<Gameplay.CarProperties>();
                 assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
                 var infoComponent = car.GetComponent<CarInfoComponent>();
@@ -186,18 +198,18 @@ namespace Race.SceneTransition
                 return (car, carProperties, infoComponent);
             }
 
-            Task<PlayerDriverInfo>[] playerTasks;
+            Task<DriverInfo>[] playerTasks;
             {
                 var playerCount = info.playerInfos.Length;
                 assert(playerCount == 1);
 
-                playerTasks = new Task<PlayerDriverInfo>[playerCount];
+                playerTasks = new Task<DriverInfo>[playerCount];
                 for (int i = 0; i < playerTasks.Length; i++)
                 {
                     var task = CreateCar(info.playerInfos[i], gameplayCarsLocationsHandle);
                     playerTasks[i] = task;
 
-                    static async Task<PlayerDriverInfo> CreateCar(PlayerInfo playerInfo, LocationsHandle locationsHandle)
+                    static async Task<DriverInfo> CreateCar(PlayerInfo playerInfo, LocationsHandle locationsHandle)
                     {
                         var (car, carProperties, infoComponent) = 
                             await CreateCarAndGetSomeComponents(playerInfo.carIndex, locationsHandle);
@@ -217,7 +229,7 @@ namespace Race.SceneTransition
                             // The mesh renderer should be in a separate metadata component,
                             // or should be accessed in a standard way (there are other ways too, via interfaces).
                             ApplyColor(playerInfo.carDataModel.mainColor, infoComponent);
-                            Gameplay.InitializationHelper.FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
+                            Gameplay.InitializationHelper.FinalizeCarPropertiesInitialization(carProperties, infoComponent, car.transform, carSpec);
                             
                             static void ApplyColor(Color color, CarInfoComponent infoComponent)
                             {
@@ -225,7 +237,7 @@ namespace Race.SceneTransition
                             }
                         }
 
-                        return new PlayerDriverInfo(car, carProperties);
+                        return new DriverInfo(car, carProperties);
                     }
                 }
             }
@@ -246,11 +258,23 @@ namespace Race.SceneTransition
                         var (car, carProperties, infoComponent) = 
                             await CreateCarAndGetSomeComponents(botInfo.carIndex, locationsHandle);
 
-                        Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent);
+                        Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent, car.transform);
 
                         return new BotDriverInfo(car, carProperties);
                     }
                 }
+            }
+
+            GameObject trackMap;
+            Transform trackTransform;
+            {
+                LocationsHandle tracksLocationsHandle = Addressables.LoadResourceLocationsAsync(TracksLabel);
+                // TODO: do the awaits simultaneously.
+                trackMap = await InstantiateAsyncByIndex(info.trackIndex, tracksLocationsHandle);
+                // TODO: This should be a nicely displayed error, not an assertion.
+                assert(trackMap != null);
+
+                trackTransform = FindTrack(trackMap.transform);
             }
             
             {
@@ -261,12 +285,14 @@ namespace Race.SceneTransition
                 var playerDriverInfos = await Task.WhenAll(playerTasks);
                 var botDriverInfos = await Task.WhenAll(botTasks);
                 
-                var initializationInfo = new GameplayInitializationInfo
-                {
-                    rootTransform = gameplaySceneRoot,
-                    playerDriverInfos = playerDriverInfos,
-                    botDriverInfos = botDriverInfos,
-                };
+                // HACK! Will need to reafactor this.
+                var initializationInfo = new GameplayExternalInitializationInfo(
+                    gameplaySceneRoot,
+                    playerDriverInfos,
+                    botDriverInfos,
+                    trackTransform,
+                    trackMap);
+
                 var enableDisableInput = initializationComponent.Initialize(initializationInfo);
                 enableDisableInput.EnableAllInput();
 
@@ -328,6 +354,11 @@ namespace Race.SceneTransition
         private Transform FindInitializationTransform(Transform root)
         {
             return root.Find("initialization");
+        }
+
+        private Transform FindTrack(Transform root)
+        {
+            return root.Find("track");
         }
     }
 }

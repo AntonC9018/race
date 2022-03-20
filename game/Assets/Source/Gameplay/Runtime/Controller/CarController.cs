@@ -124,6 +124,7 @@ namespace Race.Gameplay
             dataModel.DrivingState.gearIndex = firstPositiveGearIndex;
         }
 
+    #if false
         void OnGUI()
         {
             var rigidbody = GetComponent<Rigidbody>();
@@ -142,6 +143,7 @@ namespace Race.Gameplay
 
             GUILayout.EndVertical();
         }
+    #endif
 
         void OnGearInput()
         {

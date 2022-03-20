@@ -18,27 +18,13 @@ namespace Race.Gameplay
             ICameraInputView cameraInputView = viewFactory.CreateCameraInputView(0, carProperties);
             ICarInputView carInputView = viewFactory.CreateCarInputView(0, carProperties);
 
-            InitializePlayerInput(
-                car, carProperties, cameraControl, cameraInputView, carInputView);
-        }
-
-        public static void InitializePlayerInput(
-            GameObject car,
-            Gameplay.CarProperties carProperties,
-            CameraControl cameraControl,
-            ICameraInputView cameraInputView,
-            ICarInputView carInputView)
-        {
             assert(cameraInputView != null);
             assert(carInputView != null);
 
-            {
-                cameraControl.Initialize(car.transform, cameraInputView);
-            }
-            {
-                var carController = car.GetComponent<CarController>();
-                InitializeCarController(carInputView, carController, carProperties);
-            }
+            cameraControl.Initialize(car.transform, cameraInputView);
+
+            var carController = car.GetComponent<CarController>();
+            InitializeCarController(carInputView, carController, carProperties);
         }
 
         public static void InitializeCarController(
@@ -51,26 +37,17 @@ namespace Race.Gameplay
             carInputView.ResetTo(carProperties);
             carController.Initialize(carProperties, carInputView);
         }
-        
-        private static void InitializeBotInput(
-            GameObject car, Gameplay.CarProperties carProperties)
-        {
-            // TODO: settings for difficulty and such
-            var carInputView = new BotInputView();
-
-            var carController = car.GetComponent<CarController>();
-            Gameplay.InitializationHelper.InitializeCarController(carInputView, carController, carProperties);
-        }
 
         public static void FinalizeCarPropertiesInitialization(
             Gameplay.CarProperties carProperties,
             CarInfoComponent infoComponent,
+            Transform transform,
             in CarSpecInfo carSpec)
         {
             CarColliderSetupHelper.AdjustCenterOfMass(
                 ref infoComponent.colliderParts, infoComponent.template.centerOfMassAdjustmentParameters);
 
-            var carDataModel = new Gameplay.CarDataModel(carSpec, infoComponent);
+            var carDataModel = new Gameplay.CarDataModel(carSpec, infoComponent, transform);
             carProperties.Initialize(carDataModel);
         }
 
@@ -91,10 +68,37 @@ namespace Race.Gameplay
 
 
         public static void FinalizeCarPropertiesInitializationWithDefaults(
-            Gameplay.CarProperties carProperties, CarInfoComponent infoComponent)
+            Gameplay.CarProperties carProperties, CarInfoComponent infoComponent, Transform transform)
         {
             var carSpec = infoComponent.template.baseSpec;
-            FinalizeCarPropertiesInitialization(carProperties, infoComponent, carSpec);
+            FinalizeCarPropertiesInitialization(carProperties, infoComponent, transform, carSpec);
+        }
+
+        public static void InitializePlayerInputAndInjectDependencies(
+            CommonInitializationStuff stuff,
+            CameraControl cameraControl,
+            GameObject car,
+            CarProperties carProperties)
+        {
+            InitializationHelper.InitializePlayerInput(car, carProperties, cameraControl, stuff.inputViewFactory);
+            InitializationHelper.InitializeUI(stuff.diRootTransform, carProperties);
+        }
+        
+        public static (IStaticTrack, TrackManager) InitializeTrackAndTrackManagerFromTrackQuad(
+            DriverInfo[] driverInfos, Transform trackQuad)
+        {
+            var (track, trackWidth) = TrackHelper.CreateFromQuad(trackQuad);
+
+            // For now, do hacks and produce garbage.
+            // TODO: refactor
+            var trackManager = new TrackManager();
+
+            var grid = new GridPlacementStrategy();
+            grid.Reset(track, trackWidth, driverInfos);
+
+            trackManager.Initialize(driverInfos, track, grid);
+
+            return (track, trackManager);
         }
     }
 }

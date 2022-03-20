@@ -58,8 +58,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22a7ab87201ee564ba5754cb07dffb2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _commonStuff:
+    inputViewFactory: {fileID: 7176400070802936376}
+    diRootTransform: {fileID: 7176400071718098410}
   _cameraControlPrefab: {fileID: 1921171471085227138, guid: 6dc21cbc56720b24f887d8492e665c92, type: 3}
-  _factory: {fileID: 7176400070802936376}
 --- !u!1 &7176400070940440194
 GameObject:
   m_ObjectHideFlags: 0

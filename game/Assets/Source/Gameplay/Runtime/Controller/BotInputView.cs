@@ -6,6 +6,8 @@ namespace Race.Gameplay
 {
     public class BotInputView : ICarInputView
     {
+        public IStaticTrack Track { get; set; }
+        
         public CarMovementInputValues Movement
         {
             get

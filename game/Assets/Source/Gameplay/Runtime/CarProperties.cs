@@ -36,14 +36,22 @@ namespace Race.Gameplay
         /// </summary>
         public readonly CarInfoComponent _infoComponent;
 
-        public CarDataModel(CarSpecInfo spec, CarInfoComponent infoComponent)
+        /// <summary>
+        /// The transform is pretty hard to get at without the assumption
+        /// that it's on the same object that CarProperties is on.
+        /// </summary>
+        public readonly Transform _transform;
+
+        public CarDataModel(CarSpecInfo spec, CarInfoComponent infoComponent, Transform transform)
         {
             _spec = spec;
             _drivingState = new CarDrivingState();
             _infoComponent = infoComponent;
+            _transform = transform;
         }
 
         public ref CarDrivingState DrivingState => ref _drivingState;
+        public Transform Transform => _transform;
 
         /// <summary>
         /// We do not allow it to change at runtime.

@@ -13,60 +13,56 @@ namespace Race.Gameplay
         Vector3 Position { get; }
     }
 
-    public struct ParticipantInfo
+    public static class TrackHelper
     {
-        public readonly Transform transform;
-        public readonly CarProperties carProperties;
-        public float deathTime;
-
-        public ParticipantInfo(Transform transform, CarProperties carProperties)
+        public static (IStaticTrack track, float width) CreateFromQuad(Transform quad)
         {
-            this.transform = transform;
-            this.carProperties = carProperties;
-            this.deathTime = 0;
+            var transform = quad.transform;
+            var center = transform.position;
+            var scale = transform.localRotation * transform.localScale;
+            var length = scale.z;
+            var width = scale.x;
+
+            // hack: does not handle slopes
+            var halfLengthVector = new Vector3(0, 0, length / 2);
+
+            var startPoint = center - halfLengthVector;
+            var endPoint = center + halfLengthVector;
+
+            const float visualVSFunctionRoadFactor = 1.2f;
+            return (new StraightTrack(startPoint, endPoint, width * visualVSFunctionRoadFactor), width);
         }
     }
 
-    public class TrackManager : MonoBehaviour
+    public class TrackManager
     {
+        // Currently assumes that the road is a 1x1 quad.
         private LowLevelTrackManager _underlyingManager;
-        private ParticipantInfo[] _participants;
+        private DriverInfo[] _participants;
+        private float[] _participantDeathTimes;
 
-        public void Initialize(Transform playerTransform, CarProperties playerCarProperties)
+        // TODO: Must not place participants immediately! That's just confusing. Refactor!
+        public void Initialize(DriverInfo[] participants, IStaticTrack track, ICarPlacementStrategy placementStrategy)
         {
-            _participants = new[] { new ParticipantInfo(playerTransform, playerCarProperties), };
-
-            var track = MakeTrack();
-            IStaticTrack MakeTrack()
-            {
-                var transform = this.transform;
-                var center = transform.position;
-                var scale = transform.localRotation * transform.localScale;
-                var length = scale.z;
-                var width = scale.x;
-
-                // hack: does not handle slopes
-                var halfLengthVector = new Vector3(0, 0, length / 2);
-
-                var startPoint = center - halfLengthVector;
-                var endPoint = center + halfLengthVector;
-
-                const float visualVSFunctionRoadFactor = 1.2f;
-                return new StraightTrack(startPoint, endPoint, width * visualVSFunctionRoadFactor);
-            }
+            assert(participants is not null);
+            assert(track is not null);
+            assert(placementStrategy is not null);
+            
+            _participants = participants;
+            _participantDeathTimes = new float[participants.Length];
 
             _underlyingManager = new LowLevelTrackManager();
-            _underlyingManager.Reset(track, 1);
+            _underlyingManager.Reset(track, participants.Length);
 
-            for (int i = 0; i < _participants.Length; i++)
-                ActivateParticipant(i);
-        }
-
-        private void ActivateParticipant(int i)
-        {
-            var (position, r) = _underlyingManager.GetPositionAndRotation(participantIndex: i);
-            ref readonly var participant = ref _participants[i];
-            CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(participant.transform, participant.carProperties, position, r);
+            for (int i = 0; i < participants.Length; i++)
+            {
+                var (pos, rot) = placementStrategy.PlaceCar(i);
+                ref readonly var participant = ref participants[i];
+                var t = participant.transform;
+                CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
+                    t, participant.carProperties, pos, rot);
+                _underlyingManager.UpdatePosition(i, t);
+            }
         }
 
         void FixedUpdate()
@@ -80,10 +76,14 @@ namespace Race.Gameplay
                 {
                     const float respawnTimeout = 1.0f;
 
-                    if (participant.deathTime + respawnTimeout < Time.time)
+                    if (_participantDeathTimes[i] + respawnTimeout < Time.time)
                     {
                         _underlyingManager.ReturnToCheckpoint(i);
-                        ActivateParticipant(i);
+                        {
+                            var (position, r) = _underlyingManager.GetPositionAndRotation(participantIndex: i);
+                            CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
+                                participant.transform, participant.carProperties, position, r);
+                        }
                         CarDataModelHelper.RestartDisabledDriving(participant.carProperties);
                     }
                 }
@@ -93,35 +93,11 @@ namespace Race.Gameplay
                     var updateResult = _underlyingManager.UpdatePosition(i, participant.transform);
                     if ((updateResult & LowLevelTrackManager.UpdateResult.EliminatedBit) != 0)
                     {
-                        Debug.Log(updateResult);
                         CarDataModelHelper.StopCar(participant.transform, participant.carProperties);
-                        participant.deathTime = Time.time;
+                        _participantDeathTimes[i] = Time.time;
                     }
                 }
             }
-        }
-
-
-        [Command(Name = "flip", Help = "Flips a car upside down.")]
-        public static void FlipOver(
-            [Argument("Which participant to flip over")] int participantIndex = 0)
-        {
-            var trackManager = GameObject.FindObjectOfType<TrackManager>();
-            if (trackManager == null)
-            {
-                Debug.LogError("The track manager could not be found");
-                return;
-            }
-
-            if (participantIndex < 0 || participantIndex >= trackManager._participants.Length)
-            {
-                Debug.Log($"The participant index {participantIndex} was outside the bound of the participant array");
-                return;
-            }
-
-            var t = trackManager._participants[participantIndex].transform;
-            t.rotation = Quaternion.AngleAxis(180, Vector3.forward);
-            t.position += Vector3.up * 3;
         }
     }
 

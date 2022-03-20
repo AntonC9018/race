@@ -7,7 +7,7 @@ namespace Race.Gameplay
 {
     public interface ICarPlacementStrategy
     {
-        void Reset(IStaticTrack track, float trackWidth, ParticipantInfo[] participants);
+        void Reset(IStaticTrack track, float trackWidth, DriverInfo[] participants);
         (Vector3 position, Quaternion rotation) PlaceCar(int carIndex);
     }
 
@@ -24,7 +24,7 @@ namespace Race.Gameplay
         private Vector3 _perpendicularDirection;
         private Quaternion _startingRotation;
 
-        public void Reset(IStaticTrack track, float trackWidth, ParticipantInfo[] participants)
+        public void Reset(IStaticTrack track, float trackWidth, DriverInfo[] participants)
         {
             assert(track is not null);
             assert(participants is not null);

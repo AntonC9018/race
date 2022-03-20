@@ -10,31 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: default_car_models
+  m_Name: default_maps
   m_EditorClassIdentifier: 
-  m_GroupName: default_car_models
+  m_GroupName: default_maps
   m_Data:
     m_SerializedData: []
-  m_GUID: e715d75b775a8b74c808685c0ff0663f
+  m_GUID: 3f42faa600febe640a53dbd39e8e0c1d
   m_SerializeEntries:
-  - m_GUID: 040de42b61cc4ca4bbf09c7edaa74124
-    m_Address: car_0
+  - m_GUID: a8badedfaab401a498ad76c670915ffe
+    m_Address: map_0
     m_ReadOnly: 0
     m_SerializedLabels:
-    - model
-  - m_GUID: 35c6246c59f16b440aaa2c34bfbbcc64
-    m_Address: car_1
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - model
-  - m_GUID: 9d4d51851e8b8a242a17bc3291c028fd
-    m_Address: car_2
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - model
+    - track
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 2ffc4cb9e209f4f4db2c5351f8ad028b, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: b6f569a51fdec0a4da1b01dae68f037c, type: 2}
-    - {fileID: 11400000, guid: 19934b96ea3e00543b18bbf547e85efa, type: 2}
+    - {fileID: 11400000, guid: 33f96c500d9762c4b8a930f7ae94b2d3, type: 2}
+    - {fileID: 11400000, guid: 41d78be218683264eb336c037026d832, type: 2}
