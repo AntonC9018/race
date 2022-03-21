@@ -265,6 +265,7 @@ namespace Race.Gameplay.Tests
                     var expected0 = track._startPosition;
                     expected0.z += length / 2;
                     expected0.x -= trackInfo.visualWidth * 0.25f;
+
                     var actual = CarPlacement.GetPositionAndRotation(data, 0).position;
                     
                     Helper.AssertClose(expected0, actual, 0.01f);
@@ -274,6 +275,7 @@ namespace Race.Gameplay.Tests
                     var expected1 = track._startPosition;
                     expected1.z += length / 2;
                     expected1.x += trackInfo.visualWidth * 0.25f;
+
                     var actual = CarPlacement.GetPositionAndRotation(data, 1).position;
                     
                     Helper.AssertClose(expected1, actual, 0.01f);
@@ -288,6 +290,7 @@ namespace Race.Gameplay.Tests
                     var expected0 = track._startPosition;
                     expected0.z += length / 2;
                     expected0.x -= trackInfo.visualWidth * 0.25f;
+
                     var actual = CarPlacement.GetPositionAndRotation(data, 0).position;
                     
                     Helper.AssertClose(expected0, actual, 0.01f);
@@ -297,6 +300,7 @@ namespace Race.Gameplay.Tests
                     var expected1 = track._startPosition;
                     expected1.z += length / 2;
                     expected1.x += trackInfo.visualWidth * 0.25f;
+
                     var actual = CarPlacement.GetPositionAndRotation(data, 1).position;
                     
                     Helper.AssertClose(expected1, actual, 0.01f);
@@ -305,6 +309,7 @@ namespace Race.Gameplay.Tests
                 {
                     var expected2 = track._startPosition;
                     expected2.z += length * 1.5f;
+                    
                     var actual = CarPlacement.GetPositionAndRotation(data, 2).position;
                     
                     Helper.AssertClose(expected2, actual, 0.01f);
