@@ -91,19 +91,6 @@ namespace Race.Gameplay
             InitializePlayerInput(car, carProperties, cameraControl, stuff.inputViewFactory);
             InjectDependency(stuff.diRootTransform, carProperties);
         }
-
-        public static TrackRaceInfo CreateTrackWithInfo(Transform trackTransform, float howMuchVisualWidthInActualWidth)
-        {
-            var (track, actualWidth) = TrackHelper.CreateFromQuad(trackTransform);
-            var visualWidth = howMuchVisualWidthInActualWidth * actualWidth;
-
-            return new TrackRaceInfo
-            {
-                track = track,
-                actualWidth = actualWidth,
-                visualWidth = visualWidth,
-            };
-        }
         
         public static Transform FindTrackTransform(Transform mapTransform)
         {
@@ -117,7 +104,7 @@ namespace Race.Gameplay
 
         public static TrackRaceInfo CreateTrackWithInfo(Transform trackTransform, TrackLimitsConfiguration trackLimitsConfiguration)
         {
-            return InitializationHelper.CreateTrackWithInfo(trackTransform, trackLimitsConfiguration.howMuchVisualWidthInActualWidth);
+            return TrackHelper.CreateFromQuad(trackTransform, trackLimitsConfiguration.actualToVisualWidthRatio);
         }
     }
 }

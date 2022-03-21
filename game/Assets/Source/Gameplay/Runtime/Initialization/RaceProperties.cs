@@ -86,10 +86,10 @@ namespace Race.Gameplay
         public static void PlaceParticipants(RaceDataModel dataModel)
         {
             // For now, only position in a grid
-            var maxSize = CarPlacement.ComputeMaxSizes(dataModel.participants.driver.infos, dataModel.trackInfo.visualWidth);
-            var placementData = CarPlacement.GetGridPlacementData(maxSize, dataModel.trackInfo);
-            
             ref var participants = ref dataModel.participants;
+            var maxSize = CarPlacement.ComputeMaxSizes(participants.driver.infos, dataModel.trackInfo.visualWidth);
+            var placementData = CarPlacement.GetGridPlacementData(maxSize, participants.Count, dataModel.trackInfo);
+            
             
             for (int i = 0; i < participants.Count; i++)
             {
@@ -99,8 +99,8 @@ namespace Race.Gameplay
                 var t = driverInfo.transform;
 
                 // Visual
-                CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
-                    t, driverInfo.carProperties, pos, rot);
+                CarDataModelHelper.ResetPositionAndRotationOfCenterOfCar(
+                    t, driverInfo.carProperties.DataModel, pos, rot);
 
                 SynchronizeTrackLocationToWorldPositionOfParticipant(dataModel, t, i);
             }

@@ -7,7 +7,7 @@ namespace Race.Gameplay
 {
     public static class TrackHelper
     {
-        public static (IStaticTrack track, float width) CreateFromQuad(Transform quad)
+        public static TrackRaceInfo CreateFromQuad(Transform quad, float actualToVisualWidthRatio)
         {
             var transform = quad.transform;
             var center = transform.position;
@@ -21,8 +21,15 @@ namespace Race.Gameplay
             var startPoint = center - halfLengthVector;
             var endPoint = center + halfLengthVector;
 
-            const float visualVSFunctionRoadFactor = 1.2f;
-            return (new StraightTrack(startPoint, endPoint, width * visualVSFunctionRoadFactor), width);
+            var visualWidth = width;
+            var actualWidth = visualWidth * actualToVisualWidthRatio;
+
+            return new TrackRaceInfo
+            {
+                actualWidth = actualWidth,
+                visualWidth = visualWidth,
+                track = new StraightTrack(startPoint, endPoint, actualWidth),
+            };
         }
     }
 

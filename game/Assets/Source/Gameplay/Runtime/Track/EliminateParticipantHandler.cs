@@ -48,7 +48,7 @@ namespace Race.Gameplay
                     var position = track.GetRoadMiddlePosition(point);
                     var rotation = track.GetRegularRotation(point);
                     CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
-                        driver.transform, driver.carProperties, position, rotation);
+                        driver.transform, driver.carProperties.DataModel, position, rotation);
                 }
 
                 Debug.Log("returing car to checkpoint");

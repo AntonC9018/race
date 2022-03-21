@@ -7,8 +7,10 @@ namespace Race.Gameplay
 {
     public struct GridPlacementData
     {
-        public Vector2 cellSize;
         public int colCount;
+        public int rowCount;
+        public int columnCountOnLastRow;
+        public bool HasIncompleteLastRow => columnCountOnLastRow != 0;
 
         // Assume the start is linear.
         // The system cannot handle arbitrary turns and road segment sizes without
@@ -17,12 +19,15 @@ namespace Race.Gameplay
         public Vector3 tangentDirection;
         public Vector3 perpendicularDirection;
         public Quaternion startingRotation;
+
+        public float trackWidth;
+        public float maxCarLength;
     }
     
     public static class CarPlacement
     {
         public static GridPlacementData GetGridPlacementData(
-            (float width, float length) max, in TrackRaceInfo trackInfo)
+            (float width, float length) max, int carCount, in TrackRaceInfo trackInfo)
         {
             assert(trackInfo.track is not null);
 
@@ -33,11 +38,17 @@ namespace Race.Gameplay
                 if (numCarsPerRow == 0)
                     numCarsPerRow = 1;
 
-                result.colCount = numCarsPerRow;
-                
-                float lengthEachCellUntilMultiple = (trackInfo.visualWidth % max.width) / numCarsPerRow;
-                result.cellSize = new Vector2(max.width + lengthEachCellUntilMultiple, max.length);
-                // _rowCount = MathHelper.CeilDivide(participants.Length, numCarsPerRow);
+                var colCount = numCarsPerRow;
+                result.colCount = colCount;
+
+                var rowCount = MathHelper.CeilDivide(carCount, result.colCount);
+                result.rowCount = rowCount;
+
+                var lastRowCount = carCount % colCount;
+                result.columnCountOnLastRow = lastRowCount;
+
+                result.maxCarLength = max.length;
+                result.trackWidth = trackInfo.visualWidth;
             }
 
             {
@@ -47,10 +58,14 @@ namespace Race.Gameplay
                 var position = track.GetRoadMiddlePosition(start);
 
                 var perpendicularDirection = rotation * Vector3.right;
+                var tangentDirection = rotation * Vector3.forward;
 
-                result.startingPosition = position - (-trackInfo.visualWidth / 2 + result.cellSize.x / 2) * perpendicularDirection;
+                var offsetPerp = -trackInfo.visualWidth / 2;
+                var offsetTangent = max.length / 2;
+
+                result.startingPosition = position + offsetPerp * perpendicularDirection + offsetTangent * tangentDirection;
                 result.startingRotation = rotation;
-                result.tangentDirection = rotation * Vector3.forward;
+                result.tangentDirection = tangentDirection;
                 result.perpendicularDirection = perpendicularDirection;
             }
 
@@ -74,14 +89,24 @@ namespace Race.Gameplay
             return (maxWidth, maxLength);
         }
 
+
+        // Just use a random access implementation for now, but an iterator will work better here.
         public static (Vector3 position, Quaternion rotation) GetPositionAndRotation(in GridPlacementData data, int carIndex)
         {
             int row = carIndex / data.colCount;
             int column = carIndex % data.colCount;
 
+            int colCount;
+            if (data.HasIncompleteLastRow && row == data.rowCount - 1)
+                colCount = data.columnCountOnLastRow;
+            else
+                colCount = data.colCount;
+
+            float segmentWidth = data.trackWidth / colCount;
+
             Vector3 position = data.startingPosition;
-            position += data.cellSize.y * row * data.tangentDirection;
-            position += data.cellSize.x * column * data.perpendicularDirection;
+            position += data.maxCarLength * row * data.tangentDirection;
+            position += segmentWidth * (column + 0.5f) * data.perpendicularDirection;
 
             return (position, data.startingRotation);
         }

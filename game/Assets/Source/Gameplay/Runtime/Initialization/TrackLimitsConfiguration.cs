@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Race.Gameplay
 {
@@ -9,6 +10,7 @@ namespace Race.Gameplay
         order = 51)]       
     public class TrackLimitsConfiguration : ScriptableObject
     {
-        public float howMuchVisualWidthInActualWidth;
+        [FormerlySerializedAs("howMuchVisualWidthInActualWidth")]
+        public float actualToVisualWidthRatio; 
     }
 }

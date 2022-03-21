@@ -110,27 +110,206 @@ namespace Race.Gameplay.Tests
         {
             var start = new Vector3(1, 1, 1);
             var end = new Vector3(1, 1, 10);
-            var width = 3;
+            var width = 1;
             track = new StraightTrack(start, end, width);
         }
 
-        [Test]
-        public void SingleCarPositioning()
+        private GridPlacementData GetDataForTheTrack((float width, float length) max, int carCount)
         {
-            var max = (1.0f, 1.0f);
-            var trackInfo = new TrackRaceInfo
-            {
-                track = track,
-                actualWidth = track._roadWidth,
-                visualWidth = track._roadWidth,
-            };
-            var data = CarPlacement.GetGridPlacementData(max, trackInfo);
-
-            // Helper.AssertClose(track._startPosition, data.startingPosition, 0.01f);
-            
-            var (pos, rot) = CarPlacement.GetPositionAndRotation(data, 0);
-            Helper.AssertClose(track._startPosition, pos, 0.01f);
+            var trackInfo = TrackInfo;
+            var data = CarPlacement.GetGridPlacementData(max, carCount, trackInfo);
+            return data;
         }
 
+        private TrackRaceInfo TrackInfo
+        {
+            get
+            {
+                return new TrackRaceInfo
+                {
+                    track = track,
+                    actualWidth = track._roadWidth,
+                    visualWidth = track._roadWidth,
+                };
+            }
+        }
+
+        [Test]
+        public void SingleCar_SingleRowAndColumn()
+        {
+            var trackInfo = TrackInfo;
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth, 1), carCount: 1);
+                Assert.AreEqual(1, a.colCount);
+                Assert.AreEqual(1, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth * 100, trackInfo.visualWidth * 100), carCount: 1);
+                Assert.AreEqual(1, a.colCount);
+                Assert.AreEqual(1, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+        }
+
+        [Test]
+        public void TwoCars_NumberOfRowsAndColumns_CorrespondToHowManyCarsCanFitInSingleRow()
+        {
+            var trackInfo = TrackInfo;
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth, 1), carCount: 2);
+                Assert.AreEqual(1, a.colCount);
+                Assert.AreEqual(2, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth * 100, trackInfo.visualWidth * 100), carCount: 2);
+                Assert.AreEqual(1, a.colCount);
+                Assert.AreEqual(2, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth / 2.1f, 1), carCount: 2);
+                Assert.AreEqual(2, a.colCount);
+                Assert.AreEqual(1, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth / 3.1f, 1), carCount: 2);
+                Assert.AreEqual(3, a.colCount);
+                Assert.AreEqual(1, a.rowCount);
+                Assert.True(a.HasIncompleteLastRow);
+                Assert.True(a.columnCountOnLastRow == 2);
+            }
+        }
+
+        [Test]
+        public void ManyCars_RowsAndColumnsAreCorrect()
+        {
+            var trackInfo = TrackInfo;
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth, 1), carCount: 4);
+                Assert.AreEqual(1, a.colCount);
+                Assert.AreEqual(4, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth * 2, 1), carCount: 4);
+                Assert.AreEqual(1, a.colCount);
+                Assert.AreEqual(4, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth / 2.1f, 1), carCount: 4);
+                Assert.AreEqual(2, a.colCount);
+                Assert.AreEqual(2, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth / 3.1f, 1), carCount: 4);
+                Assert.AreEqual(3, a.colCount);
+                Assert.AreEqual(2, a.rowCount);
+                Assert.True(a.HasIncompleteLastRow);
+                Assert.True(a.columnCountOnLastRow == 1);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth / 4.1f, 1), carCount: 4);
+                Assert.AreEqual(4, a.colCount);
+                Assert.AreEqual(1, a.rowCount);
+                Assert.True(!a.HasIncompleteLastRow);
+            }
+            {
+                var a = GetDataForTheTrack((trackInfo.visualWidth / 2.1f, 1), carCount: 3);
+                Assert.AreEqual(2, a.colCount);
+                Assert.AreEqual(2, a.rowCount);
+                Assert.True(a.HasIncompleteLastRow);
+                Assert.True(a.columnCountOnLastRow == 1);
+            }
+        }
+
+        [Test]
+        public void SingleCar_IsPositionedCorrectly()
+        {
+            // Equal dimensions
+            AssertExpectedPositionForSingleCar((1, 1));
+            
+            // Unequal dimensions
+            AssertExpectedPositionForSingleCar((1, 2));
+            AssertExpectedPositionForSingleCar((2.9f, 1));
+        }
+
+        private void AssertExpectedPositionForSingleCar((float width, float length) dims)
+        {
+            var data = GetDataForTheTrack(dims, 1);
+            Assert.True(!data.HasIncompleteLastRow);
+
+            var expected = track._startPosition;
+            expected.z += dims.length / 2;
+
+            var (pos, rot) = CarPlacement.GetPositionAndRotation(data, 0);
+            Helper.AssertClose(expected, pos, 0.01f);
+        }
+
+
+        [Test]
+        public void TwoCars_ArePositionedCorrectly()
+        {
+            var trackInfo = TrackInfo;
+            var length = 1.0f;
+
+            {
+                var max = (width: trackInfo.visualWidth / 2.1f, length);
+                var data = CarPlacement.GetGridPlacementData(max, carCount: 2, trackInfo);
+                
+                {
+                    var expected0 = track._startPosition;
+                    expected0.z += length / 2;
+                    expected0.x -= trackInfo.visualWidth * 0.25f;
+                    var actual = CarPlacement.GetPositionAndRotation(data, 0).position;
+                    
+                    Helper.AssertClose(expected0, actual, 0.01f);
+                }
+
+                {
+                    var expected1 = track._startPosition;
+                    expected1.z += length / 2;
+                    expected1.x += trackInfo.visualWidth * 0.25f;
+                    var actual = CarPlacement.GetPositionAndRotation(data, 1).position;
+                    
+                    Helper.AssertClose(expected1, actual, 0.01f);
+                }
+            }
+
+            {
+                var max = (width: trackInfo.visualWidth / 2.1f, length);
+                var data = CarPlacement.GetGridPlacementData(max, carCount: 3, trackInfo);
+                
+                {
+                    var expected0 = track._startPosition;
+                    expected0.z += length / 2;
+                    expected0.x -= trackInfo.visualWidth * 0.25f;
+                    var actual = CarPlacement.GetPositionAndRotation(data, 0).position;
+                    
+                    Helper.AssertClose(expected0, actual, 0.01f);
+                }
+
+                {
+                    var expected1 = track._startPosition;
+                    expected1.z += length / 2;
+                    expected1.x += trackInfo.visualWidth * 0.25f;
+                    var actual = CarPlacement.GetPositionAndRotation(data, 1).position;
+                    
+                    Helper.AssertClose(expected1, actual, 0.01f);
+                }
+
+                {
+                    var expected2 = track._startPosition;
+                    expected2.z += length * 1.5f;
+                    var actual = CarPlacement.GetPositionAndRotation(data, 2).position;
+                    
+                    Helper.AssertClose(expected2, actual, 0.01f);
+                }
+            }
+        }
     }
 }

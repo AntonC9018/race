@@ -130,23 +130,35 @@ namespace Race.Gameplay
             properties.TriggerOnDrivingToggled();
         }
 
-        public static void ResetPositionAndRotationOfBackOfCar(Transform carTransform, CarProperties properties, Vector3 targetPosition, Quaternion targetRotation)
+        public static void ResetPositionAndRotationOfBackOfCar(Transform carTransform, CarDataModel carDataModel, Vector3 targetPosition, Quaternion targetRotation)
         {
-            var carDataModel = properties.DataModel;
-
-            Vector3 additionalDisplacement;
-            {
-                var elevation = carDataModel._infoComponent.elevationSuchThatWheelsAreLevelWithTheGround;
-                var up = elevation * Vector3.up;
-                
-                var halfLength = properties.DataModel.ColliderParts.body.collider.bounds.extents.z;
-                var forward = halfLength * Vector3.forward;
-
-                additionalDisplacement = up + forward;
-            }
+            Vector3 additionalDisplacement = 
+                GetUpDisplacementVector(carDataModel) + GetForwardDisplacementVector(carDataModel);
             var position = targetPosition + targetRotation * additionalDisplacement;
             carTransform.SetPositionAndRotation(position, targetRotation);
         }
+        
+        public static void ResetPositionAndRotationOfCenterOfCar(Transform carTransform, CarDataModel carDataModel, Vector3 targetPosition, Quaternion targetRotation)
+        {
+            Vector3 additionalDisplacement = GetUpDisplacementVector(carDataModel);
+            var position = targetPosition + targetRotation * additionalDisplacement;
+            carTransform.SetPositionAndRotation(position, targetRotation);
+        }
+
+        private static Vector3 GetForwardDisplacementVector(CarDataModel carDataModel)
+        {
+            var halfLength = carDataModel.GetBodySize().z;
+            var forward = halfLength * Vector3.forward;
+            return forward;
+        }
+
+        private static Vector3 GetUpDisplacementVector(CarDataModel carDataModel)
+        {
+            var elevation = carDataModel._infoComponent.elevationSuchThatWheelsAreLevelWithTheGround;
+            var up = elevation * Vector3.up;
+            return up;
+        }
+
 
         // Since the gear ratio is expressed for a generic wheel (radius of 1),
         // it gets multiplied by the wheel radius.
