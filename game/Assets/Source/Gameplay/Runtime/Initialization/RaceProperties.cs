@@ -86,7 +86,8 @@ namespace Race.Gameplay
         public static void PlaceParticipants(RaceDataModel dataModel)
         {
             // For now, only position in a grid
-            var placementData = CarPlacement.GetGridPlacementData(dataModel.participants.driver, dataModel.trackInfo);
+            var maxSize = CarPlacement.ComputeMaxSizes(dataModel.participants.driver.infos, dataModel.trackInfo.visualWidth);
+            var placementData = CarPlacement.GetGridPlacementData(maxSize, dataModel.trackInfo);
             
             ref var participants = ref dataModel.participants;
             

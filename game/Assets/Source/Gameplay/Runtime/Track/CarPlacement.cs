@@ -18,16 +18,27 @@ namespace Race.Gameplay
         public Vector3 perpendicularDirection;
         public Quaternion startingRotation;
     }
-
+    
     public static class CarPlacement
     {
         public static GridPlacementData GetGridPlacementData(
-            in ParticipantsDriverInfo driver, in TrackRaceInfo trackInfo)
+            (float width, float length) max, in TrackRaceInfo trackInfo)
         {
             assert(trackInfo.track is not null);
-            assert(driver.infos is not null);
 
             GridPlacementData result;
+
+            {
+                int numCarsPerRow = Mathf.FloorToInt(trackInfo.visualWidth / max.width);
+                if (numCarsPerRow == 0)
+                    numCarsPerRow = 1;
+
+                result.colCount = numCarsPerRow;
+                
+                float lengthEachCellUntilMultiple = (trackInfo.visualWidth % max.width) / numCarsPerRow;
+                result.cellSize = new Vector2(max.width + lengthEachCellUntilMultiple, max.length);
+                // _rowCount = MathHelper.CeilDivide(participants.Length, numCarsPerRow);
+            }
 
             {
                 var track = trackInfo.track;
@@ -36,36 +47,31 @@ namespace Race.Gameplay
                 var position = track.GetRoadMiddlePosition(start);
 
                 var perpendicularDirection = rotation * Vector3.right;
-                result.startingPosition = position - trackInfo.visualWidth / 2 * perpendicularDirection;
+
+                result.startingPosition = position - (-trackInfo.visualWidth / 2 + result.cellSize.x / 2) * perpendicularDirection;
                 result.startingRotation = rotation;
                 result.tangentDirection = rotation * Vector3.forward;
                 result.perpendicularDirection = perpendicularDirection;
             }
 
-            float maxWidth = 0;
-            {
-                float maxLength = 0;
-                for (int i = 0; i < driver.infos.Length; i++)
-                {
-                    ref readonly var participant = ref driver.infos[i];
-                    var size = participant.carProperties.DataModel.GetBodySize();
-
-                    maxWidth = Mathf.Max(size.x, maxWidth);
-                    maxLength = Mathf.Max(size.z, maxLength);
-                }
-
-                int numCarsPerRow = Mathf.FloorToInt(trackInfo.visualWidth / maxWidth);
-                if (numCarsPerRow == 0)
-                    numCarsPerRow = 1;
-
-                result.colCount = numCarsPerRow;
-
-                float lengthEachCellUntilMultiple = (trackInfo.visualWidth % maxWidth) / numCarsPerRow;
-                result.cellSize = new Vector2(maxWidth + lengthEachCellUntilMultiple, maxLength);
-                // _rowCount = MathHelper.CeilDivide(participants.Length, numCarsPerRow);
-            }
 
             return result;
+        }
+
+        public static (float width, float length) ComputeMaxSizes(DriverInfo[] driver, float visualWidth)
+        {
+            float maxWidth = 0;
+            float maxLength = 0;
+            for (int i = 0; i < driver.Length; i++)
+            {
+                ref readonly var participant = ref driver[i];
+                var size = participant.carProperties.DataModel.GetBodySize();
+
+                maxWidth = Mathf.Max(size.x, maxWidth);
+                maxLength = Mathf.Max(size.z, maxLength);
+            }
+
+            return (maxWidth, maxLength);
         }
 
         public static (Vector3 position, Quaternion rotation) GetPositionAndRotation(in GridPlacementData data, int carIndex)

@@ -3,6 +3,15 @@ using NUnit.Framework;
 
 namespace Race.Gameplay.Tests
 {
+    public static class Helper
+    {
+        public static void AssertClose(Vector3 expected, Vector3 actual, float epsilon, string message = "")
+        {
+            Assert.AreEqual(expected.x, actual.x, epsilon, "x was not equal: {0}", message);
+            Assert.AreEqual(expected.y, actual.y, epsilon, "y was not equal: {0}", message);
+            Assert.AreEqual(expected.z, actual.z, epsilon, "z was not equal: {0}", message);
+        }
+    }
     // TODO: more tests; these helped me catch a bug, but there are more.
     public class TrackTests
     {
@@ -32,19 +41,12 @@ namespace Race.Gameplay.Tests
             return startPoint;
         }
 
-        private static void AssertClose(Vector3 expected, Vector3 actual, float epsilon, string message = "")
-        {
-            Assert.AreEqual(expected.x, actual.x, epsilon, message);
-            Assert.AreEqual(expected.y, actual.y, epsilon, message);
-            Assert.AreEqual(expected.z, actual.z, epsilon, message);
-        }
-
         [Test]
         public void QueriedInitialPosition_IsTheSameAsTheActualInitialPosition()
         {
             var startPoint = GetStartPoint();
             var positionOfRoadStart = track.GetRoadMiddlePosition(startPoint);
-            AssertClose(track._startPosition, positionOfRoadStart, 0.01f);
+            Helper.AssertClose(track._startPosition, positionOfRoadStart, 0.01f);
         }
 
         private Vector3 GetCenterOfTrack()
@@ -76,7 +78,7 @@ namespace Race.Gameplay.Tests
         {
             var centerPoint = new RoadPoint(0, 0.5f);
             var centerPos = track.GetRoadMiddlePosition(centerPoint);
-            AssertClose(GetCenterOfTrack(), centerPos, 0.01f);
+            Helper.AssertClose(GetCenterOfTrack(), centerPos, 0.01f);
         }
 
         [Test]
@@ -94,7 +96,41 @@ namespace Race.Gameplay.Tests
             var positionOnRoad = GetCenterOfTrack();
             var point = track.GetRoadPointAt(positionOnRoad);
             var positionAfter = track.GetRoadMiddlePosition(point);
-            AssertClose(positionOnRoad, positionAfter, 0.01f);
+            Helper.AssertClose(positionOnRoad, positionAfter, 0.01f);
         }
+    }
+
+
+    public class PositioningTests
+    {
+        internal StraightTrack track;
+
+        [SetUp]
+        public void Setup()
+        {
+            var start = new Vector3(1, 1, 1);
+            var end = new Vector3(1, 1, 10);
+            var width = 3;
+            track = new StraightTrack(start, end, width);
+        }
+
+        [Test]
+        public void SingleCarPositioning()
+        {
+            var max = (1.0f, 1.0f);
+            var trackInfo = new TrackRaceInfo
+            {
+                track = track,
+                actualWidth = track._roadWidth,
+                visualWidth = track._roadWidth,
+            };
+            var data = CarPlacement.GetGridPlacementData(max, trackInfo);
+
+            // Helper.AssertClose(track._startPosition, data.startingPosition, 0.01f);
+            
+            var (pos, rot) = CarPlacement.GetPositionAndRotation(data, 0);
+            Helper.AssertClose(track._startPosition, pos, 0.01f);
+        }
+
     }
 }
