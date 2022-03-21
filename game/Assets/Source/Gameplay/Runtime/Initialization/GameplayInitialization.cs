@@ -24,34 +24,9 @@ namespace Race.Gameplay
     public struct GameplayExternalInitializationInfo
     {
         public Transform rootTransform;
-        public DriverInfo[] driverInfos;
-        public int playerCount;
-        public int botCount;
-
-        // For now, we only allow simple quad track.
-        public Transform trackQuadTransform;
+        public DriverInfo[] playerInfos;
+        public DriverInfo[] botInfos;
         public GameObject mapGameObject;
-
-
-        // Encapsulate it for now
-        public GameplayExternalInitializationInfo(
-            Transform rootTransform,
-            DriverInfo[] playerInfos,
-            DriverInfo[] botInfos,
-            Transform trackQuad,
-            GameObject mapGameObject)
-        {
-            this.rootTransform = rootTransform;
-            this.driverInfos = playerInfos.Concat(botInfos).ToArray();
-            this.playerCount = playerInfos.Length;
-            this.botCount = botInfos.Length;
-            this.trackQuadTransform = trackQuad;
-            this.mapGameObject = mapGameObject;
-        }
-
-        public Span<DriverInfo> PlayerInfos => driverInfos.AsSpan(0, playerCount);
-        public Span<DriverInfo> BotInfos => driverInfos.AsSpan(playerCount, botCount);
-
     }
 
     public interface IGameplayInitialization
@@ -63,25 +38,24 @@ namespace Race.Gameplay
     {
         [SerializeField] private CommonInitializationStuff _commonStuff;
         [SerializeField] private GameObject _cameraControlPrefab;
-
-        private TrackManager _trackManager;
-        private GameplayExternalInitializationInfo _initializationInfo;
+        [SerializeField] private RaceProperties _raceProperties;
+        private Transform _rootTransform;
 
 
         public IEnableDisableInput Initialize(in GameplayExternalInitializationInfo info)
         {
+
             _initializationInfo = info;
 
-            assert(info.PlayerInfos.Length == 1);
-            assert(info.BotInfos.Length == 1);
+            assert(info.playerInfos.Length == 1);
+            assert(info.botInfos.Length == 1);
 
             var carContainer = new GameObject("car_container").transform;
             carContainer.SetParent(info.rootTransform, worldPositionStays: false);
 
             // Initialize track
-            var (track, _trackManager) = InitializationHelper.InitializeTrackAndTrackManagerFromTrackQuad(
-                info.driverInfos, info.trackQuadTransform);
             info.mapGameObject.SetActive(true);
+            InitializeRaceProperties(_raceProperties, info);
 
             // Initialize players & UI
             {
@@ -125,7 +99,48 @@ namespace Race.Gameplay
                 car.SetActive(true);
             }
 
+            RaceDataModelHelper.PlaceParticipants(_raceProperties.DataModel);
+
             return _commonStuff.inputViewFactory as IEnableDisableInput;
+        }
+
+        private static void InitializeRaceProperties(RaceProperties raceProperties, in GameplayExternalInitializationInfo info)
+        {
+            var model = raceProperties.DataModel;
+
+            {
+                var mapTransform = info.mapGameObject.transform;
+                model.mapTransform = mapTransform;
+
+                var trackTransform = mapTransform.Find("track");
+                model.trackTransform = trackTransform;
+
+                {
+                    ref var driver = ref model.participants.driver;
+                    driver.Reset(info.playerInfos, info.botInfos);
+                    RaceDataModelHelper.ResizeTrackParticipantDataToParticipantDriverData(ref model.participants);
+                }
+
+                var (track, actualWidth) = TrackHelper.CreateFromQuad(trackTransform);
+
+                const float visualWidthScale = 1.2f;
+                var visualWidth = visualWidthScale * actualWidth;
+
+                model.trackInfo = new TrackRaceInfo
+                {
+                    track = track,
+                    actualWidth = actualWidth,
+                    visualWidth = visualWidth,
+                };
+            }
+        }
+
+        // TODO: This needs refactoring, but for now, just tick it manually here.
+        // `RaceDataModel` with the participants, events for death, winning etc.
+        // It should definitely not be done in initialization.
+        void Update()
+        {
+            _raceManager.Update();
         }
 
 

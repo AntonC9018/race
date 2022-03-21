@@ -19,7 +19,7 @@ namespace Race.Gameplay
         [SerializeField] private GameObject _car;
         [SerializeField] private CameraControl _cameraControl;
         [SerializeField] private Transform _trackQuad;
-        private TrackManager _trackManager;
+        private RaceManager _raceManager;
 
         void Start()
         {
@@ -31,7 +31,7 @@ namespace Race.Gameplay
             assert(commonStuff.inputViewFactory != null);
             assert(_cameraControl != null);
             assert(commonStuff.diRootTransform != null);
-            assert(_trackManager == null);
+            assert(_raceManager == null);
 
             // Initialize player
             var playerCar = _car;
@@ -49,9 +49,15 @@ namespace Race.Gameplay
             // Initialize track
             {
                 var driverInfos = new[] { new DriverInfo(playerCar, carProperties), };
-                var (_, _trackManager) = InitializationHelper.InitializeTrackAndTrackManagerFromTrackQuad(
-                    driverInfos, _trackQuad);
+                var (_, _trackManager) = InitializationHelper.InitializeTrackAndRaceManagerFromTrackQuad(
+                    driverInfos, _trackQuad, commonStuff.playerRespawnDelay);
             }
+        }
+
+        // TODO: This needs refactoring, but for now, just tick it manually here.
+        void Update()
+        {
+            _raceManager?.Update();
         }
     }
 }

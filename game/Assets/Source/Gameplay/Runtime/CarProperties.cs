@@ -261,6 +261,11 @@ namespace Race.Gameplay
             float b = maxEngineEfficiency - engine.efficiencyAtMaxRPM;
             return Mathf.Lerp(engine.maxRPM, engine.optimalRPM, a / b);
         }
+
+        public static Vector3 GetBodySize(this CarDataModel dataModel)
+        {
+            return dataModel.ColliderParts.body.collider.size;
+        }
     }
 
     public class CarProperties : MonoBehaviour

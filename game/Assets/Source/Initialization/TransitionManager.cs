@@ -266,15 +266,12 @@ namespace Race.SceneTransition
             }
 
             GameObject trackMap;
-            Transform trackTransform;
             {
                 LocationsHandle tracksLocationsHandle = Addressables.LoadResourceLocationsAsync(TracksLabel);
                 // TODO: do the awaits simultaneously.
                 trackMap = await InstantiateAsyncByIndex(info.trackIndex, tracksLocationsHandle);
                 // TODO: This should be a nicely displayed error, not an assertion.
                 assert(trackMap != null);
-
-                trackTransform = FindTrack(trackMap.transform);
             }
             
             {
@@ -285,13 +282,13 @@ namespace Race.SceneTransition
                 var playerDriverInfos = await Task.WhenAll(playerTasks);
                 var botDriverInfos = await Task.WhenAll(botTasks);
                 
-                // HACK! Will need to reafactor this.
-                var initializationInfo = new GameplayExternalInitializationInfo(
-                    gameplaySceneRoot,
-                    playerDriverInfos,
-                    botDriverInfos,
-                    trackTransform,
-                    trackMap);
+                var initializationInfo = new GameplayExternalInitializationInfo
+                {
+                    botInfos = botDriverInfos,
+                    playerInfos = playerDriverInfos,
+                    mapGameObject = trackMap,
+                    rootTransform = gameplaySceneRoot,
+                };
 
                 var enableDisableInput = initializationComponent.Initialize(initializationInfo);
                 enableDisableInput.EnableAllInput();
@@ -354,11 +351,6 @@ namespace Race.SceneTransition
         private Transform FindInitializationTransform(Transform root)
         {
             return root.Find("initialization");
-        }
-
-        private Transform FindTrack(Transform root)
-        {
-            return root.Find("track");
         }
     }
 }

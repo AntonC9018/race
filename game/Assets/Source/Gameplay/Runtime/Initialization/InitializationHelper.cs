@@ -84,21 +84,21 @@ namespace Race.Gameplay
             InitializationHelper.InitializeUI(stuff.diRootTransform, carProperties);
         }
         
-        public static (IStaticTrack, TrackManager) InitializeTrackAndTrackManagerFromTrackQuad(
-            DriverInfo[] driverInfos, Transform trackQuad)
+        public static (IStaticTrack, RaceManager) InitializeTrackAndRaceManagerFromTrackQuad(
+            DriverInfo[] driverInfos, Transform trackQuad, IDelay delay)
         {
             var (track, trackWidth) = TrackHelper.CreateFromQuad(trackQuad);
 
             // For now, do hacks and produce garbage.
             // TODO: refactor
-            var trackManager = new TrackManager();
+            var raceManager = new RaceManager();
+            raceManager.Initialize(driverInfos, track, delay);
 
             var grid = new GridPlacementStrategy();
             grid.Reset(track, trackWidth, driverInfos);
+            raceManager.PlaceParticipants(grid);
 
-            trackManager.Initialize(driverInfos, track, grid);
-
-            return (track, trackManager);
+            return (track, raceManager);
         }
     }
 }

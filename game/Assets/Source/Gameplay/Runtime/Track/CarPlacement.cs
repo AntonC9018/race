@@ -5,75 +5,79 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    public interface ICarPlacementStrategy
+    public struct GridPlacementData
     {
-        void Reset(IStaticTrack track, float trackWidth, DriverInfo[] participants);
-        (Vector3 position, Quaternion rotation) PlaceCar(int carIndex);
-    }
-
-    public class GridPlacementStrategy : ICarPlacementStrategy
-    {
-        private Vector2 _cellSize;
-        private int _colCount;
+        public Vector2 cellSize;
+        public int colCount;
 
         // Assume the start is linear.
         // The system cannot handle arbitrary turns and road segment sizes without
         // any assumptions of the underlying track.
-        private Vector3 _startingPosition;
-        private Vector3 _tangentDirection;
-        private Vector3 _perpendicularDirection;
-        private Quaternion _startingRotation;
+        public Vector3 startingPosition;
+        public Vector3 tangentDirection;
+        public Vector3 perpendicularDirection;
+        public Quaternion startingRotation;
+    }
 
-        public void Reset(IStaticTrack track, float trackWidth, DriverInfo[] participants)
+    public static class CarPlacement
+    {
+        public static GridPlacementData GetGridPlacementData(
+            in ParticipantsDriverInfo driver, in TrackRaceInfo trackInfo)
         {
-            assert(track is not null);
-            assert(participants is not null);
+            assert(trackInfo.track is not null);
+            assert(driver.infos is not null);
+
+            GridPlacementData result;
 
             {
+                var track = trackInfo.track;
                 var start = RoadPoint.CreateStartOf(track.StartingSegment);
                 var rotation = track.GetRegularRotation(start);
                 var position = track.GetRoadMiddlePosition(start);
 
-                _startingPosition = position - trackWidth / 2 * _perpendicularDirection;
-                _startingRotation = rotation;
-                _tangentDirection = rotation * Vector3.forward;
-                _perpendicularDirection = rotation * Vector3.right;
+                var perpendicularDirection = rotation * Vector3.right;
+                result.startingPosition = position - trackInfo.visualWidth / 2 * perpendicularDirection;
+                result.startingRotation = rotation;
+                result.tangentDirection = rotation * Vector3.forward;
+                result.perpendicularDirection = perpendicularDirection;
             }
 
             float maxWidth = 0;
             {
                 float maxLength = 0;
-                for (int i = 0; i < participants.Length; i++)
+                for (int i = 0; i < driver.infos.Length; i++)
                 {
-                    ref readonly var participant = ref participants[i];
-                    var size = participant.carProperties.DataModel.ColliderParts.body.collider.size;
+                    ref readonly var participant = ref driver.infos[i];
+                    var size = participant.carProperties.DataModel.GetBodySize();
 
                     maxWidth = Mathf.Max(size.x, maxWidth);
                     maxLength = Mathf.Max(size.z, maxLength);
                 }
 
-                int numCarsPerRow = Mathf.FloorToInt(trackWidth / maxWidth);
+                int numCarsPerRow = Mathf.FloorToInt(trackInfo.visualWidth / maxWidth);
                 if (numCarsPerRow == 0)
                     numCarsPerRow = 1;
 
-                _colCount = numCarsPerRow;
+                result.colCount = numCarsPerRow;
 
-                float lengthEachCellUntilMultiple = (trackWidth % maxWidth) / numCarsPerRow;
-                _cellSize = new Vector2(maxWidth + lengthEachCellUntilMultiple, maxLength);
+                float lengthEachCellUntilMultiple = (trackInfo.visualWidth % maxWidth) / numCarsPerRow;
+                result.cellSize = new Vector2(maxWidth + lengthEachCellUntilMultiple, maxLength);
                 // _rowCount = MathHelper.CeilDivide(participants.Length, numCarsPerRow);
             }
+
+            return result;
         }
 
-        public (Vector3 position, Quaternion rotation) PlaceCar(int carIndex)
+        public static (Vector3 position, Quaternion rotation) GetPositionAndRotation(in GridPlacementData data, int carIndex)
         {
-            int row = carIndex / _colCount;
-            int column = carIndex % _colCount;
+            int row = carIndex / data.colCount;
+            int column = carIndex % data.colCount;
 
-            Vector3 position = _startingPosition;
-            position += _cellSize.y * row * _tangentDirection;
-            position += _cellSize.x * column * _perpendicularDirection;
+            Vector3 position = data.startingPosition;
+            position += data.cellSize.y * row * data.tangentDirection;
+            position += data.cellSize.x * column * data.perpendicularDirection;
 
-            return (position, _startingRotation);
+            return (position, data.startingRotation);
         }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Kari.Plugins.Terminal;
 using Race.Gameplay.Generated;
 using UnityEngine;
 
@@ -34,38 +33,29 @@ namespace Race.Gameplay
         }
     }
 
-    public class TrackManager
+    public class RaceManager
     {
-        // Currently assumes that the road is a 1x1 quad.
-        private LowLevelTrackManager _underlyingManager;
-        private DriverInfo[] _participants;
-        private float[] _participantDeathTimes;
+        internal LowLevelRaceManager _underlyingManager = new LowLevelRaceManager();
+        internal DriverInfo[] _participants;
+        internal IDelay _delay;
 
-        // TODO: Must not place participants immediately! That's just confusing. Refactor!
-        public void Initialize(DriverInfo[] participants, IStaticTrack track, ICarPlacementStrategy placementStrategy)
+        /// <summary>
+        /// The delay is used for respawning participants when they are eliminated.
+        /// </summary>
+        public void Initialize(DriverInfo[] participants, IStaticTrack track, IDelay delay)
         {
             assert(participants is not null);
             assert(track is not null);
-            assert(placementStrategy is not null);
             
             _participants = participants;
-            _participantDeathTimes = new float[participants.Length];
-
-            _underlyingManager = new LowLevelTrackManager();
             _underlyingManager.Reset(track, participants.Length);
 
-            for (int i = 0; i < participants.Length; i++)
-            {
-                var (pos, rot) = placementStrategy.PlaceCar(i);
-                ref readonly var participant = ref participants[i];
-                var t = participant.transform;
-                CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
-                    t, participant.carProperties, pos, rot);
-                _underlyingManager.UpdatePosition(i, t);
-            }
+            _delay = delay;
         }
 
-        void FixedUpdate()
+        
+
+        public void Update()
         {
             for (int i = 0; i < _participants.Length; i++)
             {
@@ -73,35 +63,40 @@ namespace Race.Gameplay
 
                 bool isRespawning = participant.carProperties.DataModel.DrivingState.flags.Has(CarDrivingState.Flags.Disabled);
                 if (isRespawning)
-                {
-                    const float respawnTimeout = 1.0f;
+                    continue;
 
-                    if (_participantDeathTimes[i] + respawnTimeout < Time.time)
-                    {
-                        _underlyingManager.ReturnToCheckpoint(i);
-                        {
-                            var (position, r) = _underlyingManager.GetPositionAndRotation(participantIndex: i);
-                            CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
-                                participant.transform, participant.carProperties, position, r);
-                        }
-                        CarDataModelHelper.RestartDisabledDriving(participant.carProperties);
-                    }
-                }
                 // Update
-                else
+                var updateResult = _underlyingManager.UpdatePosition(i, participant.transform);
+                if ((updateResult & LowLevelRaceManager.UpdateResult.EliminatedBit) != 0)
                 {
-                    var updateResult = _underlyingManager.UpdatePosition(i, participant.transform);
-                    if ((updateResult & LowLevelTrackManager.UpdateResult.EliminatedBit) != 0)
-                    {
-                        CarDataModelHelper.StopCar(participant.transform, participant.carProperties);
-                        _participantDeathTimes[i] = Time.time;
-                    }
+                    CarDataModelHelper.StopCar(participant.transform, participant.carProperties);
+
+                    // TODO:
+                    // When happens on death should ideally be decoupled into a separate action,
+                    // but, for now, just delay it. We only do one thing currently anyway.
+                    _delay.Delay(() => RespawnPlayer(i));
                 }
             }
         }
+
+        private void RespawnPlayer(int i)
+        {
+            ref var participant = ref _participants[i];
+            _underlyingManager.ReturnToCheckpoint(i);
+            {
+                var (position, r) = _underlyingManager.GetPositionAndRotation(participantIndex: i);
+                CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
+                    participant.transform, participant.carProperties, position, r);
+            }
+            CarDataModelHelper.RestartDisabledDriving(participant.carProperties);
+        }
     }
 
-    public class LowLevelTrackManager
+    /// <summary>
+    /// Provides an abstraction over a track, such that the user gets to only work with concrete
+    /// positions and rotations, and not road segments and road points.
+    /// </summary>
+    public class LowLevelRaceManager
     {
         internal RoadPoint[] _participantPositions;
         internal RoadPoint[] _participantCheckpoints;
