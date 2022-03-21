@@ -3,6 +3,11 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
+    public interface IInitialize<T>
+    {
+        void Initialize(T value);
+    }
+
     // Note: 90% of this code can be replaced using a dependency injection framework.
     // Or with advanced code generation.
     public static class InitializationHelper
@@ -53,73 +58,21 @@ namespace Race.Gameplay
             carProperties.Initialize(carDataModel);
         }
 
-        public interface ISetCarProperties
-        {
-            CarProperties CarProperties { set; }
-        }
-
-        public static void InjectDependency(Transform diRoot, CarProperties properties)
-        {
-            var inject = new InjectCarProperties(properties);
-            InjectDependecies<ISetCarProperties, InjectCarProperties>(diRoot, inject);
-        }
-
-        public interface ISetRaceProperties
-        {
-            RaceProperties RaceProperties { set; }
-        }
-
-        public static void InjectDependency(Transform diRoot, RaceProperties properties)
-        {
-            var inject = new InjectRaceProperties(properties);
-            InjectDependecies<ISetRaceProperties, InjectRaceProperties>(diRoot, inject);
-        }
-
-        private struct InjectCarProperties : IInject<ISetCarProperties>
-        {
-            private CarProperties properties;
-
-            public InjectCarProperties(CarProperties properties)
-            {
-                this.properties = properties;
-            }
-
-            public void Inject(ISetCarProperties where)
-            {
-                where.CarProperties = properties;
-            }
-        }
-
-        private readonly struct InjectRaceProperties : IInject<ISetRaceProperties>
-        {
-            private readonly RaceProperties properties;
-
-            public InjectRaceProperties(RaceProperties properties)
-            {
-                this.properties = properties;
-            }
-
-            public void Inject(ISetRaceProperties where)
-            {
-                where.RaceProperties = properties;
-            }
-        }
-        
-        // TDOO:
         // Could use some dynamic dependency injection for the widgets.
         // For now, inject manually with a mini-implementation.
-        //
-        // As you can see from the usage, making it generic does not achieve much.
-        public interface IInject<I>
+        public static void InjectDependency<T>(Transform diRoot, T value)
         {
-            void Inject(I where);
-        }
+            // Inject into self
+            // {
+            //     var c = diRoot.GetComponent<IInitialize<T>>();
+            //     if (c != null)
+            //         c.Initialize(value);
+            // }
 
-        public static void InjectDependecies<Interface, Inject>(Transform diRoot, Inject inject) where Inject : IInject<Interface>
-        {
-            var components = diRoot.GetComponentsInChildren<Interface>(includeInactive: false);
+            // Inject into children
+            var components = diRoot.GetComponentsInChildren<IInitialize<T>>(includeInactive: false);
             foreach (var component in components)
-                inject.Inject(component);
+                component.Initialize(value);
         }
 
         public static void FinalizeCarPropertiesInitializationWithDefaults(

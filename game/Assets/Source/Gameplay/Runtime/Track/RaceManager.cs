@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Race.Gameplay.Generated;
 using UnityEngine;
 
@@ -7,174 +5,78 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    public interface IPosition
+    public enum ParticipantUpdateResult
     {
-        Vector3 Position { get; }
+        Ok = 0,
+        Invalid = 1,
+        EliminatedBit = 16,
+        UpsideDown = EliminatedBit | 1,
+        OutsideTrack = EliminatedBit | 2,
     }
 
-    public static class TrackHelper
+    /// <summary>
+    /// Dispatches events on the RaceProperties when participants' points get updated.
+    /// </summary>
+    public class RaceManager : MonoBehaviour, IInitialize<RaceProperties>
     {
-        public static (IStaticTrack track, float width) CreateFromQuad(Transform quad)
+        private RaceProperties _raceProperties;
+        private ref Participants Participants => ref _raceProperties.DataModel.participants;
+
+        public void Initialize(RaceProperties properties)
         {
-            var transform = quad.transform;
-            var center = transform.position;
-            var scale = transform.localRotation * transform.localScale;
-            var length = scale.z;
-            var width = scale.x;
+            _raceProperties = properties;
 
-            // hack: does not handle slopes
-            var halfLengthVector = new Vector3(0, 0, length / 2);
-
-            var startPoint = center - halfLengthVector;
-            var endPoint = center + halfLengthVector;
-
-            const float visualVSFunctionRoadFactor = 1.2f;
-            return (new StraightTrack(startPoint, endPoint, width * visualVSFunctionRoadFactor), width);
+            ref var participants = ref properties.DataModel.participants.track;
+            var dataModel = properties.DataModel;
         }
-    }
-
-    public class RaceManager
-    {
-        internal LowLevelRaceManager _underlyingManager = new LowLevelRaceManager();
-        internal DriverInfo[] _participants;
-        internal IDelay _delay;
-
-        /// <summary>
-        /// The delay is used for respawning participants when they are eliminated.
-        /// </summary>
-        public void Initialize(DriverInfo[] participants, IStaticTrack track, IDelay delay)
-        {
-            assert(participants is not null);
-            assert(track is not null);
-            
-            _participants = participants;
-            _underlyingManager.Reset(track, participants.Length);
-
-            _delay = delay;
-        }
-
-        
 
         public void Update()
         {
-            for (int i = 0; i < _participants.Length; i++)
+            ref var participants = ref _raceProperties.DataModel.participants.driver.infos;
+
+            for (int i = 0; i < Participants.Count; i++)
             {
-                ref var participant = ref _participants[i];
+                ref var participant = ref Participants.driver[i];
 
                 bool isRespawning = participant.carProperties.DataModel.DrivingState.flags.Has(CarDrivingState.Flags.Disabled);
                 if (isRespawning)
                     continue;
 
-                // Update
-                var updateResult = _underlyingManager.UpdatePosition(i, participant.transform);
-                if ((updateResult & LowLevelRaceManager.UpdateResult.EliminatedBit) != 0)
-                {
-                    CarDataModelHelper.StopCar(participant.transform, participant.carProperties);
+                var updateResult = UpdatePosition(i, participant.transform);
 
-                    // TODO:
-                    // When happens on death should ideally be decoupled into a separate action,
-                    // but, for now, just delay it. We only do one thing currently anyway.
-                    _delay.Delay(() => RespawnPlayer(i));
-                }
+                // Swallow the invalids. They mean the listeners did not disable the participant.
+                if (updateResult == ParticipantUpdateResult.Invalid)
+                    continue;
+
+                // An idea is to do a readonly array, and dispatch the whole thing at once.
+                _raceProperties.TriggerParticipantUpdated(i, updateResult);
             }
         }
 
-        private void RespawnPlayer(int i)
+        private static bool IsUpsideDown(IStaticTrack track, RoadPoint point, Transform participantTransform)
         {
-            ref var participant = ref _participants[i];
-            _underlyingManager.ReturnToCheckpoint(i);
-            {
-                var (position, r) = _underlyingManager.GetPositionAndRotation(participantIndex: i);
-                CarDataModelHelper.ResetPositionAndRotationOfBackOfCar(
-                    participant.transform, participant.carProperties, position, r);
-            }
-            CarDataModelHelper.RestartDisabledDriving(participant.carProperties);
-        }
-    }
-
-    /// <summary>
-    /// Provides an abstraction over a track, such that the user gets to only work with concrete
-    /// positions and rotations, and not road segments and road points.
-    /// </summary>
-    public class LowLevelRaceManager
-    {
-        internal RoadPoint[] _participantPositions;
-        internal RoadPoint[] _participantCheckpoints;
-        internal IStaticTrack _track;
-
-        public void Reset(IStaticTrack track, int count)
-        {
-            Array.Resize(ref _participantPositions, count);
-            Array.Resize(ref _participantCheckpoints, count);
-            _track = track;
-
-            {
-                var p = RoadPoint.CreateStartOf(track.StartingSegment);
-                assert(p.IsInsideTrack);
-
-                for (int i = 0; i < count; i++)
-                {
-                    _participantCheckpoints[i] = p;
-                    _participantPositions[i] = p;
-                }
-            }
-        }
-
-        public Vector3 GetCheckpointPosition(int participantIndex)
-        {
-            return _track.GetRoadMiddlePosition(_participantCheckpoints[participantIndex]);
-        }
-
-        private bool IsUpsideDown(int participantIndex, Transform participantTransform)
-        {
-            var location = _participantPositions[participantIndex];
-            Vector3 roadNormal = _track.GetRoadNormal(location);
+            Vector3 roadNormal = track.GetRoadNormal(point);
             float upAmount = Vector3.Dot(participantTransform.up, roadNormal);
             const float requiredUpAmount = -0.2f;
             return upAmount < requiredUpAmount;
         }
-
-
-        public enum UpdateResult
+        
+        private ParticipantUpdateResult UpdatePosition(int participantIndex, Transform participantTransform)
         {
-            Ok = 0,
-            EliminatedBit = 16,
-            UpsideDown = EliminatedBit | 1,
-            OutsideTrack = EliminatedBit | 2,
-        }
+            ref var point = ref Participants.track.points[participantIndex];
+            var track = _raceProperties.DataModel.Track;
 
-        public UpdateResult UpdatePosition(int participantIndex, Transform participantTransform)
-        {
-            ref var location = ref _participantPositions[participantIndex];
-            if (location.IsOutsideTrack)
-                return UpdateResult.OutsideTrack;
+            if (point.IsOutsideTrack)
+                return ParticipantUpdateResult.Invalid;
 
-            location = _track.UpdateRoadPoint(location, participantTransform.position);
-            if (location.IsOutsideTrack)
-                return UpdateResult.OutsideTrack;
+            point = track.UpdateRoadPoint(point, participantTransform.position);
+            if (point.IsOutsideTrack)
+                return ParticipantUpdateResult.OutsideTrack;
 
-            bool isUpsideDown = IsUpsideDown(participantIndex, participantTransform);
-            if (!isUpsideDown)
-            {
-                // TODO: maybe snap
-                _participantCheckpoints[participantIndex] = location;
-                return UpdateResult.Ok;
-            }
-                
-            return UpdateResult.UpsideDown;
-        }
+            if (IsUpsideDown(track, point, participantTransform))
+                return ParticipantUpdateResult.UpsideDown;
 
-        public (Vector3 position, Quaternion rotation) GetPositionAndRotation(int participantIndex)
-        {
-            var location = _participantPositions[participantIndex];
-            var position = _track.GetRoadMiddlePosition(location);
-            var rotation = _track.GetRegularRotation(location);
-            return (position, rotation);
-        }
-
-        public void ReturnToCheckpoint(int participantIndex)
-        {
-            _participantPositions[participantIndex] = _participantCheckpoints[participantIndex];
+            return ParticipantUpdateResult.Ok;
         }
     }
 }

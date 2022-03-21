@@ -5,6 +5,27 @@ using RoadSegmentID = System.Int32;
 
 namespace Race.Gameplay
 {
+    public static class TrackHelper
+    {
+        public static (IStaticTrack track, float width) CreateFromQuad(Transform quad)
+        {
+            var transform = quad.transform;
+            var center = transform.position;
+            var scale = transform.localRotation * transform.localScale;
+            var length = scale.z;
+            var width = scale.x;
+
+            // hack: does not handle slopes
+            var halfLengthVector = new Vector3(0, 0, length / 2);
+
+            var startPoint = center - halfLengthVector;
+            var endPoint = center + halfLengthVector;
+
+            const float visualVSFunctionRoadFactor = 1.2f;
+            return (new StraightTrack(startPoint, endPoint, width * visualVSFunctionRoadFactor), width);
+        }
+    }
+
     /// <summary>
     /// Allows querying connected road segments.
     /// The methods must be pure, aka always return the same results for the same inputs.

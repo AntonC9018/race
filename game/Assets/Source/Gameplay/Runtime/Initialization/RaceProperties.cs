@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 using static EngineCommon.Assertions;
-using static Race.Gameplay.LowLevelRaceManager;
 
 namespace Race.Gameplay
 {
@@ -15,12 +15,14 @@ namespace Race.Gameplay
 
         public readonly Span<DriverInfo> Players => infos.AsSpan(0, playerCount);
         public readonly Span<DriverInfo> Bots => infos.AsSpan(playerCount, botCount);
+        public readonly ref DriverInfo this[int index] => ref infos[index];
+        public readonly int Count => infos.Length;
     }
 
     public struct ParticipantsTrackInfo
     {
         // 2, 3
-        public RoadPoint[] positions;
+        public RoadPoint[] points;
         public RoadPoint[] checkpoints;
     }
 
@@ -76,7 +78,7 @@ namespace Race.Gameplay
 
             {
                 ref var track = ref dataModel.participants.track;
-                Array.Resize(ref track.positions, participantCount); 
+                Array.Resize(ref track.points, participantCount); 
                 Array.Resize(ref track.checkpoints, participantCount); 
             }
         }
@@ -106,7 +108,7 @@ namespace Race.Gameplay
         private static void SynchronizeTrackLocationToWorldPositionOfParticipant(
             RaceDataModel dataModel, Transform transform, int participantIndex)
         {
-            ref var location = ref dataModel.participants.track.positions[participantIndex];
+            ref var location = ref dataModel.participants.track.points[participantIndex];
             location = dataModel.Track.UpdateRoadPoint(location, transform.position);
         }
     }
@@ -115,6 +117,8 @@ namespace Race.Gameplay
     {
         private RaceDataModel _dataModel;
         public RaceDataModel DataModel => _dataModel;
+
+        public UnityEvent<ParticipantUpdatedEventInfo> OnParticipantUpdated;
 
         void Awake()
         {
@@ -129,14 +133,30 @@ namespace Race.Gameplay
                 assert(dataModel.trackTransform != null);
                 assert(dataModel.participants.driver.infos is not null);
                 assert(dataModel.participants.track.checkpoints is not null);
-                assert(dataModel.participants.track.positions is not null);
+                assert(dataModel.participants.track.points is not null);
                 assert(dataModel.trackInfo.track is not null);
             }
         }
 
-        public void TriggerPlayerEliminated(int playerIndex, UpdateResult reason)
+        public void TriggerParticipantUpdated(int participantIndex, ParticipantUpdateResult result)
         {
-            
+            OnParticipantUpdated.Invoke(new ParticipantUpdatedEventInfo
+            {
+                index = participantIndex,
+                result = result,
+                raceProperties = this,
+            });
         }
+    }
+
+
+    public struct ParticipantUpdatedEventInfo
+    {
+        public int index;
+        public ParticipantUpdateResult result;
+        public RaceProperties raceProperties;
+
+        public readonly RaceDataModel DataModel => raceProperties.DataModel;
+        public readonly ref DriverInfo Driver => ref DataModel.participants.driver[index];
     }
 }

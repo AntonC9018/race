@@ -119,7 +119,7 @@ namespace Race.Gameplay
             RaceDataModelHelper.PlaceParticipants(raceProperties.DataModel);
             info.mapGameObject.SetActive(true);
 
-            return commonStuff.inputViewFactory as IEnableDisableInput;
+            return (IEnableDisableInput) commonStuff.inputViewFactory;
         }
 
 

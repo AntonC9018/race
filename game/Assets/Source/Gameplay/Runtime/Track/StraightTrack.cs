@@ -79,14 +79,13 @@ namespace Race.Gameplay
 
         public Vector3 GetRoadNormal(RoadPoint point)
         {
-            var a = _startPosition;
-            var b = _endPosition;
-            
-            // We assume roll = 0
-            var perp = a.With(y: 0);
-            
-            var c = b - a;
-            return Vector3.Cross(perp, c).normalized;
+            var a = _endPosition - _startPosition;
+
+            // We assume 0 roll
+            var rightPerpendicular = new Vector3(a.z, 0, -a.x);
+
+            // I guess Unity uses the left hand for this, because it ends up flipped.
+            return Vector3.Cross(a, rightPerpendicular).normalized;
         }
 
         public Quaternion GetRegularRotation(RoadPoint point)

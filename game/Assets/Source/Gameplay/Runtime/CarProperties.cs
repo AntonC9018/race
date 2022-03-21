@@ -96,14 +96,6 @@ namespace Race.Gameplay
             properties.TriggerOnDrivingToggled();
         }
 
-        public static void RestartCar(
-            Transform carTransform, CarProperties properties,
-            Vector3 targetPosition, Quaternion targetRotation)
-        {
-            ResetPositionAndRotationOfBackOfCar(carTransform, properties, targetPosition, targetRotation);
-            RestartDisabledDriving(properties);
-        }
-
         public static void RestartDisabledDriving(CarProperties properties)
         {
             var carDataModel = properties.DataModel;
