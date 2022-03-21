@@ -3,6 +3,8 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
+    // Note: 90% of this code can be replaced using a dependency injection framework.
+    // Or with advanced code generation.
     public static class InitializationHelper
     {
         public static void InitializePlayerInput(
@@ -51,21 +53,74 @@ namespace Race.Gameplay
             carProperties.Initialize(carDataModel);
         }
 
-        // TDOO:
-        // Could use some dynamic dependency injection for the widgets.
-        // For now, inject manually with a mini-implementation.
-        public static void InitializeUI(Transform ui, CarProperties properties)
-        {
-            var components = ui.GetComponentsInChildren<ISetCarProperties>(includeInactive: false);
-            foreach (var component in components)
-                component.CarProperties = properties;
-        }
-
         public interface ISetCarProperties
         {
             CarProperties CarProperties { set; }
         }
 
+        public static void InjectDependency(Transform diRoot, CarProperties properties)
+        {
+            var inject = new InjectCarProperties(properties);
+            InjectDependecies<ISetCarProperties, InjectCarProperties>(diRoot, inject);
+        }
+
+        public interface ISetRaceProperties
+        {
+            RaceProperties RaceProperties { set; }
+        }
+
+        public static void InjectDependency(Transform diRoot, RaceProperties properties)
+        {
+            var inject = new InjectRaceProperties(properties);
+            InjectDependecies<ISetRaceProperties, InjectRaceProperties>(diRoot, inject);
+        }
+
+        private struct InjectCarProperties : IInject<ISetCarProperties>
+        {
+            private CarProperties properties;
+
+            public InjectCarProperties(CarProperties properties)
+            {
+                this.properties = properties;
+            }
+
+            public void Inject(ISetCarProperties where)
+            {
+                where.CarProperties = properties;
+            }
+        }
+
+        private readonly struct InjectRaceProperties : IInject<ISetRaceProperties>
+        {
+            private readonly RaceProperties properties;
+
+            public InjectRaceProperties(RaceProperties properties)
+            {
+                this.properties = properties;
+            }
+
+            public void Inject(ISetRaceProperties where)
+            {
+                where.RaceProperties = properties;
+            }
+        }
+        
+        // TDOO:
+        // Could use some dynamic dependency injection for the widgets.
+        // For now, inject manually with a mini-implementation.
+        //
+        // As you can see from the usage, making it generic does not achieve much.
+        public interface IInject<I>
+        {
+            void Inject(I where);
+        }
+
+        public static void InjectDependecies<Interface, Inject>(Transform diRoot, Inject inject) where Inject : IInject<Interface>
+        {
+            var components = diRoot.GetComponentsInChildren<Interface>(includeInactive: false);
+            foreach (var component in components)
+                inject.Inject(component);
+        }
 
         public static void FinalizeCarPropertiesInitializationWithDefaults(
             Gameplay.CarProperties carProperties, CarInfoComponent infoComponent, Transform transform)
@@ -80,25 +135,36 @@ namespace Race.Gameplay
             GameObject car,
             CarProperties carProperties)
         {
-            InitializationHelper.InitializePlayerInput(car, carProperties, cameraControl, stuff.inputViewFactory);
-            InitializationHelper.InitializeUI(stuff.diRootTransform, carProperties);
+            InitializePlayerInput(car, carProperties, cameraControl, stuff.inputViewFactory);
+            InjectDependency(stuff.diRootTransform, carProperties);
+        }
+
+        public static TrackRaceInfo CreateTrackWithInfo(Transform trackTransform, float howMuchVisualWidthInActualWidth)
+        {
+            var (track, actualWidth) = TrackHelper.CreateFromQuad(trackTransform);
+            var visualWidth = howMuchVisualWidthInActualWidth * actualWidth;
+
+            return new TrackRaceInfo
+            {
+                track = track,
+                actualWidth = actualWidth,
+                visualWidth = visualWidth,
+            };
         }
         
-        public static (IStaticTrack, RaceManager) InitializeTrackAndRaceManagerFromTrackQuad(
-            DriverInfo[] driverInfos, Transform trackQuad, IDelay delay)
+        public static Transform FindTrackTransform(Transform mapTransform)
         {
-            var (track, trackWidth) = TrackHelper.CreateFromQuad(trackQuad);
+            return mapTransform.Find("track");
+        }
+        
+        public static Transform FindRaceLogicTransform(Transform rootTransform)
+        {
+            return rootTransform.Find("race_logic");
+        }
 
-            // For now, do hacks and produce garbage.
-            // TODO: refactor
-            var raceManager = new RaceManager();
-            raceManager.Initialize(driverInfos, track, delay);
-
-            var grid = new GridPlacementStrategy();
-            grid.Reset(track, trackWidth, driverInfos);
-            raceManager.PlaceParticipants(grid);
-
-            return (track, raceManager);
+        public static TrackRaceInfo CreateTrackWithInfo(Transform trackTransform, TrackLimitsConfiguration trackLimitsConfiguration)
+        {
+            return InitializationHelper.CreateTrackWithInfo(trackTransform, trackLimitsConfiguration.howMuchVisualWidthInActualWidth);
         }
     }
 }

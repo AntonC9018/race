@@ -265,10 +265,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87e5ebeb4314b4443aa0ce6d37832cfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _commonStuff:
-    inputViewFactory: {fileID: 7176400071679323953}
-    diRootTransform: {fileID: 7176400071679323950}
-    playerRespawnDelay: {fileID: 7176400071679323951}
+  _commonStuff: {fileID: 7176400071679323956}
   _car: {fileID: 1103270885}
   _cameraControl: {fileID: 523312443}
   _trackQuad: {fileID: 441890571}
@@ -385,6 +382,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2c3ad5e62181fa499597eb0a83ec206, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1129934330 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7176400070802936377, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
+  m_PrefabInstance: {fileID: 7176400071679323949}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1905027771
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -563,9 +565,21 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 3595943087492541421, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
-      propertyPath: _delay
-      value: 1
+    - target: {fileID: 4659369535860764839, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
+      propertyPath: _commonStuff
+      value: 
+      objectReference: {fileID: 7176400071679323956}
+    - target: {fileID: 7176400070802936373, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7176400070802936373, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7176400070802936373, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7176400070940440194, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
       propertyPath: m_Name
@@ -622,15 +636,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7176400071718098410, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
   m_PrefabInstance: {fileID: 7176400071679323949}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7176400071679323951 stripped
+--- !u!4 &7176400071679323951 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 29682775256245107, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
+  m_PrefabInstance: {fileID: 7176400071679323949}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7176400071679323952 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3595943087492541421, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2119788064150745669, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
   m_PrefabInstance: {fileID: 7176400071679323949}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98da0c7554f899b49823df9cd6b070fd, type: 3}
+  m_Script: {fileID: 11500000, guid: be16cb9da81cda247b921f06f83c9f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &7176400071679323953 stripped
@@ -638,9 +657,27 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7176400070802936376, guid: 879423da78232ca4c9d9ccd35d450001, type: 3}
   m_PrefabInstance: {fileID: 7176400071679323949}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1129934330}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c5011a3ef0beb14c8627e29d0573328, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7176400071679323956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1129934330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 146553fffdb28164dabed54378d0094f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  stuff:
+    inputViewFactory: {fileID: 7176400071679323953}
+    diRootTransform: {fileID: 7176400071679323950}
+    trackLimits: {fileID: 11400000, guid: 80548310aa69b0f4a9a8c04ff6cd8821, type: 2}
+    raceLogicTransform: {fileID: 7176400071679323951}
+    raceProperties: {fileID: 7176400071679323952}

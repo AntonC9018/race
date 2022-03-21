@@ -15,23 +15,22 @@ namespace Race.Gameplay
     // Only useful for the editor.
     public class LocalGameplayInitialization : MonoBehaviour
     {
-        [SerializeField] private CommonInitializationStuff _commonStuff;
+        [SerializeField] private CommonInitializationStuffComponent _commonStuff;
         [SerializeField] private GameObject _car;
         [SerializeField] private CameraControl _cameraControl;
         [SerializeField] private Transform _trackQuad;
-        private RaceManager _raceManager;
 
         void Start()
         {
             if (_car == null)
                 return;
 
-            var commonStuff = _commonStuff;
+            ref var commonStuff = ref _commonStuff.stuff;
 
             assert(commonStuff.inputViewFactory != null);
             assert(_cameraControl != null);
             assert(commonStuff.diRootTransform != null);
-            assert(_raceManager == null);
+            assert(commonStuff.raceProperties != null);
 
             // Initialize player
             var playerCar = _car;
@@ -47,17 +46,36 @@ namespace Race.Gameplay
             commonStuff.inputViewFactory.EnableAllInput();
 
             // Initialize track
+            var raceModel = new RaceDataModel();
             {
-                var driverInfos = new[] { new DriverInfo(playerCar, carProperties), };
-                var (_, _trackManager) = InitializationHelper.InitializeTrackAndRaceManagerFromTrackQuad(
-                    driverInfos, _trackQuad, commonStuff.playerRespawnDelay);
-            }
-        }
+                // `ref` is used for the sake of symmerty with structs (it's a class)
+                ref var model = ref raceModel;
 
-        // TODO: This needs refactoring, but for now, just tick it manually here.
-        void Update()
-        {
-            _raceManager?.Update();
+                var mapTransform = _trackQuad.parent;
+                model.mapTransform = mapTransform;
+
+                var trackTransform = _trackQuad;
+                model.trackTransform = trackTransform;
+
+                {
+                    var driverInfos = new[] { new DriverInfo(playerCar, carProperties), };
+                    RaceDataModelHelper.SetParticipants(model, driverInfos, Array.Empty<DriverInfo>());
+                }
+                
+                var trackInfo = InitializationHelper.CreateTrackWithInfo(trackTransform, commonStuff.trackLimits);
+                model.trackInfo = trackInfo;
+            }
+
+            var raceProperties = commonStuff.raceProperties;
+            raceProperties.Initialize(raceModel);
+
+            // Initialize race logic
+            {
+                var raceLogicTransform = commonStuff.raceLogicTransform;
+                assert(raceLogicTransform != null);
+
+                InitializationHelper.InjectDependency(raceLogicTransform, raceProperties);
+            }
         }
     }
 }

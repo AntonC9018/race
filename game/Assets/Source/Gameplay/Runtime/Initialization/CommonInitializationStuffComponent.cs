@@ -2,6 +2,11 @@ using UnityEngine;
 
 namespace Race.Gameplay
 {
+    public class CommonInitializationStuffComponent : MonoBehaviour
+    {
+        public CommonInitializationStuff stuff;
+    }
+
     [System.Serializable]
     public struct CommonInitializationStuff
     {
@@ -12,10 +17,8 @@ namespace Race.Gameplay
         /// </summary>
         public Transform diRootTransform;
 
-        /// <summary>
-        /// </summary>
-        // For now it's a concrete type just to be able to set it in the inspector.
-        // The race manager calls it through interface already.
-        public SameDurationDelay playerRespawnDelay;
+        public TrackLimitsConfiguration trackLimits;
+        public Transform raceLogicTransform;
+        public RaceProperties raceProperties;
     }
 }

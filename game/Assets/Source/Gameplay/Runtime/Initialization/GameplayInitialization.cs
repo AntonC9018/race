@@ -1,8 +1,5 @@
 using UnityEngine;
-using Race.Gameplay;
-using System;
 using static EngineCommon.Assertions;
-using System.Linq;
 using Kari.Plugins.Terminal;
 
 namespace Race.Gameplay
@@ -36,30 +33,49 @@ namespace Race.Gameplay
 
     public class GameplayInitialization : MonoBehaviour, IGameplayInitialization
     {
-        [SerializeField] private CommonInitializationStuff _commonStuff;
+        [SerializeField] private CommonInitializationStuffComponent _commonStuff;
         [SerializeField] private GameObject _cameraControlPrefab;
-        [SerializeField] private RaceProperties _raceProperties;
         private Transform _rootTransform;
 
 
         public IEnableDisableInput Initialize(in GameplayExternalInitializationInfo info)
         {
-
-            _initializationInfo = info;
-
-            assert(info.playerInfos.Length == 1);
-            assert(info.botInfos.Length == 1);
-
+            ref var commonStuff = ref _commonStuff.stuff;
+            
             var carContainer = new GameObject("car_container").transform;
             carContainer.SetParent(info.rootTransform, worldPositionStays: false);
 
-            // Initialize track
-            info.mapGameObject.SetActive(true);
-            InitializeRaceProperties(_raceProperties, info);
+            // Initialize track & race participants
+            var raceModel = new RaceDataModel();
+            {
+                // `ref` is used for the sake of symmerty with structs (it's a class)
+                ref var model = ref raceModel;
+
+                var mapTransform = info.mapGameObject.transform;
+                model.mapTransform = mapTransform;
+
+                var trackTransform = InitializationHelper.FindTrackTransform(mapTransform);
+                model.trackTransform = trackTransform;
+
+                RaceDataModelHelper.SetParticipants(model, info.playerInfos, info.botInfos);
+
+                var trackInfo = InitializationHelper.CreateTrackWithInfo(trackTransform, commonStuff.trackLimits);
+                model.trackInfo = trackInfo;
+            }
+
+            // Initialize race logic
+            var raceProperties = commonStuff.raceProperties;
+            {
+                var raceLogicTransform = commonStuff.raceLogicTransform;
+                raceProperties.Initialize(raceModel);
+
+                InitializationHelper.InjectDependency(raceLogicTransform, raceProperties);
+            }
 
             // Initialize players & UI
             {
-                ref var playerInfo = ref info.PlayerInfos[0];
+                assert(info.playerInfos.Length == 1);
+                ref var playerInfo = ref info.playerInfos[0];
                 var car = playerInfo.car;
                 var carProperties = playerInfo.carProperties;
 
@@ -74,14 +90,15 @@ namespace Race.Gameplay
                 }
 
                 InitializationHelper.InitializePlayerInputAndInjectDependencies(
-                    _commonStuff, cameraControl, car, carProperties);
+                    commonStuff, cameraControl, car, carProperties);
 
                 car.SetActive(true);
             }
 
             // Initialize bots
+            for (int i = 0; i < info.botInfos.Length; i++)
             {
-                ref var botInfo = ref info.BotInfos[0];
+                ref var botInfo = ref info.botInfos[i];
                 var car = botInfo.car;
                 var carProperties = botInfo.carProperties;
                 var carController = car.GetComponent<CarController>();
@@ -92,55 +109,17 @@ namespace Race.Gameplay
                 {
                     // TODO: settings for difficulty and such
                     var carInputView = new BotInputView();
-                    carInputView.Track = track;
+                    carInputView.Track = raceModel.Track;
                     Gameplay.InitializationHelper.InitializeCarController(carInputView, carController, carProperties);
                 }
 
                 car.SetActive(true);
             }
 
-            RaceDataModelHelper.PlaceParticipants(_raceProperties.DataModel);
+            RaceDataModelHelper.PlaceParticipants(raceProperties.DataModel);
+            info.mapGameObject.SetActive(true);
 
-            return _commonStuff.inputViewFactory as IEnableDisableInput;
-        }
-
-        private static void InitializeRaceProperties(RaceProperties raceProperties, in GameplayExternalInitializationInfo info)
-        {
-            var model = raceProperties.DataModel;
-
-            {
-                var mapTransform = info.mapGameObject.transform;
-                model.mapTransform = mapTransform;
-
-                var trackTransform = mapTransform.Find("track");
-                model.trackTransform = trackTransform;
-
-                {
-                    ref var driver = ref model.participants.driver;
-                    driver.Reset(info.playerInfos, info.botInfos);
-                    RaceDataModelHelper.ResizeTrackParticipantDataToParticipantDriverData(ref model.participants);
-                }
-
-                var (track, actualWidth) = TrackHelper.CreateFromQuad(trackTransform);
-
-                const float visualWidthScale = 1.2f;
-                var visualWidth = visualWidthScale * actualWidth;
-
-                model.trackInfo = new TrackRaceInfo
-                {
-                    track = track,
-                    actualWidth = actualWidth,
-                    visualWidth = visualWidth,
-                };
-            }
-        }
-
-        // TODO: This needs refactoring, but for now, just tick it manually here.
-        // `RaceDataModel` with the participants, events for death, winning etc.
-        // It should definitely not be done in initialization.
-        void Update()
-        {
-            _raceManager.Update();
+            return commonStuff.inputViewFactory as IEnableDisableInput;
         }
 
 
@@ -148,20 +127,21 @@ namespace Race.Gameplay
         public static void FlipOver(
             [Argument("Which participant to flip over")] int participantIndex = 0)
         {
-            var initialization = GameObject.FindObjectOfType<GameplayInitialization>();
-            if (initialization == null)
+            var raceProperties = GameObject.FindObjectOfType<RaceProperties>();
+            if (raceProperties == null)
             {
-                Debug.LogError("The initialization could not be found");
+                Debug.LogError("RaceProperties could not be found");
                 return;
             }
 
-            if (participantIndex < 0 || participantIndex >= initialization._initializationInfo.driverInfos.Length)
+            var driverInfos = raceProperties.DataModel.participants.driver.infos;
+            if (participantIndex < 0 || participantIndex >= driverInfos.Length)
             {
                 Debug.Log($"The participant index {participantIndex} was outside the bound of the participant array");
                 return;
             }
 
-            var t = initialization._initializationInfo.driverInfos[participantIndex].transform;
+            var t = driverInfos[participantIndex].transform;
             t.rotation = Quaternion.AngleAxis(180, Vector3.forward);
             t.position += Vector3.up * 3;
         }

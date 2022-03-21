@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using static EngineCommon.Assertions;
+using static Race.Gameplay.LowLevelRaceManager;
 
 namespace Race.Gameplay
 {
@@ -14,22 +15,6 @@ namespace Race.Gameplay
 
         public readonly Span<DriverInfo> Players => infos.AsSpan(0, playerCount);
         public readonly Span<DriverInfo> Bots => infos.AsSpan(playerCount, botCount);
-
-        // NOTE:
-        // I in the end decided to go with a method,
-        // because this method is pretty much about the invariance of the data.
-        // I was really tempted to go with an extension method here, but a member
-        // method actually makes sense in this case. 
-        public void Reset(DriverInfo[] players, DriverInfo[] bots)
-        {
-            Array.Resize(ref this.infos, players.Length + bots.Length);
-            
-            this.playerCount = players.Length;
-            players.CopyTo(this.Players);
-            
-            this.botCount = bots.Length;
-            bots.CopyTo(this.Bots);
-        }
     }
 
     public struct ParticipantsTrackInfo
@@ -68,10 +53,32 @@ namespace Race.Gameplay
 
     public static class RaceDataModelHelper
     {
-        public static void ResizeTrackParticipantDataToParticipantDriverData(ref Participants participants)
+        
+        // NOTE:
+        // I in the end decided to go with a method,
+        // because this method is pretty much about the invariance of the data.
+        // I was really tempted to go with an extension method here, but a member
+        // method actually makes sense in this case. 
+        public static void SetParticipants(RaceDataModel dataModel, ReadOnlySpan<DriverInfo> players, ReadOnlySpan<DriverInfo> bots)
         {
-            Array.Resize(ref participants.track.positions, participants.Count); 
-            Array.Resize(ref participants.track.checkpoints, participants.Count); 
+            int participantCount = players.Length + bots.Length;
+
+            {
+                ref var driver = ref dataModel.participants.driver;
+                Array.Resize(ref driver.infos, participantCount);
+                
+                driver.playerCount = players.Length;
+                players.CopyTo(driver.Players);
+                
+                driver.botCount = bots.Length;
+                bots.CopyTo(driver.Bots);
+            }
+
+            {
+                ref var track = ref dataModel.participants.track;
+                Array.Resize(ref track.positions, participantCount); 
+                Array.Resize(ref track.checkpoints, participantCount); 
+            }
         }
 
         public static void PlaceParticipants(RaceDataModel dataModel)
@@ -111,7 +118,25 @@ namespace Race.Gameplay
 
         void Awake()
         {
-            _dataModel = new RaceDataModel();
+        }
+
+        public void Initialize(RaceDataModel dataModel)
+        {
+            _dataModel = dataModel;
+
+            {
+                assert(dataModel.mapTransform != null);
+                assert(dataModel.trackTransform != null);
+                assert(dataModel.participants.driver.infos is not null);
+                assert(dataModel.participants.track.checkpoints is not null);
+                assert(dataModel.participants.track.positions is not null);
+                assert(dataModel.trackInfo.track is not null);
+            }
+        }
+
+        public void TriggerPlayerEliminated(int playerIndex, UpdateResult reason)
+        {
+            
         }
     }
 }
