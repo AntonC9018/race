@@ -219,6 +219,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 3676478921632373686}
     m_Modifications:
     - target: {fileID: 1679545006, guid: bfba0f05ebea55e45bf97c8ecbc5fd6d, type: 3}
+      propertyPath: _maxTextCount
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 1679545006, guid: bfba0f05ebea55e45bf97c8ecbc5fd6d, type: 3}
       propertyPath: _carProperties
       value: 
       objectReference: {fileID: 0}

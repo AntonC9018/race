@@ -1,0 +1,179 @@
+<linker>
+  <assembly fullname="EngineCommon, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="EngineCommon.ColorPicker.CUIColorPicker" preserve="all" />
+    <type fullname="EngineCommon.NoteComponent" preserve="all" />
+    <type fullname="EngineCommon.TogglePopup" preserve="all" />
+  </assembly>
+  <assembly fullname="Gameplay, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="Race.Gameplay.CameraControl" preserve="all" />
+    <type fullname="Race.Gameplay.CarController" preserve="all" />
+    <type fullname="Race.Gameplay.CarInfoComponent" preserve="all" />
+    <type fullname="Race.Gameplay.CarProperties" preserve="all" />
+    <type fullname="Race.Gameplay.CarTemplate" preserve="all" />
+    <type fullname="Race.Gameplay.CommonInitializationStuffComponent" preserve="all" />
+    <type fullname="Race.Gameplay.GameplayInitialization" preserve="all" />
+    <type fullname="Race.Gameplay.GameplayToGarageTransitionManager" preserve="all" />
+    <type fullname="Race.Gameplay.KeyboardInputSmoothingParameters" preserve="all" />
+    <type fullname="Race.Gameplay.KeyboardInputViewFactory" preserve="all" />
+    <type fullname="Race.Gameplay.RaceParticipantsUpdateManager" preserve="all" />
+    <type fullname="Race.Gameplay.RaceProperties" preserve="all" />
+    <type fullname="Race.Gameplay.RaceUpdateTracker" preserve="all" />
+    <type fullname="Race.Gameplay.RadialDisplayVisualConfiguration" preserve="all" />
+    <type fullname="Race.Gameplay.RadialPipsWidget" preserve="all" />
+    <type fullname="Race.Gameplay.RadialValueDisplay" preserve="all" />
+    <type fullname="Race.Gameplay.SameDurationDelay" preserve="all" />
+    <type fullname="Race.Gameplay.Speedometer" preserve="all" />
+    <type fullname="Race.Gameplay.Tachometer" preserve="all" />
+    <type fullname="Race.Gameplay.TrackLimitsConfiguration" preserve="all" />
+    <type fullname="Race.Gameplay.CarBrakesInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarColliderParts" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarColliderSetupHelper/CenterOfMassAdjustmentParameters" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarEngineInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarPart`1[UnityEngine.BoxCollider]" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarPart`1[UnityEngine.WheelCollider]" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarSpecInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarSteeringInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarTransmissionInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CarVisualParts" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.DataSmoothingParameters" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.VisualWheel" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.CommonInitializationStuff" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.PipConfiguration" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.PipInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.RadialValueVisualConfiguration" preserve="nothing" serialized="true" />
+    <type fullname="Race.Gameplay.ValueRange" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="Garage, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="Race.Garage.BuyCoinsOptionsManager" preserve="all" />
+    <type fullname="Race.Garage.CarIndexDropdownBridge" preserve="all" />
+    <type fullname="Race.Garage.CarProperties" preserve="all" />
+    <type fullname="Race.Garage.CarStatsManager" preserve="all" />
+    <type fullname="Race.Garage.DisplayCarInfoComponent" preserve="all" />
+    <type fullname="Race.Garage.FromGarageToGameplayTransitionManager" preserve="all" />
+    <type fullname="Race.Garage.GarageInitialization" preserve="all" />
+    <type fullname="Race.Garage.PedestalRotation" preserve="all" />
+    <type fullname="Race.Garage.PedestalRotationParams" preserve="all" />
+    <type fullname="Race.Garage.SpendMoneyForStatsButtonManager" preserve="all" />
+    <type fullname="Race.Garage.UnspentStatValueDisplay" preserve="all" />
+    <type fullname="Race.Garage.UserCurrencyDisplay" preserve="all" />
+    <type fullname="Race.Garage.UserNicknameDisplay" preserve="all" />
+    <type fullname="Race.Garage.UserNicknameInput" preserve="all" />
+    <type fullname="Race.Garage.UserProperties" preserve="all" />
+    <type fullname="Race.Garage.CarStats" preserve="nothing" serialized="true" />
+    <type fullname="Race.Garage.DisplayCarInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Garage.BuyCoinsOptionData" preserve="nothing" serialized="true" />
+    <type fullname="Race.Garage.GarageFunctionalInfo" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="Unity.Addressables, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" preserve="all">
+    <type fullname="UnityEngine.AddressableAssets.Addressables" preserve="all" />
+  </assembly>
+  <assembly fullname="Unity.ResourceManager, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" preserve="all">
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.AssetBundleProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.BundledAssetProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.InstanceProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.LegacyResourcesProvider" preserve="all" />
+    <type fullname="UnityEngine.ResourceManagement.ResourceProviders.SceneProvider" preserve="all" />
+  </assembly>
+  <assembly fullname="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="TMPro.TextMeshProUGUI" preserve="all" />
+    <type fullname="TMPro.TMP_Dropdown" preserve="all" />
+    <type fullname="TMPro.TMP_FontAsset" preserve="all" />
+    <type fullname="TMPro.TMP_InputField" preserve="all" />
+    <type fullname="TMPro.FaceInfo_Legacy" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.FontAssetCreationSettings" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.KerningTable" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_Character" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_Dropdown/DropdownEvent" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_Dropdown/OptionDataList" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_FontFeatureTable" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_FontWeightPair" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_GlyphAdjustmentRecord" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_GlyphPairAdjustmentRecord" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_GlyphValueRecord" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_InputField/OnChangeEvent" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_InputField/SelectionEvent" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_InputField/SubmitEvent" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_InputField/TextSelectionEvent" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.TMP_InputField/TouchScreenKeyboardEvent" preserve="nothing" serialized="true" />
+    <type fullname="TMPro.VertexGradient" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="Unity.VectorGraphics, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="Unity.VectorGraphics.SVGImage" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.AudioListener" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.Camera" preserve="all" />
+    <type fullname="UnityEngine.GameObject" preserve="all" />
+    <type fullname="UnityEngine.Light" preserve="all" />
+    <type fullname="UnityEngine.Material" preserve="all" />
+    <type fullname="UnityEngine.Mesh" preserve="all" />
+    <type fullname="UnityEngine.MeshFilter" preserve="all" />
+    <type fullname="UnityEngine.MeshRenderer" preserve="all" />
+    <type fullname="UnityEngine.Object" preserve="all" />
+    <type fullname="UnityEngine.RectTransform" preserve="all" />
+    <type fullname="UnityEngine.Shader" preserve="all" />
+    <type fullname="UnityEngine.Sprite" preserve="all" />
+    <type fullname="UnityEngine.Texture2D" preserve="all" />
+    <type fullname="UnityEngine.Transform" preserve="all" />
+    <type fullname="UnityEngine.Events.PersistentCallGroup" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.UnityEvent`1[Race.Gameplay.CarProperties]" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.ArgumentCache" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.PersistentListenerMode" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.UnityEvent`1[Race.Gameplay.ParticipantUpdatedEventInfo]" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.UnityEvent`1[Race.Garage.CarSelectionChangedEventInfo]" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.UnityEvent`1[Race.Garage.CarStatsChangedEventInfo]" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.UnityEvent`1[Race.Garage.UserPropertyChangedEventInfo`1[Race.Garage.Currency]]" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.UnityEvent`1[Race.Garage.UserPropertyChangedEventInfo`1[System.String]]" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.Events.UnityEvent`1[UnityEngine.Color]" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.RectOffset" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.BoxCollider" preserve="all" />
+    <type fullname="UnityEngine.MeshCollider" preserve="all" />
+    <type fullname="UnityEngine.Rigidbody" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.TextRenderingModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.Font" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.UI.Button" preserve="all" />
+    <type fullname="UnityEngine.UI.CanvasScaler" preserve="all" />
+    <type fullname="UnityEngine.UI.ContentSizeFitter" preserve="all" />
+    <type fullname="UnityEngine.UI.GraphicRaycaster" preserve="all" />
+    <type fullname="UnityEngine.UI.Image" preserve="all" />
+    <type fullname="UnityEngine.UI.LayoutElement" preserve="all" />
+    <type fullname="UnityEngine.UI.Mask" preserve="all" />
+    <type fullname="UnityEngine.UI.Outline" preserve="all" />
+    <type fullname="UnityEngine.UI.RectMask2D" preserve="all" />
+    <type fullname="UnityEngine.UI.Scrollbar" preserve="all" />
+    <type fullname="UnityEngine.UI.ScrollRect" preserve="all" />
+    <type fullname="UnityEngine.UI.Slider" preserve="all" />
+    <type fullname="UnityEngine.UI.Toggle" preserve="all" />
+    <type fullname="UnityEngine.UI.VerticalLayoutGroup" preserve="all" />
+    <type fullname="UnityEngine.UI.AnimationTriggers" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Button/ButtonClickedEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.ColorBlock" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.MaskableGraphic/CullStateChangedEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Navigation" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.ScrollRect/ScrollRectEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Scrollbar/ScrollEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Slider/SliderEvent" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.SpriteState" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.UI.Toggle/ToggleEvent" preserve="nothing" serialized="true" />
+  </assembly>
+  <assembly fullname="UnityEngine.UIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.Canvas" preserve="all" />
+    <type fullname="UnityEngine.CanvasRenderer" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.VehiclesModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+    <type fullname="UnityEngine.WheelCollider" preserve="all" />
+  </assembly>
+  <assembly fullname="UnityEngine.TextCoreFontEngineModule">
+    <type fullname="UnityEngine.TextCore.FaceInfo" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.Glyph" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.GlyphMetrics" preserve="nothing" serialized="true" />
+    <type fullname="UnityEngine.TextCore.GlyphRect" preserve="nothing" serialized="true" />
+  </assembly>
+</linker>

@@ -300,20 +300,14 @@ namespace Race.Gameplay
         {
             var currentSpeed = CarDataModelHelper.GetCurrentSpeed(carDataModel);
             var maxSpeed = CarDataModelHelper.GetMaxSpeed(carDataModel);
-
-            const float hardcodedPowerFactor = 9;
-            var exponent = 1.0f + 1.0f / maxSpeed * hardcodedPowerFactor;
-            currentSpeed = MathHelper.ClampMagnitude(currentSpeed, 0, maxSpeed);
-            var dampedFactor = Mathf.Pow(exponent, -currentSpeed);
-            
-            const float allowedTurnChangePerSecondAtMaximumSpeed = 0.0001f;
-            var allowedChangeFactor = Mathf.Lerp(allowedTurnChangePerSecondAtMaximumSpeed, allowedTurnChangePerSecondAtMinimumSpeed, dampedFactor);
-            var allowedChange = allowedChangeFactor * Time.fixedDeltaTime;
-
             float currentTurnFactor = carDataModel.DrivingState.steeringInputFactor;
-            float actualTurnFactor = MathHelper.GetValueChangedByAtMost(currentTurnFactor, desiredTurnFactor, allowedChange);
-            
-            return actualTurnFactor;
+
+            return DampValueDependingOnSpeed(
+                desiredTurnFactor,
+                currentTurnFactor,
+                allowedTurnChangePerSecondAtMinimumSpeed,
+                currentSpeed,
+                maxSpeed);
         }
     }
 
