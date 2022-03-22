@@ -12,8 +12,7 @@ namespace Race
         // Start is called before the first frame update
         void Start()
         {
-            // var lookupType = typeof(GameObject);
-            System.Type lookupType = null;
+            var lookupType = typeof(GameObject);
             var handle = Addressables.LoadResourceLocationsAsync(_resourceLabel, lookupType); 
             handle.Completed += handle =>
             {

@@ -156,7 +156,7 @@ namespace Race.SceneTransition
             // This is stupid and I hate it ...
             // Addressables' API is terrible IMO. I'd do a custom thing and be happy.
             // Their code is complicated and unreadable too.
-            LocationsHandle gameplayCarsLocationsHandle = Addressables.LoadResourceLocationsAsync(GameplayLabel);
+            LocationsHandle gameplayCarsLocationsHandle = Addressables.LoadResourceLocationsAsync(GameplayLabel, typeof(GameObject));
 
             /*
                 I'd do something like the following:
@@ -284,7 +284,7 @@ namespace Race.SceneTransition
 
             GameObject trackMap;
             {
-                LocationsHandle tracksLocationsHandle = Addressables.LoadResourceLocationsAsync(TracksLabel);
+                LocationsHandle tracksLocationsHandle = Addressables.LoadResourceLocationsAsync(TracksLabel, typeof(GameObject));
                 // TODO: do the awaits simultaneously.
                 trackMap = await InstantiateAsyncByIndex(info.trackIndex, tracksLocationsHandle);
                 // TODO: This should be a nicely displayed error, not an assertion.

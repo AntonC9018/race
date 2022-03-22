@@ -29,7 +29,7 @@ namespace Race.Garage
         async Task IGarageInitialize.Initialize(GarageInitializationInfo initializationInfo)
         {
             const string label = "display";
-            var handle = Addressables.LoadResourceLocationsAsync(label);
+            var handle = Addressables.LoadResourceLocationsAsync(label, typeof(GameObject));
             var locations = await handle.Task;
             var listHandle = Addressables.LoadAssetsAsync<GameObject>(locations, callback: null);
             var prefabs = await listHandle.Task;
