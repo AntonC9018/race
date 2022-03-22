@@ -141,29 +141,5 @@ namespace Race.Gameplay
 
             return (IEnableDisableInput) commonStuff.inputViewFactory;
         }
-
-
-        [Command(Name = "flip", Help = "Flips a car upside down.")]
-        public static void FlipOver(
-            [Argument("Which participant to flip over")] int participantIndex = 0)
-        {
-            var raceProperties = GameObject.FindObjectOfType<RaceProperties>();
-            if (raceProperties == null)
-            {
-                Debug.LogError("RaceProperties could not be found");
-                return;
-            }
-
-            var driverInfos = raceProperties.DataModel.participants.driver.infos;
-            if (participantIndex < 0 || participantIndex >= driverInfos.Length)
-            {
-                Debug.Log($"The participant index {participantIndex} was outside the bound of the participant array");
-                return;
-            }
-
-            var t = driverInfos[participantIndex].transform;
-            t.rotation = Quaternion.AngleAxis(180, Vector3.forward);
-            t.position += Vector3.up * 3;
-        }
     }
 }

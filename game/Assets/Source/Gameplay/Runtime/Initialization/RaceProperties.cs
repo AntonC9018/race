@@ -1,4 +1,5 @@
 using System;
+using Kari.Plugins.Terminal;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem.Utilities;
@@ -122,10 +123,6 @@ namespace Race.Gameplay
 
         public UnityEvent<ParticipantUpdatedEventInfo> OnParticipantsUpdated;
 
-        void Awake()
-        {
-        }
-
         public void Initialize(RaceDataModel dataModel)
         {
             _dataModel = dataModel;
@@ -152,6 +149,30 @@ namespace Race.Gameplay
         public void RemoveAllListenersToAllEvents()
         {
             OnParticipantsUpdated.RemoveAllListeners();
+        }
+
+
+        [Command(Name = "flip", Help = "Flips a car upside down.")]
+        public static void FlipOver(
+            [Argument("Which participant to flip over")] int participantIndex = 0)
+        {
+            var raceProperties = GameObject.FindObjectOfType<RaceProperties>();
+            if (raceProperties == null)
+            {
+                Debug.LogError("RaceProperties could not be found");
+                return;
+            }
+
+            var driverInfos = raceProperties.DataModel.participants.driver.infos;
+            if (participantIndex < 0 || participantIndex >= driverInfos.Length)
+            {
+                Debug.Log($"The participant index {participantIndex} was outside the bound of the participant array");
+                return;
+            }
+
+            var t = driverInfos[participantIndex].transform;
+            t.rotation = Quaternion.AngleAxis(180, Vector3.forward);
+            t.position += Vector3.up * 3;
         }
     }
 

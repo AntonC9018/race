@@ -28,11 +28,18 @@ namespace Race.SceneTransition
         // because scenes have no benefits over prefabs as far as I can tell.
         [SerializeField] private AssetReferenceGameObject _garageScenePrefab;
         [SerializeField] private AssetReferenceGameObject _gameplayScenePrefab;
-        [SerializeField] private AssetReferenceGameObject _garageToGameplayTransitionScenePrefab;
 
         private Transform _garageTransform;
         private SceneInfo<IGameplayInitialization> _gameplay;
-        private Transform _garageToGameplayTransitionTransform;
+
+        // This is kind of messy right now, because the things are asymmetric.
+        // We assume too much about the individual scenes.
+        // In case of this object currently it is fine, because it was made coupled
+        // to other systems to make it simple.
+        // If we were to decouple it, it will have to be way more generic.
+        [SerializeField] private GameObject _intermediateSceneContainer;
+        [SerializeField] private SkipAd _skipAd;
+
         private IEnableDisableInput _enableDisableInput;
 
         
@@ -139,9 +146,12 @@ namespace Race.SceneTransition
         {
             assert(_garageTransform != null);
             assert(_gameplayScenePrefab != null);
-            assert(_garageToGameplayTransitionScenePrefab != null);
+            assert(_intermediateSceneContainer != null);
 
             _garageTransform.gameObject.SetActive(false);
+
+            _intermediateSceneContainer.SetActive(true);
+            var adSkippedTask = _skipAd.Restart();
 
             // This is stupid and I hate it ...
             // Addressables' API is terrible IMO. I'd do a custom thing and be happy.
@@ -296,9 +306,11 @@ namespace Race.SceneTransition
                     transitionHandler = this,
                 };
 
+                await adSkippedTask;
+                _intermediateSceneContainer.gameObject.SetActive(false);
+
                 var enableDisableInput = initializationComponent.Initialize(initializationInfo);
                 enableDisableInput.EnableAllInput();
-
                 _enableDisableInput = enableDisableInput;
 
                 gameplaySceneRoot.gameObject.SetActive(true);

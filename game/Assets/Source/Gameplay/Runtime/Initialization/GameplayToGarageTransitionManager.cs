@@ -1,3 +1,4 @@
+using Kari.Plugins.Terminal;
 using UnityEngine;
 
 namespace Race.Gameplay
@@ -38,6 +39,27 @@ namespace Race.Gameplay
             GameObject.Destroy(_finalizeInfo.mapContainer);
 
             _finalizeInfo.transitionHandler.TransitionFromGameplayToGarage();
+        }
+
+
+        [Command(Name = "endrace", Help = "Ends the race")]
+        public static void EndRace()
+        {
+            var manager = GameObject.FindObjectOfType<GameplayToGarageTransitionManager>();
+            if (manager == null)
+            {
+                Debug.LogError("GameplayToGarageTransitionManager could not be found");
+                return;
+            }
+            
+            var raceProperties = GameObject.FindObjectOfType<RaceProperties>();
+            if (raceProperties == null)
+            {
+                Debug.LogError("RaceProperties could not be found");
+                return;
+            }
+
+            manager.HandleTransitionToGarageScene(raceProperties);
         }
     }
 }

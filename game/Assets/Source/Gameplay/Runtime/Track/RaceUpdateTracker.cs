@@ -5,6 +5,10 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
+    // There should also be an event for this.
+    // A single thing should handle whatever happens to the race as a result,
+    // and while all the other things could update ui and stuff.
+    // But I don't know for certain yet.
     public interface IOnRaceEnded
     {
         void OnRaceEnded(int winnerIndex, RaceProperties raceProperties);
