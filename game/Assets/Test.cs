@@ -19,6 +19,7 @@ namespace Race
                 assert(handle.Result != null);
                 foreach (var key in handle.Result)
                     Debug.Log(key);
+                Addressables.Release(handle);
             };
         }
 

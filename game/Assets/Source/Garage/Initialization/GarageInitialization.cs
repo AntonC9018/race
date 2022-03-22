@@ -31,12 +31,17 @@ namespace Race.Garage
             const string label = "display";
             var handle = Addressables.LoadResourceLocationsAsync(label, typeof(GameObject));
             var locations = await handle.Task;
+
+            // We don't release the handle here for now.
             var listHandle = Addressables.LoadAssetsAsync<GameObject>(locations, callback: null);
             var prefabs = await listHandle.Task;
+            
             var arrayOfPrefabs = prefabs.Select(p => new CarPrefabInfo { prefab = p, }).ToArray();
 
             InitializationHelper.InitializeGarage(in info, arrayOfPrefabs);
             _transition.Initialize(info, initializationInfo);
+
+            Addressables.Release(handle);
         }
     }
 
