@@ -21,7 +21,12 @@ namespace Race.Gameplay
             if (info.result == ParticipantUpdateResult.Ok)
             {
                 ref var t = ref info.DataModel.participants.track;
-                t.checkpoints[info.index] = t.points[info.index];
+                
+                ref var checkpoint = ref t.checkpoints[info.index];
+                var point = t.points[info.index];
+
+                if (point > checkpoint)
+                        checkpoint = point;
             }
 
             else if ((info.result & ParticipantUpdateResult.EliminatedBit) != 0)

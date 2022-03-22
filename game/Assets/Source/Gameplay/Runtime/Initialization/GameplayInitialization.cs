@@ -43,7 +43,7 @@ namespace Race.Gameplay
             ref var commonStuff = ref _commonStuff.stuff;
             
             var carContainer = new GameObject("car_container").transform;
-            carContainer.SetParent(info.rootTransform, worldPositionStays: false);
+            // carContainer.SetParent(info.rootTransform, worldPositionStays: false);
 
             // Initialize track & race participants
             var raceModel = new RaceDataModel();
@@ -109,7 +109,9 @@ namespace Race.Gameplay
                 {
                     // TODO: settings for difficulty and such
                     var carInputView = new BotInputView();
-                    carInputView.Track = raceModel.Track;
+                    carInputView.RaceProperties = raceProperties;
+                    carInputView.OwnIndex = i + info.playerInfos.Length;
+
                     Gameplay.InitializationHelper.InitializeCarController(carInputView, carController, carProperties);
                 }
 

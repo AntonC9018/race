@@ -1,4 +1,5 @@
 using System;
+using EngineCommon;
 using Race.Gameplay.Generated;
 using UnityEngine;
 using UnityEngine.Events;
@@ -269,6 +270,50 @@ namespace Race.Gameplay
         public static Vector3 GetBodySize(this CarDataModel dataModel)
         {
             return dataModel.ColliderParts.body.collider.size;
+        }
+
+        public static float DampValueDependingOnSpeed(
+            float desiredValue,
+            float currentValue,
+            float allowedValuePerSecondAtMinimumSpeed,
+            float currentSpeed,
+            float maxSpeed)
+        {
+            const float hardcodedPowerFactor = 9;
+            var exponent = 1.0f + 1.0f / maxSpeed * hardcodedPowerFactor;
+            currentSpeed = MathHelper.ClampMagnitude(currentSpeed, 0, maxSpeed);
+            var dampedFactor = Mathf.Pow(exponent, -currentSpeed);
+
+            const float allowedTurnChangePerSecondAtMaximumSpeed = 0.0001f;
+            var allowedChangeFactor = Mathf.Lerp(allowedTurnChangePerSecondAtMaximumSpeed, allowedValuePerSecondAtMinimumSpeed, dampedFactor);
+            var allowedChange = allowedChangeFactor * Time.fixedDeltaTime;
+
+            float actualValueFactor = MathHelper.GetValueChangedByAtMost(currentValue, desiredValue, allowedChange);
+
+            return actualValueFactor;
+        }
+
+        public static float DampTurnInputDependingOnCurrentSpeed(
+            CarDataModel carDataModel,
+            float desiredTurnFactor,
+            float allowedTurnChangePerSecondAtMinimumSpeed)
+        {
+            var currentSpeed = CarDataModelHelper.GetCurrentSpeed(carDataModel);
+            var maxSpeed = CarDataModelHelper.GetMaxSpeed(carDataModel);
+
+            const float hardcodedPowerFactor = 9;
+            var exponent = 1.0f + 1.0f / maxSpeed * hardcodedPowerFactor;
+            currentSpeed = MathHelper.ClampMagnitude(currentSpeed, 0, maxSpeed);
+            var dampedFactor = Mathf.Pow(exponent, -currentSpeed);
+            
+            const float allowedTurnChangePerSecondAtMaximumSpeed = 0.0001f;
+            var allowedChangeFactor = Mathf.Lerp(allowedTurnChangePerSecondAtMaximumSpeed, allowedTurnChangePerSecondAtMinimumSpeed, dampedFactor);
+            var allowedChange = allowedChangeFactor * Time.fixedDeltaTime;
+
+            float currentTurnFactor = carDataModel.DrivingState.steeringInputFactor;
+            float actualTurnFactor = MathHelper.GetValueChangedByAtMost(currentTurnFactor, desiredTurnFactor, allowedChange);
+            
+            return actualTurnFactor;
         }
     }
 

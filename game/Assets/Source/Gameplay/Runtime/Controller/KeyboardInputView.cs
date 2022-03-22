@@ -52,12 +52,13 @@ namespace Race.Gameplay
                     desiredValue: player.Forward.ReadValue<float>(),
                     _smoothingParameters.maxMotorTorqueInputFactorChangePerSecond * timeSinceLastInput);
 
-                result.Turn = MathHelper.GetValueChangedByAtMost(
-                    _carProperties.DataModel.DrivingState.steeringInputFactor,
-                    desiredValue: player.Turn.ReadValue<float>(),
-                    // This one might be part of the controller tho,
-                    // Because the amount a wheel can turn should be constrained.
-                    _smoothingParameters.maxSteeringAngleInputFactorChangePerSecond * timeSinceLastInput);
+                {
+                    var desiredValue = player.Turn.ReadValue<float>(); 
+                    var atMin = _smoothingParameters.maxSteeringAngleInputFactorChangePerSecond;
+
+                    result.Turn = CarDataModelHelper.DampTurnInputDependingOnCurrentSpeed(
+                        _carProperties.DataModel, desiredValue, atMin);
+                }
 
                 return result;
             }

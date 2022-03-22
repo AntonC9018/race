@@ -77,27 +77,29 @@ namespace Race.Gameplay
             return GetRoadPointAt(newPosition);
         }
 
-        public Vector3 GetRoadNormal(RoadPoint point)
+
+        private Vector3 GetPerp(Vector3 diff)
         {
+            return new Vector3(diff.z, 0, -diff.x);
+        }
+
+        public UnitVectors GetUnitVectors(RoadPoint point)
+        {
+            AssertPointValid(point);
+
             var a = _endPosition - _startPosition;
-
-            // We assume 0 roll
-            var rightPerpendicular = new Vector3(a.z, 0, -a.x);
-
+            var tangent = a.normalized;
+            var perp = GetPerp(tangent);
             // I guess Unity uses the left hand for this, because it ends up flipped.
-            return Vector3.Cross(a, rightPerpendicular).normalized;
+            var normal = Vector3.Cross(a, perp).normalized;
+
+            return new UnitVectors(tangent, perp, normal);
         }
 
         public Quaternion GetRegularRotation(RoadPoint point)
         {
-            AssertPointValid(point);
-
-            var tangent = (_endPosition - _startPosition).normalized;
-            var projectedLength = tangent.With(y: 0).magnitude;
-            var angle = Mathf.Atan2(tangent.y, projectedLength);
-            var perp = _startPosition.With(y: 0).normalized;
-            
-            return Quaternion.AngleAxis(angle, perp);
+            var vecs = GetUnitVectors(point);
+            return Quaternion.LookRotation(vecs.tangent, vecs.normal);
         }
     }
 }

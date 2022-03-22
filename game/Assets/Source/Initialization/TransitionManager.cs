@@ -342,8 +342,9 @@ namespace Race.SceneTransition
                 carSpec.engine.maxTorque = newTorque;
             }
             
+            // I'm not sure this formula is correct, but it seems so.
             foreach (ref var g in carSpec.transmission.gearRatios.AsSpan())
-                g = template.engine.optimalRPM / (g * motorRPMAtOldTorque);
+                g *= motorRPMAtOldTorque / template.engine.optimalRPM;
 
             return carSpec;
         }

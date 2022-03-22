@@ -31,6 +31,35 @@ namespace Race.Gameplay
                 track = new StraightTrack(startPoint, endPoint, actualWidth),
             };
         }
+
+        public static Vector3 GetRoadNormal(this IStaticTrack track, RoadPoint point)
+        {
+            return track.GetUnitVectors(point).normal;
+        }
+    }
+
+    public readonly struct UnitVectors
+    {
+        // aka forward
+        public readonly Vector3 tangent;
+        // aka right
+        public readonly Vector3 perpendicular;
+        // aka up
+        public readonly Vector3 normal;
+
+        public UnitVectors(Vector3 tangent, Vector3 perpendicular, Vector3 normal)
+        {
+            this.tangent = tangent;
+            this.normal = normal;
+            this.perpendicular = perpendicular;
+        }
+
+        public void Deconstruct(out Vector3 tangent, out Vector3 perpendicular, out Vector3 normal)
+        {
+            tangent = this.tangent;
+            perpendicular = this.perpendicular;
+            normal = this.normal;
+        }
     }
 
     /// <summary>
@@ -56,7 +85,7 @@ namespace Race.Gameplay
         /// <summary>
         /// The input point must be a valid point inside the track.
         /// </summary>
-        Vector3 GetRoadNormal(RoadPoint point);
+        UnitVectors GetUnitVectors(RoadPoint point);
 
         /// <summary>
         /// The input point must be a valid point inside the track.
@@ -137,6 +166,22 @@ namespace Race.Gameplay
         public static RoadPoint CreateEndOf(int segment)
         {
             return new RoadPoint(segment, 1);
+        }
+
+        public static bool operator>(RoadPoint a, RoadPoint b)
+        {
+            if (a.segment > b.segment)
+                return true;
+
+            return a.segment == b.segment && a.position > b.position;
+        }
+     
+        public static bool operator<(RoadPoint a, RoadPoint b)
+        {
+            if (a.segment < b.segment)
+                return true;
+                
+            return a.segment == b.segment && a.position < b.position;
         }
     }
 
