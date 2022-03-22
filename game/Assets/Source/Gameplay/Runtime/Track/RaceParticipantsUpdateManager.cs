@@ -1,3 +1,4 @@
+using System;
 using Race.Gameplay.Generated;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace Race.Gameplay
     {
         Ok = 0,
         Invalid = 1,
+        ReachedEnd = 2,
         EliminatedBit = 16,
         UpsideDown = EliminatedBit | 1,
         OutsideTrack = EliminatedBit | 2,
@@ -17,23 +19,22 @@ namespace Race.Gameplay
     /// <summary>
     /// Dispatches events on the RaceProperties when participants' points get updated.
     /// </summary>
-    public class RaceManager : MonoBehaviour, IInitialize<RaceProperties>
+    public class RaceParticipantsUpdateManager : MonoBehaviour, IInitialize<RaceProperties>
     {
         private RaceProperties _raceProperties;
+        private ParticipantUpdateResult[] _updateResultsTemporary;
         private ref Participants Participants => ref _raceProperties.DataModel.participants;
 
         public void Initialize(RaceProperties properties)
         {
             _raceProperties = properties;
 
-            ref var participants = ref properties.DataModel.participants.track;
-            var dataModel = properties.DataModel;
+            ref var participants = ref properties.DataModel.participants;
+            Array.Resize(ref _updateResultsTemporary, participants.Count);
         }
 
         public void Update()
         {
-            ref var participants = ref _raceProperties.DataModel.participants.driver.infos;
-
             for (int i = 0; i < Participants.Count; i++)
             {
                 ref var participant = ref Participants.driver[i];
@@ -42,22 +43,16 @@ namespace Race.Gameplay
                 if (isRespawning)
                     continue;
 
-                var updateResult = UpdatePosition(i, participant.transform);
-
-                // Swallow the invalids. They mean the listeners did not disable the participant.
-                if (updateResult == ParticipantUpdateResult.Invalid)
-                    continue;
-
-                // An idea is to do a readonly array, and dispatch the whole thing at once.
-                _raceProperties.TriggerParticipantUpdated(i, updateResult);
+                _updateResultsTemporary[i] = UpdatePosition(i, participant.transform);
             }
+            _raceProperties.TriggerParticipantUpdated(_updateResultsTemporary);
         }
 
         private static bool IsUpsideDown(IStaticTrack track, RoadPoint point, Transform participantTransform)
         {
             Vector3 roadNormal = track.GetRoadNormal(point);
             float upAmount = Vector3.Dot(participantTransform.up, roadNormal);
-            const float requiredUpAmount = -0.2f;
+            const float requiredUpAmount = 0.2f;
             return upAmount < requiredUpAmount;
         }
         
@@ -75,6 +70,11 @@ namespace Race.Gameplay
 
             if (IsUpsideDown(track, point, participantTransform))
                 return ParticipantUpdateResult.UpsideDown;
+
+            // Probably should take into account the length of the car somehow?
+            // So the track should have a function for back and a function for front?
+            if (Mathf.Approximately(track.GetTotalProgress(point), 1.0f))
+                return ParticipantUpdateResult.ReachedEnd;
 
             return ParticipantUpdateResult.Ok;
         }

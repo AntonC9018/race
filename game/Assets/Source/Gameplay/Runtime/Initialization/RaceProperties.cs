@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.InputSystem.Utilities;
 using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
@@ -119,7 +120,7 @@ namespace Race.Gameplay
         private RaceDataModel _dataModel;
         public RaceDataModel DataModel => _dataModel;
 
-        public UnityEvent<ParticipantUpdatedEventInfo> OnParticipantUpdated;
+        public UnityEvent<ParticipantUpdatedEventInfo> OnParticipantsUpdated;
 
         void Awake()
         {
@@ -139,25 +140,27 @@ namespace Race.Gameplay
             }
         }
 
-        public void TriggerParticipantUpdated(int participantIndex, ParticipantUpdateResult result)
+        public void TriggerParticipantUpdated(ReadOnlyArray<ParticipantUpdateResult> result)
         {
-            OnParticipantUpdated.Invoke(new ParticipantUpdatedEventInfo
+            OnParticipantsUpdated.Invoke(new ParticipantUpdatedEventInfo
             {
-                index = participantIndex,
-                result = result,
+                results = result,
                 raceProperties = this,
             });
+        }
+
+        public void RemoveAllListenersToAllEvents()
+        {
+            OnParticipantsUpdated.RemoveAllListeners();
         }
     }
 
 
     public struct ParticipantUpdatedEventInfo
     {
-        public int index;
-        public ParticipantUpdateResult result;
+        public ReadOnlyArray<ParticipantUpdateResult> results;
         public RaceProperties raceProperties;
 
         public readonly RaceDataModel DataModel => raceProperties.DataModel;
-        public readonly ref DriverInfo Driver => ref DataModel.participants.driver[index];
     }
 }

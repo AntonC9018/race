@@ -20,10 +20,12 @@ namespace Race.Gameplay
 
     public struct GameplayExternalInitializationInfo
     {
-        public Transform rootTransform;
         public DriverInfo[] playerInfos;
         public DriverInfo[] botInfos;
+
         public GameObject mapGameObject;
+        public Transform rootTransform;
+        public ITransitionFromGameplayToGarage transitionHandler;
     }
 
     public interface IGameplayInitialization
@@ -35,14 +37,15 @@ namespace Race.Gameplay
     {
         [SerializeField] private CommonInitializationStuffComponent _commonStuff;
         [SerializeField] private GameObject _cameraControlPrefab;
+        [SerializeField] private GameplayToGarageTransitionManager _transitionManager;
         private Transform _rootTransform;
-
 
         public IEnableDisableInput Initialize(in GameplayExternalInitializationInfo info)
         {
             ref var commonStuff = ref _commonStuff.stuff;
             
-            var carContainer = new GameObject("car_container").transform;
+            var carContainer = new GameObject("car_container");
+            var carContainerTransform = carContainer.transform;
             // carContainer.SetParent(info.rootTransform, worldPositionStays: false);
 
             // Initialize track & race participants
@@ -70,6 +73,12 @@ namespace Race.Gameplay
                 raceProperties.Initialize(raceModel);
 
                 InitializationHelper.InjectDependency(raceLogicTransform, raceProperties);
+
+                // For now, initialize the update thing manually.
+                var updateTracker = commonStuff.raceUpdateTracker;
+                assert(updateTracker != null);
+
+                updateTracker.Initialize(raceProperties, commonStuff.respawnDelay, _transitionManager);
             }
 
             // Initialize players & UI
@@ -79,13 +88,14 @@ namespace Race.Gameplay
                 var car = playerInfo.car;
                 var carProperties = playerInfo.carProperties;
 
-                car.transform.SetParent(carContainer, worldPositionStays: false);
+                car.transform.SetParent(carContainerTransform, worldPositionStays: false);
                 car.name = "player";
 
                 CameraControl cameraControl;
                 {
                     var cameraControlGameObject = GameObject.Instantiate(_cameraControlPrefab);
-                    cameraControlGameObject.transform.SetParent(info.rootTransform, worldPositionStays: false);
+                    cameraControlGameObject.transform.SetParent(carContainerTransform, worldPositionStays: false);
+
                     cameraControl = cameraControlGameObject.GetComponent<CameraControl>();
                 }
 
@@ -103,7 +113,7 @@ namespace Race.Gameplay
                 var carProperties = botInfo.carProperties;
                 var carController = car.GetComponent<CarController>();
 
-                car.transform.SetParent(carContainer, worldPositionStays: false);
+                car.transform.SetParent(carContainerTransform, worldPositionStays: false);
                 car.name = "bot";
 
                 {
@@ -120,6 +130,14 @@ namespace Race.Gameplay
 
             RaceDataModelHelper.PlaceParticipants(raceProperties.DataModel);
             info.mapGameObject.SetActive(true);
+
+            var finalizeInfo = new FinalizeGameplayInfo
+            {
+                carContainer = carContainer,
+                mapContainer = info.mapGameObject,
+                transitionHandler = info.transitionHandler,
+            };
+            _transitionManager.FinalizeInfo = finalizeInfo;
 
             return (IEnableDisableInput) commonStuff.inputViewFactory;
         }

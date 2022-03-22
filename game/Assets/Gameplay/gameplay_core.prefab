@@ -47,7 +47,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be16cb9da81cda247b921f06f83c9f93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnParticipantUpdated:
+  OnParticipantsUpdated:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &7176400071679323951
@@ -62,7 +62,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1157b28272831614cb8a86e951aa7f92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _delay: {fileID: 7176400071679323952}
 --- !u!114 &7176400071679323952
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100,6 +99,8 @@ GameObject:
   - component: {fileID: 7176400070802936376}
   - component: {fileID: 4659369535860764839}
   - component: {fileID: 7176400071679323956}
+  - component: {fileID: 7176400071679323960}
+  - component: {fileID: 7176400071679323961}
   m_Layer: 0
   m_Name: initialization
   m_TagString: Untagged
@@ -149,6 +150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _commonStuff: {fileID: 7176400071679323956}
   _cameraControlPrefab: {fileID: 1921171471085227138, guid: 6dc21cbc56720b24f887d8492e665c92, type: 3}
+  _transitionManager: {fileID: 7176400071679323961}
 --- !u!114 &7176400071679323956
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -167,6 +169,33 @@ MonoBehaviour:
     trackLimits: {fileID: 11400000, guid: 80548310aa69b0f4a9a8c04ff6cd8821, type: 2}
     raceLogicTransform: {fileID: 29682775256245107}
     raceProperties: {fileID: 2119788064150745669}
+    raceUpdateTracker: {fileID: 7176400071679323951}
+    respawnDelay: {fileID: 7176400071679323960}
+--- !u!114 &7176400071679323960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7176400070802936377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98da0c7554f899b49823df9cd6b070fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _delay: 0
+--- !u!114 &7176400071679323961
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7176400070802936377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9626d2ed4c93f4499ddbd798e6277c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &7176400070940440194
 GameObject:
   m_ObjectHideFlags: 0

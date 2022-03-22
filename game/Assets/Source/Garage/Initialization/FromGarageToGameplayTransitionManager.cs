@@ -56,7 +56,7 @@ namespace Race.Garage
             assert(_transitionInfo.fromGarageToGameplay != null);
         }
 
-        public void OnButtonClicked()
+        public async void OnButtonClicked()
         {
             if (_transitionInfo.fromGarageToGameplay == null)
             {
@@ -92,7 +92,7 @@ namespace Race.Garage
                 trackIndex = 0,
             };
             
-            _transitionInfo.fromGarageToGameplay.TransitionFromGarageToGameplay(transitionInfo);
+            await _transitionInfo.fromGarageToGameplay.TransitionFromGarageToGameplay(transitionInfo);
         }
 
         [Command("go", "Transition from garage to gameplay")]

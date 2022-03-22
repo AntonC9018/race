@@ -20,6 +20,14 @@ namespace Race.Gameplay
         [SerializeField] private CameraControl _cameraControl;
         [SerializeField] private Transform _trackQuad;
 
+        private class _RaceEndedHandler : IOnRaceEnded
+        {
+            public void OnRaceEnded(int winnerIndex, RaceProperties raceProperties)
+            {
+                Debug.Log("The scenes transitions are not implemented in the local gameplay version.");
+            }
+        }
+
         void Start()
         {
             if (_car == null)
@@ -65,7 +73,7 @@ namespace Race.Gameplay
                 var trackInfo = InitializationHelper.CreateTrackWithInfo(trackTransform, commonStuff.trackLimits);
                 model.trackInfo = trackInfo;
             }
-
+            
             var raceProperties = commonStuff.raceProperties;
             raceProperties.Initialize(raceModel);
 
@@ -75,6 +83,8 @@ namespace Race.Gameplay
                 assert(raceLogicTransform != null);
 
                 InitializationHelper.InjectDependency(raceLogicTransform, raceProperties);
+                
+                commonStuff.raceUpdateTracker.Initialize(raceProperties, commonStuff.respawnDelay, new _RaceEndedHandler());
             }
         }
     }

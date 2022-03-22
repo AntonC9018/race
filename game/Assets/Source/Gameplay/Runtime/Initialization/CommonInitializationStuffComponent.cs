@@ -20,5 +20,9 @@ namespace Race.Gameplay
         public TrackLimitsConfiguration trackLimits;
         public Transform raceLogicTransform;
         public RaceProperties raceProperties;
+
+        // For now, put it here, but it should be handled by the normal DI instead.
+        public RaceUpdateTracker raceUpdateTracker;
+        public SameDurationDelay respawnDelay;
     }
 }

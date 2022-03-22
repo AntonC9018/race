@@ -17,7 +17,8 @@ using LocationsHandle = UnityEngine.ResourceManagement.AsyncOperations.AsyncOper
 
 namespace Race.SceneTransition
 {
-    public class TransitionManager : MonoBehaviour, ITransitionFromGarageToGameplay
+    public class TransitionManager : MonoBehaviour,
+        ITransitionFromGarageToGameplay, ITransitionFromGameplayToGarage
     {
         private const string GameplayLabel = "gameplay";
         private const string TracksLabel = "track";
@@ -30,7 +31,7 @@ namespace Race.SceneTransition
         [SerializeField] private AssetReferenceGameObject _garageToGameplayTransitionScenePrefab;
 
         private Transform _garageTransform;
-        private Transform _gameplayTransform;
+        private SceneInfo<IGameplayInitialization> _gameplay;
         private Transform _garageToGameplayTransitionTransform;
         private IEnableDisableInput _enableDisableInput;
 
@@ -81,22 +82,28 @@ namespace Race.SceneTransition
             return gameObject;
         }
 
-        // private readonly struct Temp<TInitializationComponent>
-        // {
-        //     public readonly GameObject rootTransform;
-        //     public readonly TInitializationComponent initializationComponent;
+        private readonly struct SceneInfo<TInitializationComponent>
+        {
+            public readonly Transform transform;
+            public readonly TInitializationComponent initializationComponent;
 
-        //     public Temp(GameObject rootTransform, TInitializationComponent initializationComponent)
-        //     {
-        //         this.rootTransform = rootTransform;
-        //         this.initializationComponent = initializationComponent;
-        //     }
-        // }
+            public SceneInfo(Transform rootTransform, TInitializationComponent initializationComponent)
+            {
+                this.transform = rootTransform;
+                this.initializationComponent = initializationComponent;
+            }
+
+            public void Deconstruct(out Transform transform, out TInitializationComponent initializationComponent)
+            {
+                transform = this.transform;
+                initializationComponent = this.initializationComponent;
+            }
+        }
 
         // The gameobject returned is deactivated.
         // Tasks are not supported in WebGL, so might want to refactor this to use coroutines.
         // https://docs.unity3d.com/Packages/com.unity.addressables@1.9/manual/AddressableAssetsAsyncOperationHandle.html
-        private async Task<(Transform, TInitializationComponent)> InstantiatePrefabAndFindInitializationObject<TInitializationComponent>(
+        private async Task<SceneInfo<TInitializationComponent>> InstantiatePrefabAndFindInitializationObject<TInitializationComponent>(
             AssetReferenceGameObject prefabReference)
         {
             var prefab = (GameObject) prefabReference.Asset;
@@ -111,7 +118,7 @@ namespace Race.SceneTransition
             var initializationTransform = FindInitializationTransform(transform);
             var initializationComponent = initializationTransform.GetComponent<TInitializationComponent>();
 
-            return (transform, initializationComponent);
+            return new (transform, initializationComponent);
         }
 
         private async Task InitializeGarage()
@@ -275,9 +282,7 @@ namespace Race.SceneTransition
             }
             
             {
-                var (gameplaySceneRoot, initializationComponent) = 
-                    await InstantiatePrefabAndFindInitializationObject<IGameplayInitialization>(_gameplayScenePrefab);
-                _gameplayTransform = gameplaySceneRoot;
+                var (gameplaySceneRoot, initializationComponent) = await LazyLoadGameplayScene();
 
                 var playerDriverInfos = await Task.WhenAll(playerTasks);
                 var botDriverInfos = await Task.WhenAll(botTasks);
@@ -288,6 +293,7 @@ namespace Race.SceneTransition
                     playerInfos = playerDriverInfos,
                     mapGameObject = trackMap,
                     rootTransform = gameplaySceneRoot,
+                    transitionHandler = this,
                 };
 
                 var enableDisableInput = initializationComponent.Initialize(initializationInfo);
@@ -299,6 +305,18 @@ namespace Race.SceneTransition
             }
         }
 
+        private async Task<SceneInfo<IGameplayInitialization>> LazyLoadGameplayScene()
+        {
+            if (_gameplay.transform == null)
+                _gameplay = await InstantiatePrefabAndFindInitializationObject<IGameplayInitialization>(_gameplayScenePrefab);
+            return _gameplay;
+        }
+
+        public void TransitionFromGameplayToGarage()
+        {
+            _gameplay.transform.gameObject.SetActive(false);
+            _garageTransform.gameObject.SetActive(true);
+        }
 
         [System.Serializable]
         public struct StatsConversionRates
