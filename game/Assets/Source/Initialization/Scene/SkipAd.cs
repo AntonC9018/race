@@ -23,6 +23,7 @@ namespace Race.SceneTransition
             {
                 _ad.SetActive(false);
                 _taskCompletion.SetResult(1);
+                _taskCompletion = null;
             }
         }
     }
