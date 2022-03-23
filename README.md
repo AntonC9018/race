@@ -54,6 +54,26 @@ Create a small "1 v bot" drag racing game with 3rd person camera view.
 - After race is over - move back to first scene (garage)
 
 
+## Screenshots
+
+![](screenshots/garage.png)
+
+![](screenshots/car_different_color.png)
+
+![](screenshots/buy_coins.png)
+
+![](screenshots/ad.png)
+
+
+> Press F5 to switch view while in race.
+
+![](screenshots/back_view.png)
+
+![](screenshots/side_view.png)
+
+![](screenshots/front_view.png)
+
+
 ## Garage Notes
 
 Some of the things I'd like to mention follow.
@@ -276,3 +296,5 @@ This was by far the most complicated problem in this project.
 * TextMeshPro gameobjects performance thread: https://forum.unity.com/threads/many-text-mesh-pro-elements-in-a-scene-what-is-a-possible-solution.665614/
 
 * Optimal gears at speeds in racing cars. Used this one for gear ratio baseline data: https://www.yourdatadriven.com/best-gear-change-rpm-guide-to-optimum-gear-shift-points-in-a-racing-car/
+
+* Surface Normals and Tangent Planes: https://math.etsu.edu/multicalc/prealpha/chap3/chap3-6/printversion.pdf
