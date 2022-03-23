@@ -1,4 +1,3 @@
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -8,14 +7,6 @@ using static EngineCommon.Assertions;
 
 namespace Race.Garage
 {
-    [System.Serializable]
-    public struct GarageFunctionalInfo
-    {
-        public CarProperties carProperties;
-        public UserProperties userProperties;
-        public Transform diRoot;
-    }
-
     public interface IGarageInitialize
     {
         Task Initialize(GarageInitializationInfo initializationInfo);
@@ -23,20 +14,30 @@ namespace Race.Garage
 
     public class GarageInitialization : MonoBehaviour, IGarageInitialize
     {
-        public GarageFunctionalInfo info;
+        [SerializeField] private GarageCommonInitializationStuffComponent _commonStuff;
         [SerializeField] private FromGarageToGameplayTransitionManager _transition;
 
         async Task IGarageInitialize.Initialize(GarageInitializationInfo initializationInfo)
         {
+            var transitionInitializationTask = _transition.Initialize(_commonStuff.stuff, initializationInfo);
+
+            assert(_commonStuff != null);
+            assert(_transition != null);
+
             const string label = "display";
-            var handle = Addressables.LoadResourceLocationsAsync(label);
+            var handle = Addressables.LoadResourceLocationsAsync(label, typeof(GameObject));
             var locations = await handle.Task;
+
+            // We don't release the handle here for now.
             var listHandle = Addressables.LoadAssetsAsync<GameObject>(locations, callback: null);
             var prefabs = await listHandle.Task;
+            
             var arrayOfPrefabs = prefabs.Select(p => new CarPrefabInfo { prefab = p, }).ToArray();
 
-            InitializationHelper.InitializeGarage(in info, arrayOfPrefabs);
-            _transition.Initialize(info, initializationInfo);
+            await transitionInitializationTask;
+            InitializationHelper.InitializeGarage(_commonStuff.stuff, arrayOfPrefabs);
+
+            Addressables.Release(handle);
         }
     }
 
@@ -69,7 +70,7 @@ namespace Race.Garage
         }
 
         public static void InitializeGarage(
-            in GarageFunctionalInfo initializationInfo,
+            in GarageCommonInitializationStuff initializationInfo,
             CarPrefabInfo[] carPrefabInfos)
         {
             var carProperties = initializationInfo.carProperties;

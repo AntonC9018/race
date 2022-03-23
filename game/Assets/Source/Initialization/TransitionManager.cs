@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EngineCommon;
 using Race.Gameplay;
 using Race.Garage;
 using UnityEngine;
@@ -17,22 +18,33 @@ using LocationsHandle = UnityEngine.ResourceManagement.AsyncOperations.AsyncOper
 
 namespace Race.SceneTransition
 {
-    public class TransitionManager : MonoBehaviour, ITransitionFromGarageToGameplay
+    public class TransitionManager : MonoBehaviour,
+        ITransitionFromGarageToGameplay, ITransitionFromGameplayToGarage
     {
         private const string GameplayLabel = "gameplay";
-        private const string TracksLabel = "track";
 
         // These are not scenes, but gameobjects.
         // They act like scenes, but I'm using prefabs instead of actual scenes,
         // because scenes have no benefits over prefabs as far as I can tell.
         [SerializeField] private AssetReferenceGameObject _garageScenePrefab;
         [SerializeField] private AssetReferenceGameObject _gameplayScenePrefab;
-        [SerializeField] private AssetReferenceGameObject _garageToGameplayTransitionScenePrefab;
 
         private Transform _garageTransform;
-        private Transform _gameplayTransform;
-        private Transform _garageToGameplayTransitionTransform;
+        private SceneInfo<IGameplayInitialization> _gameplay;
+
+        // This is kind of messy right now, because the way we deal with
+        // the individual scenes is asymmetric. We assume too much about each of them.
+        // In case of this class currently it is fine, because it was made coupled
+        // to other systems to make it simple.
+        // If we were to decouple it, it will have to be way more generic.
+        [SerializeField] private GameObject _intermediateSceneContainer;
+        [SerializeField] private SkipAd _skipAd;
+
         private IEnableDisableInput _enableDisableInput;
+
+        // Just for the sake of trying this stuff, I'm going to release the handles
+        // when the gameplay "scene" gets destroyed.
+        private List<AsyncOperationHandle<GameObject>> _handlesOfGameplayCarsToRelease;
 
         
         /*
@@ -64,6 +76,7 @@ namespace Race.SceneTransition
 
         async void Start()
         {
+            _handlesOfGameplayCarsToRelease = new();
             await InitializeGarage();
             Debug.Log("Done loading garage");
         }
@@ -81,22 +94,28 @@ namespace Race.SceneTransition
             return gameObject;
         }
 
-        // private readonly struct Temp<TInitializationComponent>
-        // {
-        //     public readonly GameObject rootTransform;
-        //     public readonly TInitializationComponent initializationComponent;
+        private readonly struct SceneInfo<TInitializationComponent>
+        {
+            public readonly Transform transform;
+            public readonly TInitializationComponent initializationComponent;
 
-        //     public Temp(GameObject rootTransform, TInitializationComponent initializationComponent)
-        //     {
-        //         this.rootTransform = rootTransform;
-        //         this.initializationComponent = initializationComponent;
-        //     }
-        // }
+            public SceneInfo(Transform rootTransform, TInitializationComponent initializationComponent)
+            {
+                this.transform = rootTransform;
+                this.initializationComponent = initializationComponent;
+            }
+
+            public void Deconstruct(out Transform transform, out TInitializationComponent initializationComponent)
+            {
+                transform = this.transform;
+                initializationComponent = this.initializationComponent;
+            }
+        }
 
         // The gameobject returned is deactivated.
         // Tasks are not supported in WebGL, so might want to refactor this to use coroutines.
         // https://docs.unity3d.com/Packages/com.unity.addressables@1.9/manual/AddressableAssetsAsyncOperationHandle.html
-        private async Task<(Transform, TInitializationComponent)> InstantiatePrefabAndFindInitializationObject<TInitializationComponent>(
+        private async Task<SceneInfo<TInitializationComponent>> InstantiatePrefabAndFindInitializationObject<TInitializationComponent>(
             AssetReferenceGameObject prefabReference)
         {
             var prefab = (GameObject) prefabReference.Asset;
@@ -111,7 +130,7 @@ namespace Race.SceneTransition
             var initializationTransform = FindInitializationTransform(transform);
             var initializationComponent = initializationTransform.GetComponent<TInitializationComponent>();
 
-            return (transform, initializationComponent);
+            return new (transform, initializationComponent);
         }
 
         private async Task InitializeGarage()
@@ -128,18 +147,32 @@ namespace Race.SceneTransition
             garageTransform.gameObject.SetActive(true);
         }
 
+        private readonly struct Temp
+        {
+            public readonly int index;
+            public readonly LocationsHandle locationsHandle;
+            public readonly List<AsyncOperationHandle<GameObject>> handlesToRelease;
+
+            public Temp(int index, LocationsHandle locationsHandle, List<AsyncOperationHandle<GameObject>> handlesToRelease)
+            {
+                this.index = index;
+                this.locationsHandle = locationsHandle;
+                this.handlesToRelease = handlesToRelease;
+            }
+        }
+
         public async Task TransitionFromGarageToGameplay(GarageToGameplayTransitionInfo info)
         {
             assert(_garageTransform != null);
             assert(_gameplayScenePrefab != null);
-            assert(_garageToGameplayTransitionScenePrefab != null);
+            assert(_intermediateSceneContainer != null);
 
             _garageTransform.gameObject.SetActive(false);
 
-            // This is stupid and I hate it ...
-            // Addressables' API is terrible IMO. I'd do a custom thing and be happy.
-            // Their code is complicated and unreadable too.
-            LocationsHandle gameplayCarsLocationsHandle = Addressables.LoadResourceLocationsAsync(GameplayLabel);
+            _intermediateSceneContainer.SetActive(true);
+            var adSkippedTask = _skipAd.Restart();
+
+            var gameplayCarsLocationsHandle = AddressablesHelper.GetGameObjectLocations(GameplayLabel);
 
             /*
                 I'd do something like the following:
@@ -166,30 +199,31 @@ namespace Race.SceneTransition
 
                 I might be missing something at this point too tho.
             */
-            static async Task<GameObject> GetPrefabByIndex(
-                int index, LocationsHandle locationsHandle)
+            static async Task<GameObject> GetPrefabByIndex(Temp temp)
             {
-                var locations = await locationsHandle.Task;
-                var correctLocation = locations[index];
+                var locations = await temp.locationsHandle.Task;
+                var correctLocation = locations[temp.index];
                 // LoadAssetAsync already uses caching internally.
                 var prefabHandle = Addressables.LoadAssetAsync<GameObject>(correctLocation);
+                
+                temp.handlesToRelease.Add(prefabHandle);
+
                 return await prefabHandle.Task;
             }
 
-            static async Task<GameObject> InstantiateAsyncByIndex(int index, LocationsHandle locationsHandle)
+            static async Task<GameObject> InstantiateAsyncByIndex(Temp temp)
             {
                 // This is again just stupid, because currently WE KNOW the cars are stored in the same bundle.
                 // So they will always resolve instantly after the locations have been loaded.
                 // We could've just iterated them manually at that point.
-                var prefab = await GetPrefabByIndex(index, locationsHandle);
+                var prefab = await GetPrefabByIndex(temp);
                 var thing = Instantiate_RunAwakes_DisableUpdates(prefab);
                 return thing;
             }
 
-            static async Task<(GameObject, Gameplay.CarProperties, CarInfoComponent)> CreateCarAndGetSomeComponents(
-                int carIndex, LocationsHandle locationsHandle)
+            static async Task<(GameObject, Gameplay.CarProperties, CarInfoComponent)> CreateCarAndGetSomeComponents(Temp temp)
             {
-                GameObject car = await InstantiateAsyncByIndex(carIndex, locationsHandle);
+                GameObject car = await InstantiateAsyncByIndex(temp);
 
                 var carProperties = car.GetComponent<Gameplay.CarProperties>();
                 assert(carProperties != null, "The car prefab must contain a `CarProperties` component");
@@ -206,13 +240,17 @@ namespace Race.SceneTransition
                 playerTasks = new Task<DriverInfo>[playerCount];
                 for (int i = 0; i < playerTasks.Length; i++)
                 {
-                    var task = CreateCar(info.playerInfos[i], gameplayCarsLocationsHandle);
+                    var task = CreateCar(info.playerInfos[i], gameplayCarsLocationsHandle, _handlesOfGameplayCarsToRelease);
                     playerTasks[i] = task;
 
-                    static async Task<DriverInfo> CreateCar(PlayerInfo playerInfo, LocationsHandle locationsHandle)
+                    static async Task<DriverInfo> CreateCar(
+                        PlayerInfo playerInfo,
+                        LocationsHandle locationsHandle,
+                        List<AsyncOperationHandle<GameObject>> handlesToRelease)
                     {
+                        var temp = new Temp(playerInfo.carIndex, locationsHandle, handlesToRelease);
                         var (car, carProperties, infoComponent) = 
-                            await CreateCarAndGetSomeComponents(playerInfo.carIndex, locationsHandle);
+                            await CreateCarAndGetSomeComponents(temp);
 
                         // static void InitializeCarPropertiesFromPlayerInfo(
                         //     in PlayerInfo playerInfo,
@@ -250,13 +288,16 @@ namespace Race.SceneTransition
                 botTasks = new Task<BotDriverInfo>[botCount];
                 for (int i = 0; i < botTasks.Length; i++)
                 {
-                    var task = CreateCar(info.botInfos[i], gameplayCarsLocationsHandle);
+                    var task = CreateCar(info.botInfos[i], gameplayCarsLocationsHandle, _handlesOfGameplayCarsToRelease);
                     botTasks[i] = task;
 
-                    static async Task<BotDriverInfo> CreateCar(BotInfo botInfo, AsyncOperationHandle<IList<IResourceLocation>> locationsHandle)
+                    async Task<BotDriverInfo> CreateCar(
+                        BotInfo botInfo,
+                        LocationsHandle locationsHandle,
+                        List<AsyncOperationHandle<GameObject>> handlesToRelease)
                     {
-                        var (car, carProperties, infoComponent) = 
-                            await CreateCarAndGetSomeComponents(botInfo.carIndex, locationsHandle);
+                        var temp = new Temp(botInfo.carIndex, locationsHandle, handlesToRelease);
+                        var (car, carProperties, infoComponent) = await CreateCarAndGetSomeComponents(temp);
 
                         Gameplay.InitializationHelper.FinalizeCarPropertiesInitializationWithDefaults(carProperties, infoComponent, car.transform);
 
@@ -266,42 +307,64 @@ namespace Race.SceneTransition
             }
 
             GameObject trackMap;
-            Transform trackTransform;
             {
-                LocationsHandle tracksLocationsHandle = Addressables.LoadResourceLocationsAsync(TracksLabel);
-                // TODO: do the awaits simultaneously.
-                trackMap = await InstantiateAsyncByIndex(info.trackIndex, tracksLocationsHandle);
-                // TODO: This should be a nicely displayed error, not an assertion.
-                assert(trackMap != null);
+                var assetHandle = Addressables.LoadAssetAsync<GameObject>(info.mapResouceLocation);
+                _handlesOfGameplayCarsToRelease.Add(assetHandle);
 
-                trackTransform = FindTrack(trackMap.transform);
+                // TODO: do the awaits simultaneously.
+                var mapPrefab = await assetHandle.Task;
+
+                // TODO: This should be a nicely displayed error, not an assertion.
+                assert(mapPrefab != null);
+
+                trackMap = Instantiate_RunAwakes_DisableUpdates(mapPrefab);
             }
             
             {
-                var (gameplaySceneRoot, initializationComponent) = 
-                    await InstantiatePrefabAndFindInitializationObject<IGameplayInitialization>(_gameplayScenePrefab);
-                _gameplayTransform = gameplaySceneRoot;
+                var (gameplaySceneRoot, initializationComponent) = await LazyLoadGameplayScene();
 
                 var playerDriverInfos = await Task.WhenAll(playerTasks);
                 var botDriverInfos = await Task.WhenAll(botTasks);
                 
-                // HACK! Will need to reafactor this.
-                var initializationInfo = new GameplayExternalInitializationInfo(
-                    gameplaySceneRoot,
-                    playerDriverInfos,
-                    botDriverInfos,
-                    trackTransform,
-                    trackMap);
+                var initializationInfo = new GameplayExternalInitializationInfo
+                {
+                    botInfos = botDriverInfos,
+                    playerInfos = playerDriverInfos,
+                    mapGameObject = trackMap,
+                    rootTransform = gameplaySceneRoot,
+                    transitionHandler = this,
+                };
+
+                await adSkippedTask;
+                _intermediateSceneContainer.gameObject.SetActive(false);
 
                 var enableDisableInput = initializationComponent.Initialize(initializationInfo);
                 enableDisableInput.EnableAllInput();
-
                 _enableDisableInput = enableDisableInput;
 
                 gameplaySceneRoot.gameObject.SetActive(true);
             }
+            
+            Addressables.Release(gameplayCarsLocationsHandle);
         }
 
+        private async Task<SceneInfo<IGameplayInitialization>> LazyLoadGameplayScene()
+        {
+            if (_gameplay.transform == null)
+                _gameplay = await InstantiatePrefabAndFindInitializationObject<IGameplayInitialization>(_gameplayScenePrefab);
+            return _gameplay;
+        }
+
+        public void TransitionFromGameplayToGarage()
+        {
+            _gameplay.transform.gameObject.SetActive(false);
+            
+            foreach (var t in _handlesOfGameplayCarsToRelease)
+                Addressables.Release(t);
+            _handlesOfGameplayCarsToRelease.Clear();
+
+            _garageTransform.gameObject.SetActive(true);
+        }
 
         [System.Serializable]
         public struct StatsConversionRates
@@ -345,8 +408,9 @@ namespace Race.SceneTransition
                 carSpec.engine.maxTorque = newTorque;
             }
             
+            // I'm not sure this formula is correct, but it seems so.
             foreach (ref var g in carSpec.transmission.gearRatios.AsSpan())
-                g = template.engine.optimalRPM / (g * motorRPMAtOldTorque);
+                g *= motorRPMAtOldTorque / template.engine.optimalRPM;
 
             return carSpec;
         }
@@ -354,11 +418,6 @@ namespace Race.SceneTransition
         private Transform FindInitializationTransform(Transform root)
         {
             return root.Find("initialization");
-        }
-
-        private Transform FindTrack(Transform root)
-        {
-            return root.Find("track");
         }
     }
 }

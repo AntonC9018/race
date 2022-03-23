@@ -1,8 +1,5 @@
 using UnityEngine;
-using Race.Gameplay;
-using System;
 using static EngineCommon.Assertions;
-using System.Linq;
 using Kari.Plugins.Terminal;
 
 namespace Race.Gameplay
@@ -23,35 +20,12 @@ namespace Race.Gameplay
 
     public struct GameplayExternalInitializationInfo
     {
-        public Transform rootTransform;
-        public DriverInfo[] driverInfos;
-        public int playerCount;
-        public int botCount;
+        public DriverInfo[] playerInfos;
+        public DriverInfo[] botInfos;
 
-        // For now, we only allow simple quad track.
-        public Transform trackQuadTransform;
         public GameObject mapGameObject;
-
-
-        // Encapsulate it for now
-        public GameplayExternalInitializationInfo(
-            Transform rootTransform,
-            DriverInfo[] playerInfos,
-            DriverInfo[] botInfos,
-            Transform trackQuad,
-            GameObject mapGameObject)
-        {
-            this.rootTransform = rootTransform;
-            this.driverInfos = playerInfos.Concat(botInfos).ToArray();
-            this.playerCount = playerInfos.Length;
-            this.botCount = botInfos.Length;
-            this.trackQuadTransform = trackQuad;
-            this.mapGameObject = mapGameObject;
-        }
-
-        public Span<DriverInfo> PlayerInfos => driverInfos.AsSpan(0, playerCount);
-        public Span<DriverInfo> BotInfos => driverInfos.AsSpan(playerCount, botCount);
-
+        public Transform rootTransform;
+        public ITransitionFromGameplayToGarage transitionHandler;
     }
 
     public interface IGameplayInitialization
@@ -61,94 +35,111 @@ namespace Race.Gameplay
 
     public class GameplayInitialization : MonoBehaviour, IGameplayInitialization
     {
-        [SerializeField] private CommonInitializationStuff _commonStuff;
+        [SerializeField] private CommonInitializationStuffComponent _commonStuff;
         [SerializeField] private GameObject _cameraControlPrefab;
-
-        private TrackManager _trackManager;
-        private GameplayExternalInitializationInfo _initializationInfo;
-
+        [SerializeField] private GameplayToGarageTransitionManager _transitionManager;
+        private Transform _rootTransform;
 
         public IEnableDisableInput Initialize(in GameplayExternalInitializationInfo info)
         {
-            _initializationInfo = info;
+            ref var commonStuff = ref _commonStuff.stuff;
+            
+            var carContainer = new GameObject("car_container");
+            var carContainerTransform = carContainer.transform;
+            // carContainer.SetParent(info.rootTransform, worldPositionStays: false);
 
-            assert(info.PlayerInfos.Length == 1);
-            assert(info.BotInfos.Length == 1);
+            // Initialize track & race participants
+            var raceModel = new RaceDataModel();
+            {
+                // `ref` is used for the sake of symmerty with structs (it's a class)
+                ref var model = ref raceModel;
 
-            var carContainer = new GameObject("car_container").transform;
-            carContainer.SetParent(info.rootTransform, worldPositionStays: false);
+                var mapTransform = info.mapGameObject.transform;
+                model.mapTransform = mapTransform;
 
-            // Initialize track
-            var (track, _trackManager) = InitializationHelper.InitializeTrackAndTrackManagerFromTrackQuad(
-                info.driverInfos, info.trackQuadTransform);
-            info.mapGameObject.SetActive(true);
+                var trackTransform = InitializationHelper.FindTrackTransform(mapTransform);
+                model.trackTransform = trackTransform;
+
+                RaceDataModelHelper.SetParticipants(model, info.playerInfos, info.botInfos);
+
+                var trackInfo = InitializationHelper.CreateTrackWithInfo(trackTransform, commonStuff.trackLimits);
+                model.trackInfo = trackInfo;
+            }
+
+            // Initialize race logic
+            var raceProperties = commonStuff.raceProperties;
+            {
+                var raceLogicTransform = commonStuff.raceLogicTransform;
+                raceProperties.Initialize(raceModel);
+
+                InitializationHelper.InjectDependency(raceLogicTransform, raceProperties);
+
+                // For now, initialize the update thing manually.
+                var updateTracker = commonStuff.raceUpdateTracker;
+                assert(updateTracker != null);
+
+                updateTracker.Initialize(raceProperties, commonStuff.respawnDelay, _transitionManager);
+            }
 
             // Initialize players & UI
             {
-                ref var playerInfo = ref info.PlayerInfos[0];
+                assert(info.playerInfos.Length == 1);
+                ref var playerInfo = ref info.playerInfos[0];
                 var car = playerInfo.car;
                 var carProperties = playerInfo.carProperties;
 
-                car.transform.SetParent(carContainer, worldPositionStays: false);
+                car.transform.SetParent(carContainerTransform, worldPositionStays: false);
                 car.name = "player";
 
                 CameraControl cameraControl;
                 {
                     var cameraControlGameObject = GameObject.Instantiate(_cameraControlPrefab);
-                    cameraControlGameObject.transform.SetParent(info.rootTransform, worldPositionStays: false);
+                    cameraControlGameObject.transform.SetParent(carContainerTransform, worldPositionStays: false);
+
                     cameraControl = cameraControlGameObject.GetComponent<CameraControl>();
                 }
 
                 InitializationHelper.InitializePlayerInputAndInjectDependencies(
-                    _commonStuff, cameraControl, car, carProperties);
+                    commonStuff, cameraControl, car, carProperties);
 
                 car.SetActive(true);
             }
 
             // Initialize bots
+            for (int i = 0; i < info.botInfos.Length; i++)
             {
-                ref var botInfo = ref info.BotInfos[0];
+                ref var botInfo = ref info.botInfos[i];
                 var car = botInfo.car;
                 var carProperties = botInfo.carProperties;
                 var carController = car.GetComponent<CarController>();
 
-                car.transform.SetParent(carContainer, worldPositionStays: false);
+                car.transform.SetParent(carContainerTransform, worldPositionStays: false);
                 car.name = "bot";
 
                 {
                     // TODO: settings for difficulty and such
                     var carInputView = new BotInputView();
-                    carInputView.Track = track;
+                    carInputView.RaceProperties = raceProperties;
+                    carInputView.OwnIndex = i + info.playerInfos.Length;
+
                     Gameplay.InitializationHelper.InitializeCarController(carInputView, carController, carProperties);
                 }
 
                 car.SetActive(true);
             }
 
-            return _commonStuff.inputViewFactory as IEnableDisableInput;
-        }
+            RaceDataModelHelper.PlaceParticipants(raceProperties.DataModel);
+            info.mapGameObject.SetActive(true);
 
-
-        [Command(Name = "flip", Help = "Flips a car upside down.")]
-        public static void FlipOver(
-            [Argument("Which participant to flip over")] int participantIndex = 0)
-        {
-            var initialization = GameObject.FindObjectOfType<GameplayInitialization>();
-            if (initialization == null)
+            var finalizeInfo = new FinalizeGameplayInfo
             {
-                Debug.LogError("The initialization could not be found");
-                return;
-            }
+                carContainer = carContainer,
+                mapContainer = info.mapGameObject,
+                transitionHandler = info.transitionHandler,
+            };
+            _transitionManager.FinalizeInfo = finalizeInfo;
 
-            if (participantIndex < 0 || participantIndex >= initialization._initializationInfo.driverInfos.Length)
-            {
-                Debug.Log($"The participant index {participantIndex} was outside the bound of the participant array");
-                return;
-            }
-
-            var t = initialization._initializationInfo.driverInfos[participantIndex].transform;
-            t.rotation = Quaternion.AngleAxis(180, Vector3.forward);
-            t.position += Vector3.up * 3;
+            return (IEnableDisableInput) commonStuff.inputViewFactory;
         }
     }
 }

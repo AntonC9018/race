@@ -6,14 +6,14 @@ namespace Race.Garage
 {
     public class LocalGarageInitialization : MonoBehaviour
     {
-        [SerializeField] private GarageInitialization _initializationInfoComponent;
+        [SerializeField] private GarageCommonInitializationStuffComponent _commonStuff;
         [ContextMenuItem("Delete save files", nameof(DeleteSaveFiles))]
         [SerializeField] private CarPrefabInfo[] _carPrefabInfos;
 
         public void Start()
         {
-            ref readonly var info = ref _initializationInfoComponent.info;
-            InitializationHelper.InitializeGarage(in info, _carPrefabInfos);
+            assert(_commonStuff != null);
+            InitializationHelper.InitializeGarage(_commonStuff.stuff, _carPrefabInfos);
         }
 
         private void DeleteSaveFiles()

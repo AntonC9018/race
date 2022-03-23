@@ -145,7 +145,7 @@ namespace Race.Gameplay
         }
     #endif
 
-        void OnGearInput()
+        private void OnGearInput()
         {
             ref var drivingState = ref _carProperties.DataModel.DrivingState;
 
@@ -159,12 +159,14 @@ namespace Race.Gameplay
                 {
                     // Do we need the old state for ui logic?
                     drivingState.gearIndex += 1;
+                    _carProperties.TriggerOnGearShifted();
                 }
                 
                 else if (gearInput == GearInputType.GearDown
                     && drivingState.gearIndex > 0)
                 {
                     drivingState.gearIndex -= 1;
+                    _carProperties.TriggerOnGearShifted();
                 }
             }
         }
@@ -207,7 +209,7 @@ namespace Race.Gameplay
                     // `maxWheelRPMJumpPerSecond` is needed to counteract the fact that the wheel RPM
                     // that the Unity provides jumps up and down drastically, so we damp it here manually.
                     float maxAllowedChange = _dataSmoothing.maxWheelRPMJumpPerSecond * Time.fixedDeltaTime;
-                    wheelRPM = MathHelper.GetValueChangedByAtMost((float)drivingState.wheelRPM, recordedWheelRPM, maxAllowedChange);
+                    wheelRPM = MathHelper.GetValueChangedByAtMost((float) drivingState.wheelRPM, recordedWheelRPM, maxAllowedChange);
                 #else
                     float speedMetersPerSecond = colliderParts.Rigidbody.velocity.magnitude;
                     float speedMetersPerMinute = speedMetersPerSecond * 60.0f;

@@ -32,6 +32,9 @@ namespace Race.Garage
         /// </summary>
         public string defaultCarName = "";
 
+        // Scrapped for now.
+        public int defaultMapIndex = -1;
+
         /// <summary>
         /// The current amount of money.
         /// Currency is obtained in-game, or from real money.

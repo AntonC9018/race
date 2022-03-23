@@ -5,6 +5,63 @@ using RoadSegmentID = System.Int32;
 
 namespace Race.Gameplay
 {
+    public static class TrackHelper
+    {
+        public static TrackRaceInfo CreateFromQuad(Transform quad, float actualToVisualWidthRatio)
+        {
+            var transform = quad.transform;
+            var center = transform.position;
+            var scale = transform.localRotation * transform.localScale;
+            var length = scale.z;
+            var width = scale.x;
+
+            // hack: does not handle slopes
+            var halfLengthVector = new Vector3(0, 0, length / 2);
+
+            var startPoint = center - halfLengthVector;
+            var endPoint = center + halfLengthVector;
+
+            var visualWidth = width;
+            var actualWidth = visualWidth * actualToVisualWidthRatio;
+
+            return new TrackRaceInfo
+            {
+                actualWidth = actualWidth,
+                visualWidth = visualWidth,
+                track = new StraightTrack(startPoint, endPoint, actualWidth),
+            };
+        }
+
+        public static Vector3 GetRoadNormal(this IStaticTrack track, RoadPoint point)
+        {
+            return track.GetUnitVectors(point).normal;
+        }
+    }
+
+    public readonly struct UnitVectors
+    {
+        // aka forward
+        public readonly Vector3 tangent;
+        // aka right
+        public readonly Vector3 perpendicular;
+        // aka up
+        public readonly Vector3 normal;
+
+        public UnitVectors(Vector3 tangent, Vector3 perpendicular, Vector3 normal)
+        {
+            this.tangent = tangent;
+            this.normal = normal;
+            this.perpendicular = perpendicular;
+        }
+
+        public void Deconstruct(out Vector3 tangent, out Vector3 perpendicular, out Vector3 normal)
+        {
+            tangent = this.tangent;
+            perpendicular = this.perpendicular;
+            normal = this.normal;
+        }
+    }
+
     /// <summary>
     /// Allows querying connected road segments.
     /// The methods must be pure, aka always return the same results for the same inputs.
@@ -28,7 +85,7 @@ namespace Race.Gameplay
         /// <summary>
         /// The input point must be a valid point inside the track.
         /// </summary>
-        Vector3 GetRoadNormal(RoadPoint point);
+        UnitVectors GetUnitVectors(RoadPoint point);
 
         /// <summary>
         /// The input point must be a valid point inside the track.
@@ -109,6 +166,22 @@ namespace Race.Gameplay
         public static RoadPoint CreateEndOf(int segment)
         {
             return new RoadPoint(segment, 1);
+        }
+
+        public static bool operator>(RoadPoint a, RoadPoint b)
+        {
+            if (a.segment > b.segment)
+                return true;
+
+            return a.segment == b.segment && a.position > b.position;
+        }
+     
+        public static bool operator<(RoadPoint a, RoadPoint b)
+        {
+            if (a.segment < b.segment)
+                return true;
+                
+            return a.segment == b.segment && a.position < b.position;
         }
     }
 

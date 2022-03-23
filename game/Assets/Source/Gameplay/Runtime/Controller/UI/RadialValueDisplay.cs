@@ -29,7 +29,7 @@ namespace Race.Gameplay
     public class RadialValueDisplay : MonoBehaviour
     {
         [SerializeField] private RadialPipsWidget _pips;
-        [SerializeField] private RadialValueVisualConfiguration _configuration;
+        [SerializeField] internal RadialValueVisualConfiguration _configuration;
         [SerializeField] private GameObject _textGameObjectPrefab;
         [SerializeField] private RectTransform _needleTransform;
         private TMP_Text[] _valueTexts;
@@ -47,7 +47,7 @@ namespace Race.Gameplay
             // I think the array resizing and reusing thing is taking it too far.
             // This function will probably only be called once anyway.
             int oldTextCount = ResizeArrayOrDisableUnusedChildren(ref _valueTexts, textCount);
-            assert(_valueTexts.Length == textCount);
+            assert(_valueTexts.Length >= textCount);
 
             _pips.PipConfiguration.largePipInfo.count = pipsCount;
             _pips.InvalidatePipInfo();

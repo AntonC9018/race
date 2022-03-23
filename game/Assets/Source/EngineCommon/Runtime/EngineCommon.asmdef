@@ -1,7 +1,11 @@
 {
     "name": "EngineCommon",
     "rootNamespace": "EngineCommon",
-    "references": [ "Common" ],
+    "references": [
+        "Common",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -1,4 +1,5 @@
 using System;
+using EngineCommon;
 using Race.Gameplay.Generated;
 using UnityEngine;
 using UnityEngine.Events;
@@ -96,14 +97,6 @@ namespace Race.Gameplay
             properties.TriggerOnDrivingToggled();
         }
 
-        public static void RestartCar(
-            Transform carTransform, CarProperties properties,
-            Vector3 targetPosition, Quaternion targetRotation)
-        {
-            ResetPositionAndRotationOfBackOfCar(carTransform, properties, targetPosition, targetRotation);
-            RestartDisabledDriving(properties);
-        }
-
         public static void RestartDisabledDriving(CarProperties properties)
         {
             var carDataModel = properties.DataModel;
@@ -138,23 +131,35 @@ namespace Race.Gameplay
             properties.TriggerOnDrivingToggled();
         }
 
-        public static void ResetPositionAndRotationOfBackOfCar(Transform carTransform, CarProperties properties, Vector3 targetPosition, Quaternion targetRotation)
+        public static void ResetPositionAndRotationOfBackOfCar(Transform carTransform, CarDataModel carDataModel, Vector3 targetPosition, Quaternion targetRotation)
         {
-            var carDataModel = properties.DataModel;
-
-            Vector3 additionalDisplacement;
-            {
-                var elevation = carDataModel._infoComponent.elevationSuchThatWheelsAreLevelWithTheGround;
-                var up = elevation * Vector3.up;
-                
-                var halfLength = properties.DataModel.ColliderParts.body.collider.bounds.extents.z;
-                var forward = halfLength * Vector3.forward;
-
-                additionalDisplacement = up + forward;
-            }
+            Vector3 additionalDisplacement = 
+                GetUpDisplacementVector(carDataModel) + GetForwardDisplacementVector(carDataModel);
             var position = targetPosition + targetRotation * additionalDisplacement;
             carTransform.SetPositionAndRotation(position, targetRotation);
         }
+        
+        public static void ResetPositionAndRotationOfCenterOfCar(Transform carTransform, CarDataModel carDataModel, Vector3 targetPosition, Quaternion targetRotation)
+        {
+            Vector3 additionalDisplacement = GetUpDisplacementVector(carDataModel);
+            var position = targetPosition + targetRotation * additionalDisplacement;
+            carTransform.SetPositionAndRotation(position, targetRotation);
+        }
+
+        private static Vector3 GetForwardDisplacementVector(CarDataModel carDataModel)
+        {
+            var halfLength = carDataModel.GetBodySize().z;
+            var forward = halfLength * Vector3.forward;
+            return forward;
+        }
+
+        private static Vector3 GetUpDisplacementVector(CarDataModel carDataModel)
+        {
+            var elevation = carDataModel._infoComponent.elevationSuchThatWheelsAreLevelWithTheGround;
+            var up = elevation * Vector3.up;
+            return up;
+        }
+
 
         // Since the gear ratio is expressed for a generic wheel (radius of 1),
         // it gets multiplied by the wheel radius.
@@ -261,6 +266,58 @@ namespace Race.Gameplay
             float b = maxEngineEfficiency - engine.efficiencyAtMaxRPM;
             return Mathf.Lerp(engine.maxRPM, engine.optimalRPM, a / b);
         }
+
+        public static Vector3 GetBodySize(this CarDataModel dataModel)
+        {
+            return dataModel.ColliderParts.body.collider.size;
+        }
+
+        public static float DampValueDependingOnSpeed(
+            float desiredValue,
+            float currentValue,
+            float allowedValuePerSecondAtMinimumSpeed,
+            float currentSpeed,
+            float maxSpeed)
+        {
+            const float hardcodedPowerFactor = 9;
+            var exponent = 1.0f + 1.0f / maxSpeed * hardcodedPowerFactor;
+            currentSpeed = MathHelper.ClampMagnitude(currentSpeed, 0, maxSpeed);
+            var dampedFactor = Mathf.Pow(exponent, -currentSpeed);
+
+            const float allowedTurnChangePerSecondAtMaximumSpeed = 0.0001f;
+            var allowedChangeFactor = Mathf.Lerp(allowedTurnChangePerSecondAtMaximumSpeed, allowedValuePerSecondAtMinimumSpeed, dampedFactor);
+            var allowedChange = allowedChangeFactor * Time.fixedDeltaTime;
+
+            float actualValueFactor = MathHelper.GetValueChangedByAtMost(currentValue, desiredValue, allowedChange);
+
+            return actualValueFactor;
+        }
+
+        public static float DampTurnInputDependingOnCurrentSpeed(
+            CarDataModel carDataModel,
+            float desiredTurnFactor,
+            float allowedTurnChangePerSecondAtMinimumSpeed)
+        {
+            var currentSpeed = CarDataModelHelper.GetCurrentSpeed(carDataModel);
+            var maxSpeed = CarDataModelHelper.GetMaxSpeed(carDataModel);
+            float currentTurnFactor = carDataModel.DrivingState.steeringInputFactor;
+
+            return DampValueDependingOnSpeed(
+                desiredTurnFactor,
+                currentTurnFactor,
+                allowedTurnChangePerSecondAtMinimumSpeed,
+                currentSpeed,
+                maxSpeed);
+        }
+
+        public static bool IsDrivingDisabled(this CarDataModel carDataModel)
+        {
+            return carDataModel.DrivingState.flags.Has(CarDrivingState.Flags.Disabled);
+        }
+        public static bool IsDrivingEnabled(this CarDataModel carDataModel)
+        {
+            return carDataModel.DrivingState.flags.DoesNotHave(CarDrivingState.Flags.Disabled);
+        }
     }
 
     public class CarProperties : MonoBehaviour
@@ -284,6 +341,7 @@ namespace Race.Gameplay
         // TODO: A separate event object could be helpful.
         public UnityEvent<CarProperties> OnDrivingStateChanged;
         public UnityEvent<CarProperties> OnDrivingToggled;
+        public UnityEvent<CarProperties> OnGearShifted;
 
         public void TriggerOnDrivingStateChanged()
         {
@@ -293,6 +351,11 @@ namespace Race.Gameplay
         public void TriggerOnDrivingToggled()
         {
             OnDrivingToggled.Invoke(this);
+        }
+
+        public void TriggerOnGearShifted()
+        {
+            OnGearShifted.Invoke(this);
         }
     }
 }

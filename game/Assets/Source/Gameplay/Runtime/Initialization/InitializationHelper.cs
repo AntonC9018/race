@@ -3,6 +3,13 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
+    public interface IInitialize<T>
+    {
+        void Initialize(T value);
+    }
+
+    // Note: 90% of this code can be replaced using a dependency injection framework.
+    // Or with advanced code generation.
     public static class InitializationHelper
     {
         public static void InitializePlayerInput(
@@ -51,21 +58,22 @@ namespace Race.Gameplay
             carProperties.Initialize(carDataModel);
         }
 
-        // TDOO:
         // Could use some dynamic dependency injection for the widgets.
         // For now, inject manually with a mini-implementation.
-        public static void InitializeUI(Transform ui, CarProperties properties)
+        public static void InjectDependency<T>(Transform diRoot, T value)
         {
-            var components = ui.GetComponentsInChildren<ISetCarProperties>(includeInactive: false);
+            // Inject into self
+            // {
+            //     var c = diRoot.GetComponent<IInitialize<T>>();
+            //     if (c != null)
+            //         c.Initialize(value);
+            // }
+
+            // Inject into children
+            var components = diRoot.GetComponentsInChildren<IInitialize<T>>(includeInactive: false);
             foreach (var component in components)
-                component.CarProperties = properties;
+                component.Initialize(value);
         }
-
-        public interface ISetCarProperties
-        {
-            CarProperties CarProperties { set; }
-        }
-
 
         public static void FinalizeCarPropertiesInitializationWithDefaults(
             Gameplay.CarProperties carProperties, CarInfoComponent infoComponent, Transform transform)
@@ -80,25 +88,25 @@ namespace Race.Gameplay
             GameObject car,
             CarProperties carProperties)
         {
-            InitializationHelper.InitializePlayerInput(car, carProperties, cameraControl, stuff.inputViewFactory);
-            InitializationHelper.InitializeUI(stuff.diRootTransform, carProperties);
+            InitializePlayerInput(car, carProperties, cameraControl, stuff.inputViewFactory);
+            InjectDependency(stuff.diRootTransform, carProperties);
+            
+            carProperties.TriggerOnDrivingToggled();
         }
         
-        public static (IStaticTrack, TrackManager) InitializeTrackAndTrackManagerFromTrackQuad(
-            DriverInfo[] driverInfos, Transform trackQuad)
+        public static Transform FindTrackTransform(Transform mapTransform)
         {
-            var (track, trackWidth) = TrackHelper.CreateFromQuad(trackQuad);
+            return mapTransform.Find("track");
+        }
+        
+        public static Transform FindRaceLogicTransform(Transform rootTransform)
+        {
+            return rootTransform.Find("race_logic");
+        }
 
-            // For now, do hacks and produce garbage.
-            // TODO: refactor
-            var trackManager = new TrackManager();
-
-            var grid = new GridPlacementStrategy();
-            grid.Reset(track, trackWidth, driverInfos);
-
-            trackManager.Initialize(driverInfos, track, grid);
-
-            return (track, trackManager);
+        public static TrackRaceInfo CreateTrackWithInfo(Transform trackTransform, TrackLimitsConfiguration trackLimitsConfiguration)
+        {
+            return TrackHelper.CreateFromQuad(trackTransform, trackLimitsConfiguration.actualToVisualWidthRatio);
         }
     }
 }

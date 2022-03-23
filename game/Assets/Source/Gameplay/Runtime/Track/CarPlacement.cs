@@ -5,75 +5,110 @@ using static EngineCommon.Assertions;
 
 namespace Race.Gameplay
 {
-    public interface ICarPlacementStrategy
+    public struct GridPlacementData
     {
-        void Reset(IStaticTrack track, float trackWidth, DriverInfo[] participants);
-        (Vector3 position, Quaternion rotation) PlaceCar(int carIndex);
-    }
-
-    public class GridPlacementStrategy : ICarPlacementStrategy
-    {
-        private Vector2 _cellSize;
-        private int _colCount;
+        public int colCount;
+        public int rowCount;
+        public int columnCountOnLastRow;
+        public bool HasIncompleteLastRow => columnCountOnLastRow != 0;
 
         // Assume the start is linear.
         // The system cannot handle arbitrary turns and road segment sizes without
         // any assumptions of the underlying track.
-        private Vector3 _startingPosition;
-        private Vector3 _tangentDirection;
-        private Vector3 _perpendicularDirection;
-        private Quaternion _startingRotation;
+        public Vector3 startingPosition;
+        public Vector3 tangentDirection;
+        public Vector3 perpendicularDirection;
+        public Quaternion startingRotation;
 
-        public void Reset(IStaticTrack track, float trackWidth, DriverInfo[] participants)
+        public float trackWidth;
+        public float maxCarLength;
+    }
+    
+    public static class CarPlacement
+    {
+        public static GridPlacementData GetGridPlacementData(
+            (float width, float length) max, int carCount, in TrackRaceInfo trackInfo)
         {
-            assert(track is not null);
-            assert(participants is not null);
+            assert(trackInfo.track is not null);
+
+            GridPlacementData result;
 
             {
+                int numCarsPerRow = Mathf.FloorToInt(trackInfo.visualWidth / max.width);
+                if (numCarsPerRow == 0)
+                    numCarsPerRow = 1;
+
+                var colCount = numCarsPerRow;
+                result.colCount = colCount;
+
+                var rowCount = MathHelper.CeilDivide(carCount, result.colCount);
+                result.rowCount = rowCount;
+
+                var lastRowCount = carCount % colCount;
+                result.columnCountOnLastRow = lastRowCount;
+
+                result.maxCarLength = max.length;
+                result.trackWidth = trackInfo.visualWidth;
+            }
+
+            {
+                var track = trackInfo.track;
                 var start = RoadPoint.CreateStartOf(track.StartingSegment);
                 var rotation = track.GetRegularRotation(start);
                 var position = track.GetRoadMiddlePosition(start);
 
-                _startingPosition = position - trackWidth / 2 * _perpendicularDirection;
-                _startingRotation = rotation;
-                _tangentDirection = rotation * Vector3.forward;
-                _perpendicularDirection = rotation * Vector3.right;
+                var perpendicularDirection = rotation * Vector3.right;
+                var tangentDirection = rotation * Vector3.forward;
+
+                var offsetPerp = -trackInfo.visualWidth / 2;
+                var offsetTangent = max.length / 2;
+
+                result.startingPosition = position + offsetPerp * perpendicularDirection + offsetTangent * tangentDirection;
+                result.startingRotation = rotation;
+                result.tangentDirection = tangentDirection;
+                result.perpendicularDirection = perpendicularDirection;
             }
 
-            float maxWidth = 0;
-            {
-                float maxLength = 0;
-                for (int i = 0; i < participants.Length; i++)
-                {
-                    ref readonly var participant = ref participants[i];
-                    var size = participant.carProperties.DataModel.ColliderParts.body.collider.size;
 
-                    maxWidth = Mathf.Max(size.x, maxWidth);
-                    maxLength = Mathf.Max(size.z, maxLength);
-                }
-
-                int numCarsPerRow = Mathf.FloorToInt(trackWidth / maxWidth);
-                if (numCarsPerRow == 0)
-                    numCarsPerRow = 1;
-
-                _colCount = numCarsPerRow;
-
-                float lengthEachCellUntilMultiple = (trackWidth % maxWidth) / numCarsPerRow;
-                _cellSize = new Vector2(maxWidth + lengthEachCellUntilMultiple, maxLength);
-                // _rowCount = MathHelper.CeilDivide(participants.Length, numCarsPerRow);
-            }
+            return result;
         }
 
-        public (Vector3 position, Quaternion rotation) PlaceCar(int carIndex)
+        public static (float width, float length) ComputeMaxSizes(DriverInfo[] driver, float visualWidth)
         {
-            int row = carIndex / _colCount;
-            int column = carIndex % _colCount;
+            float maxWidth = 0;
+            float maxLength = 0;
+            for (int i = 0; i < driver.Length; i++)
+            {
+                ref readonly var participant = ref driver[i];
+                var size = participant.carProperties.DataModel.GetBodySize();
 
-            Vector3 position = _startingPosition;
-            position += _cellSize.y * row * _tangentDirection;
-            position += _cellSize.x * column * _perpendicularDirection;
+                maxWidth = Mathf.Max(size.x, maxWidth);
+                maxLength = Mathf.Max(size.z, maxLength);
+            }
 
-            return (position, _startingRotation);
+            return (maxWidth, maxLength);
+        }
+
+
+        // Just use a random access implementation for now, but an iterator will work better here.
+        public static (Vector3 position, Quaternion rotation) GetPositionAndRotation(in GridPlacementData data, int carIndex)
+        {
+            int row = carIndex / data.colCount;
+            int column = carIndex % data.colCount;
+
+            int colCount;
+            if (data.HasIncompleteLastRow && row == data.rowCount - 1)
+                colCount = data.columnCountOnLastRow;
+            else
+                colCount = data.colCount;
+
+            float segmentWidth = data.trackWidth / colCount;
+
+            Vector3 position = data.startingPosition;
+            position += data.maxCarLength * row * data.tangentDirection;
+            position += segmentWidth * (column + 0.5f) * data.perpendicularDirection;
+
+            return (position, data.startingRotation);
         }
     }
 }
