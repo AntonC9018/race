@@ -1,7 +1,13 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Kari.Plugins.Terminal;
+using TMPro;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.ResourceLocations;
+using UnityEngine.UI;
 using static EngineCommon.Assertions;
 
 namespace Race.Garage
@@ -26,7 +32,7 @@ namespace Race.Garage
         // TODO: Could pass IEnumerable's?
         public PlayerInfo[] playerInfos;
         public BotInfo[] botInfos;
-        public int trackIndex;
+        public IResourceLocation mapResouceLocation;
     }
 
     public readonly struct GarageInitializationInfo
@@ -46,28 +52,74 @@ namespace Race.Garage
 
     public class FromGarageToGameplayTransitionManager : MonoBehaviour
     {
-        private GarageFunctionalInfo _garageInfo;
-        private GarageInitializationInfo _transitionInfo;
+        private const string TracksLabel = "track";
 
-        public void Initialize(GarageFunctionalInfo garageInfo, GarageInitializationInfo handler)
+        // TODO: The asset things need to be managed somewhere else, definitely not here.
+        [SerializeField] private Button _button;
+        [SerializeField] private TMP_Dropdown _levelDropdown;
+
+        private IList<IResourceLocation> _mapResouceLocations;
+
+        private CarProperties _carProperties;
+        private UserProperties _userProperties;
+        private ITransitionFromGarageToGameplay _transitionHandler;
+        private Task _transitionTask;
+
+        public async Task Initialize(GarageCommonInitializationStuff commonStuff, GarageInitializationInfo handler)
         {
-            _garageInfo = garageInfo;
-            _transitionInfo = handler;
-            assert(_transitionInfo.fromGarageToGameplay != null);
+            assert(_button != null);
+            assert(_levelDropdown != null);
+            assert(handler.fromGarageToGameplay != null);
+            assert(commonStuff.carProperties != null);
+            assert(commonStuff.userProperties != null);
+
+            _carProperties = commonStuff.carProperties;
+            _userProperties = commonStuff.userProperties;
+            _transitionHandler = handler.fromGarageToGameplay;
+            
+            _carProperties.OnCarSelected.AddListener(OnCarSelected);
+            _button.onClick.AddListener(OnButtonClicked);
+
+            var mapLocationsHandle = Addressables.LoadResourceLocationsAsync(TracksLabel, typeof(GameObject));
+            var mapLocations = await mapLocationsHandle.Task;
+
+            _mapResouceLocations = mapLocations;
+            _levelDropdown.options = mapLocations
+                .Select(loc => new TMP_Dropdown.OptionData(loc.PrimaryKey))
+                .ToList();
+
+            // We don't release the handle, because the locations are needed
+            // for the whole lifetime of the application. (at least for now).
         }
 
-        public async void OnButtonClicked()
+        async void Update()
         {
-            if (_transitionInfo.fromGarageToGameplay == null)
+            if (_transitionTask is not null)
             {
-                #if UNITY_EDITOR
-                    Debug.Log("The gameplay won't start unless initialized from the main scene.");
-                #endif
-                
-                return;
+                await _transitionTask;
+                _transitionTask = null;
             }
+        }
 
-            var carProperties = _garageInfo.carProperties;
+        private void OnCarSelected(CarSelectionChangedEventInfo info)
+        {
+            _button.interactable = info.IsAnyCarSelected;
+        }
+
+        private void OnButtonClicked()
+        {
+            assert(_carProperties.IsAnyCarSelected, "??");
+            assert(_transitionHandler is not null);
+            
+            if (_transitionTask is not null)
+                return;
+            
+            _transitionTask = InitiateTransition();
+        }
+
+        private Task InitiateTransition()
+        {
+            var carProperties = _carProperties;
             var transitionInfo = new GarageToGameplayTransitionInfo
             {
                 playerInfos = new[]
@@ -76,7 +128,7 @@ namespace Race.Garage
                     {
                         carIndex = carProperties.CurrentCarIndex,
                         carDataModel = carProperties.CurrentCarInfo.dataModel,
-                        userDataModel = _garageInfo.userProperties.DataModel,
+                        userDataModel = _userProperties.DataModel,
                     }
                 },
 
@@ -88,11 +140,10 @@ namespace Race.Garage
                     }
                 },
 
-                // TODO: Allow map selection.
-                trackIndex = 0,
+                mapResouceLocation = _mapResouceLocations[_levelDropdown.value],
             };
-            
-            await _transitionInfo.fromGarageToGameplay.TransitionFromGarageToGameplay(transitionInfo);
+
+            return _transitionHandler.TransitionFromGarageToGameplay(transitionInfo);
         }
 
         [Command("go", "Transition from garage to gameplay")]

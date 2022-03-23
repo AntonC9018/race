@@ -60,7 +60,7 @@ namespace Race.Garage
 
         private void OnCarSelected(CarSelectionChangedEventInfo info)
         {
-            _currentFlags.Set(PossibilitiesFlags.NoCarSelected, info.currentIndex < 0);
+            _currentFlags.Set(PossibilitiesFlags.NoCarSelected, !info.IsAnyCarSelected);
             ResetButtonInteractability();
         }
 

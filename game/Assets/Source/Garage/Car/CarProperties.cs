@@ -131,8 +131,10 @@ namespace Race.Garage
             this.currentIndex = currentIndex;
         }
 
-        public ref CarInstanceInfo PreviousCarInfo => ref carProperties.GetCarInfo(previousIndex);
-        public ref CarInstanceInfo CurrentCarInfo => ref carProperties.GetCarInfo(currentIndex);
+        public readonly ref CarInstanceInfo PreviousCarInfo => ref carProperties.GetCarInfo(previousIndex);
+        public readonly ref CarInstanceInfo CurrentCarInfo => ref carProperties.GetCarInfo(currentIndex);
+        public readonly bool IsAnyCarSelected => currentIndex >= 0;
+        public readonly bool WasAnyCarSelected => previousIndex >= 0;
     }
 
     // TODO:

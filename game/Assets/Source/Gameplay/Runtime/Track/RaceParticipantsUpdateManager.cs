@@ -39,7 +39,7 @@ namespace Race.Gameplay
             {
                 ref var participant = ref Participants.driver[i];
 
-                bool isRespawning = participant.carProperties.DataModel.DrivingState.flags.Has(CarDrivingState.Flags.Disabled);
+                bool isRespawning = participant.carProperties.DataModel.IsDrivingDisabled();
                 if (isRespawning)
                     continue;
 

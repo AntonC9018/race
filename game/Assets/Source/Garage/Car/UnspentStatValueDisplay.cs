@@ -33,7 +33,7 @@ namespace Race.Garage
 
         private void OnCarSelected(CarSelectionChangedEventInfo info)
         {
-            if (info.currentIndex == -1)
+            if (info.IsAnyCarSelected)
                 _text.text = _initialText;
         }
     }

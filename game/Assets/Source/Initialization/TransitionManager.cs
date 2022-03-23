@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EngineCommon;
 using Race.Gameplay;
 using Race.Garage;
 using UnityEngine;
@@ -21,7 +22,6 @@ namespace Race.SceneTransition
         ITransitionFromGarageToGameplay, ITransitionFromGameplayToGarage
     {
         private const string GameplayLabel = "gameplay";
-        private const string TracksLabel = "track";
 
         // These are not scenes, but gameobjects.
         // They act like scenes, but I'm using prefabs instead of actual scenes,
@@ -32,9 +32,9 @@ namespace Race.SceneTransition
         private Transform _garageTransform;
         private SceneInfo<IGameplayInitialization> _gameplay;
 
-        // This is kind of messy right now, because the things are asymmetric.
-        // We assume too much about the individual scenes.
-        // In case of this object currently it is fine, because it was made coupled
+        // This is kind of messy right now, because the way we deal with
+        // the individual scenes is asymmetric. We assume too much about each of them.
+        // In case of this class currently it is fine, because it was made coupled
         // to other systems to make it simple.
         // If we were to decouple it, it will have to be way more generic.
         [SerializeField] private GameObject _intermediateSceneContainer;
@@ -172,10 +172,7 @@ namespace Race.SceneTransition
             _intermediateSceneContainer.SetActive(true);
             var adSkippedTask = _skipAd.Restart();
 
-            // This is stupid and I hate it ...
-            // Addressables' API is terrible IMO. I'd do a custom thing and be happy.
-            // Their code is complicated and unreadable too.
-            var gameplayCarsLocationsHandle = GetGameObjectLocations(GameplayLabel);
+            var gameplayCarsLocationsHandle = AddressablesHelper.GetGameObjectLocations(GameplayLabel);
 
             /*
                 I'd do something like the following:
@@ -311,13 +308,16 @@ namespace Race.SceneTransition
 
             GameObject trackMap;
             {
-                var tracksLocationsHandle = GetGameObjectLocations(TracksLabel);
+                var assetHandle = Addressables.LoadAssetAsync<GameObject>(info.mapResouceLocation);
+                _handlesOfGameplayCarsToRelease.Add(assetHandle);
+
                 // TODO: do the awaits simultaneously.
-                trackMap = await InstantiateAsyncByIndex(
-                    new Temp(info.trackIndex, tracksLocationsHandle, _handlesOfGameplayCarsToRelease));
+                var mapPrefab = await assetHandle.Task;
+
                 // TODO: This should be a nicely displayed error, not an assertion.
-                assert(trackMap != null);
-                Addressables.Release(tracksLocationsHandle);
+                assert(mapPrefab != null);
+
+                trackMap = Instantiate_RunAwakes_DisableUpdates(mapPrefab);
             }
             
             {
@@ -346,11 +346,6 @@ namespace Race.SceneTransition
             }
             
             Addressables.Release(gameplayCarsLocationsHandle);
-        }
-
-        private LocationsHandle GetGameObjectLocations(string key)
-        {
-            return Addressables.LoadResourceLocationsAsync(key, typeof(GameObject));
         }
 
         private async Task<SceneInfo<IGameplayInitialization>> LazyLoadGameplayScene()

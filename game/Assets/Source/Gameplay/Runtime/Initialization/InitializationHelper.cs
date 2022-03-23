@@ -90,6 +90,8 @@ namespace Race.Gameplay
         {
             InitializePlayerInput(car, carProperties, cameraControl, stuff.inputViewFactory);
             InjectDependency(stuff.diRootTransform, carProperties);
+            
+            carProperties.TriggerOnDrivingToggled();
         }
         
         public static Transform FindTrackTransform(Transform mapTransform)

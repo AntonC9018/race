@@ -11,6 +11,7 @@
     <type fullname="Race.Gameplay.CarProperties" preserve="all" />
     <type fullname="Race.Gameplay.CarTemplate" preserve="all" />
     <type fullname="Race.Gameplay.CommonInitializationStuffComponent" preserve="all" />
+    <type fullname="Race.Gameplay.CurrentGearIndicator" preserve="all" />
     <type fullname="Race.Gameplay.GameplayInitialization" preserve="all" />
     <type fullname="Race.Gameplay.GameplayToGarageTransitionManager" preserve="all" />
     <type fullname="Race.Gameplay.KeyboardInputSmoothingParameters" preserve="all" />
@@ -50,6 +51,7 @@
     <type fullname="Race.Garage.CarStatsManager" preserve="all" />
     <type fullname="Race.Garage.DisplayCarInfoComponent" preserve="all" />
     <type fullname="Race.Garage.FromGarageToGameplayTransitionManager" preserve="all" />
+    <type fullname="Race.Garage.GarageCommonInitializationStuffComponent" preserve="all" />
     <type fullname="Race.Garage.GarageInitialization" preserve="all" />
     <type fullname="Race.Garage.PedestalRotation" preserve="all" />
     <type fullname="Race.Garage.PedestalRotationParams" preserve="all" />
@@ -62,7 +64,7 @@
     <type fullname="Race.Garage.CarStats" preserve="nothing" serialized="true" />
     <type fullname="Race.Garage.DisplayCarInfo" preserve="nothing" serialized="true" />
     <type fullname="Race.Garage.BuyCoinsOptionData" preserve="nothing" serialized="true" />
-    <type fullname="Race.Garage.GarageFunctionalInfo" preserve="nothing" serialized="true" />
+    <type fullname="Race.Garage.GarageCommonInitializationStuff" preserve="nothing" serialized="true" />
   </assembly>
   <assembly fullname="Unity.Addressables, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" preserve="all">
     <type fullname="UnityEngine.AddressableAssets.Addressables" preserve="all" />

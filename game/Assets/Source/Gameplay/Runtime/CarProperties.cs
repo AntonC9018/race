@@ -309,6 +309,15 @@ namespace Race.Gameplay
                 currentSpeed,
                 maxSpeed);
         }
+
+        public static bool IsDrivingDisabled(this CarDataModel carDataModel)
+        {
+            return carDataModel.DrivingState.flags.Has(CarDrivingState.Flags.Disabled);
+        }
+        public static bool IsDrivingEnabled(this CarDataModel carDataModel)
+        {
+            return carDataModel.DrivingState.flags.DoesNotHave(CarDrivingState.Flags.Disabled);
+        }
     }
 
     public class CarProperties : MonoBehaviour
@@ -332,6 +341,7 @@ namespace Race.Gameplay
         // TODO: A separate event object could be helpful.
         public UnityEvent<CarProperties> OnDrivingStateChanged;
         public UnityEvent<CarProperties> OnDrivingToggled;
+        public UnityEvent<CarProperties> OnGearShifted;
 
         public void TriggerOnDrivingStateChanged()
         {
@@ -341,6 +351,11 @@ namespace Race.Gameplay
         public void TriggerOnDrivingToggled()
         {
             OnDrivingToggled.Invoke(this);
+        }
+
+        public void TriggerOnGearShifted()
+        {
+            OnGearShifted.Invoke(this);
         }
     }
 }

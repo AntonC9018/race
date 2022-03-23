@@ -415,11 +415,11 @@ namespace Race.Garage
             assert(info.previousIndex != info.currentIndex);
 
             // Might want to disable the canvas component, people say it's more efficient.
-            if (info.previousIndex == -1)
+            if (!info.WasAnyCarSelected)
             {
                 _statsTransform.gameObject.SetActive(true);
             }
-            else if (info.currentIndex == -1)
+            else if (!info.IsAnyCarSelected)
             {
                 // This line makes it so that the slider goes away when no car is selected.
                 // _statsTransform.gameObject.SetActive(false);
