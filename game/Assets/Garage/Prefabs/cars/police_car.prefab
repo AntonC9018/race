@@ -49,8 +49,8 @@ MonoBehaviour:
     meshRenderer: {fileID: 7398290233001510279}
     name: Police Car
     baseStats:
-      health: 50
-      accelerationModifier: 50
+      health: 10
+      accelerationModifier: 10
 --- !u!1001 &335579965286711263
 PrefabInstance:
   m_ObjectHideFlags: 0

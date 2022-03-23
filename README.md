@@ -61,6 +61,10 @@ Some of the things I'd like to mention follow.
 
 On the gameplay elements:
 
+- The only functional requirement that has not been implemented are the graphics settings.
+  I had to scrap it for now to constrain the scope of the project.
+
+
 - You can open up the terminal by pressing the backtick key, or open it fully by pressing ctrl + backtick.
   Type `help` to get info on the available commands. (You can give youself coins or stats).
 
@@ -128,15 +132,11 @@ More on the code / design:
 > Actually, these structs will still be boxed, I think.
 > I will need to test that, or study the source code.
 
-
 - No tests yet!
-  My systems are not 100% decoupled (they are close though), and I didn't really have time to write tests yet.
-
 
 - There are notes about singletons in the sources.
   I kind of dislike singletons, but I understand that they can be beneficial for some use cases, even though they provide implicit context which makes code less tractable.
-  This is also why I wire some things to the user and car models in the editor, instead of at runtime.
-  Wherever I do serialize the model manager for a component, I tend to hook up the handlers at runtime, but otherwise, it's done in the editor.
+  I'm using a simple dependency injection implementation so that I don't have to wire up stuff manually in the editor.
 
 
 - I'm not unhooking some callbakcs in `OnDisable()`. This is a conscious decision.
@@ -162,14 +162,94 @@ More on the code / design:
 
 - I'm enabling both input systems, because the command terminal package uses the old input system.
 
+
 - Most of the heavy lifting for car movement is done by the built-in `WheelCollider`, while the engine simulation is custom.
   I have designed a gear based system that computes the current RPM of the engine from the current RPM of the wheels,
   then uses that to compute the efficiency of the engine, which is then used to compute and apply torque to the wheels.
 
+
 - The speedometer and the tachometer are created dynamically based on the properties of the selected car.
+
 
 - I'm using prefabs to represent scenes instead of using actual scenes.
   It makes the transition between scenes a lot simpler and more manageable.
+  This may mean that the lighting is harder to control, but I have not looked deep enough into this.
+
+
+- The bot's logic is very minimal at this point.
+  It tries to stay at the center of the road, without flipping over.
+  It always puts the pedal to the metal and only drives in first gear.
+  A better AI algorithm had to be scrapped to constrain the scope of the project.
+
+
+- The race management includes disabling and then respawning the participant if it leaves the road or happens to flip over, detecting when one of the participants reaches the end of the track.
+
+
+- The track itself is not limited to being linear.
+  I made it so that the code uses the `IStaticTrack` interface.
+  The classes that implement this interface are supposed to represent a track, aka a sequence of road segments.
+  The position of the participants within the track is stored in road coordinates, which is a road segment number and a normalized position within such road segment.
+  Whoever implements `IStaticTrack` convert to (from) world space coordinates to (from) these road space coordinates.
+  Such system allows abstracting away the underlying track structure.
+
+  Right now, I'm only using a `StraightTrack` implementation, which is just a single simple straight road segment,
+  but you can imagine an implementation based on EasyRoads3D (scrapped for now), which would use spline equations to determine the middle position of a road segment, the curvature information that a bot will use to select a turning angle and the optimal speed. Slopes are technically supported too, because the code depends on normals and rotations obtained from this track interface.
+  
+
+- The *gameplay_playground* scene contains a few editor helpers for setting up the car colliders and computing gear ratios from speeds.
+
+## Initialization
+
+The initialization & transition is the most involved and messy part in my opinion.
+
+Every "scene" is just a prefab.
+No new actual Unity scenes are created at runtime, all I do is enable or disable game objects.
+
+This makes things a lot easier to manage:
+
+- I can have a playground scene for e.g. the gameplay, that will have a player pre-placed in the scene, without that propagating to the main scene, where I spawn the cars dynamically.
+
+- I can factor out the shared parts in a separate prefab, without having to worry about any "don't destroy on load" and singleton instances nonsense.
+
+- The static parts that will have to always get copied on "scene" instantiation can be shared between the main scene and the playground scene, by putting them in a prefab.
+
+- A playground scene can use a completely different initialization strategy than the one that used when that scene gets intantiated from the main scene.
+  For example, when initializing the gameplay scene locally, the car that's already in the scene needs to be managed by user input, but when the gameplay scene is instantiated from the main scene, the cars should get created dynamically based on the information from the garage scene.
+
+
+Let me mention some terminology that I settled on regarding this scene management approach:
+
+- *shared* things are the things that are reused across "scenes": the event system for UI and the command terminal are the two things that are shared currently.
+
+- *core* things are the static things that always need to exist for a scene to function correctly. For example, the UI, camera, lights.
+
+- *core* contains the *initialization object* (component).
+  It implements an initialization interface, which takes data specific to that "scene", and performs some internal initialization.
+  For example, for the gameplay "scene", the initialization object would inject the properties (wrapper for the data model that exposes callbacks for when the data changes) into the UI components, initialize the race logic based on the number of participants, create the bot input views (the difficulty settings are scrapped for now), etc.
+
+
+To be clear, this initialization object does not know about the other scenes.
+All it could get is an abstract transition handler, that it could use to initiate the transition to other scenes.
+If the initialization outcome depends on the data from other scenes, it should be managed by some other entity.
+
+
+Currently, there is a "God entity" that manages the aforementioned transferring data between scenes in the correct format.
+Right now I only need to transfer data from garage (the selected car, the color, the stats, etc.) to the gameplay scene,
+while converting it to the format that it understands.
+That means this class would spawn the "gameplay cars", that is, cars with colliders and the needed runtime data and whatnot, by instantiating the prefab that corresponds to the given "garage car".
+It would convert the current stats received from the garage scene into an adjusted car "spec" (motor power, the gear ratios, etc.), which it will pass with the car objects that the gameplay scene understands.
+
+So, as you can imagine, this God entity is pretty much tightly coupled with all the other scenes, managing showing/hiding of the scenes, data transfer and data conversion.
+I could decouple it more later. At least the data conversion part ideally should be handled elsewhere.
+
+
+So there are 2 kinds of initialization strategies: local and the initialization from main (let's just call it default).
+
+The default initialization is initiated by the God entity, while the local one gets executed only while in the playground scene.
+
+I've spent as much time trying to understand and implement this as I did coding the gameplay logic and figuring out the math involved in the engine simulation.
+This was by far the most complicated problem in this project.
+
 
 ## Links
 

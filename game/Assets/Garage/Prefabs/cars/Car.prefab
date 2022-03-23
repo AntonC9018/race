@@ -49,8 +49,8 @@ MonoBehaviour:
     meshRenderer: {fileID: 3411209936514357471}
     name: Bad Car
     baseStats:
-      health: 40.4
-      accelerationModifier: 43
+      health: 30
+      accelerationModifier: 0
 --- !u!1001 &6490645761855808099
 PrefabInstance:
   m_ObjectHideFlags: 0

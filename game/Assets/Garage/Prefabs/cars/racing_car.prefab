@@ -49,8 +49,8 @@ MonoBehaviour:
     meshRenderer: {fileID: 4826995131826226}
     name: Racing Car
     baseStats:
-      health: 30
-      accelerationModifier: 120
+      health: 0
+      accelerationModifier: 20
 --- !u!1001 &7067590202025359978
 PrefabInstance:
   m_ObjectHideFlags: 0
