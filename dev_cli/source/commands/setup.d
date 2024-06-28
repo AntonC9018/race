@@ -81,9 +81,9 @@ struct KariRun
         // TODO: this path should be provided by the build system or something
         // msbuild cannot do that afaik, so study the alternatives asap.
         string kariExecutablePath = buildPath(
-            context.buildDirectory, "bin", "Kari.Generator", context.configuration, "net6.0", "Kari.Generator");
+            context.buildDirectory, "bin", "Kari.Generator", context.configuration, "net8.0", "Kari.Generator");
         version (Windows)
-            kariExecutablePath += ".exe";
+            kariExecutablePath ~= ".exe";
 
         string[] usedKariPlugins = ["DataObject", "Flags", "UnityHelpers", "Terminal"];
         string[] customPlugins;
@@ -92,7 +92,7 @@ struct KariRun
         {
             return buildPath(
                 context.buildDirectory, 
-                "bin", pluginName, context.configuration, "net6.0",
+                "bin", pluginName, context.configuration, "net8.0",
                 pluginDllName);
         }
 
